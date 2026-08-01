@@ -1,16 +1,13 @@
-export const dynamic = "force-dynamic";
-
-
 "use client";
 
-import { FormEvent, useState, useEffect } from "react";
+import { Suspense, FormEvent, useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import Image from 'next/image';
 
 type AuthMode = "login" | "register";
 
-export default function LoginPage() {
+function LoginContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const redirectUrl = searchParams.get('redirect') || '/dashboard';
@@ -403,5 +400,17 @@ export default function LoginPage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-blue-50 via-white to-blue-100">
+        <div className="text-center text-slate-500 font-medium">Loading...</div>
+      </div>
+    }>
+      <LoginContent />
+    </Suspense>
   );
 }
