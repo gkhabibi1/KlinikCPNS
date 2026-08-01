@@ -1,17 +1,17 @@
 import { createServerClient } from '@supabase/ssr';
-import { NextResponse, type NextRequest } from 'next/server';
+import { NextResponse } from 'next/server';
 
-export async function middleware(request: NextRequest) {
+export async function middleware(request) {
   let supabaseResponse = NextResponse.next({ request });
 
   const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    process.env.NEXT_PUBLIC_SUPABASE_URL,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
     {
       cookies: {
         getAll() { return request.cookies.getAll(); },
         setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value, options }) => request.cookies.set(name, value));
+          cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value));
           supabaseResponse = NextResponse.next({ request });
           cookiesToSet.forEach(({ name, value, options }) => supabaseResponse.cookies.set(name, value, options));
         },
@@ -27,7 +27,7 @@ export async function middleware(request: NextRequest) {
                            request.nextUrl.pathname.startsWith('/result') || 
                            request.nextUrl.pathname.startsWith('/checkout');
 
-  // 1. Jika route diproteksi dan user BELUM login → redirect ke login dengan redirect URL
+  // 1. Jika route diproteksi dan user BELUM login -> redirect ke login
   if (isProtectedRoute && !user) {
     const url = request.nextUrl.clone();
     url.pathname = '/login';
@@ -35,10 +35,8 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  // 2. Jika user SUDAH login, BIARKAN mereka akses /result, /dashboard, dll (NextResponse.next())
-  // Kecuali mereka mencoba akses /admin tapi bukan email admin
+  // 2. Akses admin diproteksi untuk email tertentu
   if (isAdminRoute && user) {
-    // GANTI EMAIL INI DENGAN EMAIL ADMIN ANDA YANG SEKARANG (gkhabibi1@gmail.com)
     if (user.email !== 'gkhabibi1@gmail.com') {
       const url = request.nextUrl.clone();
       url.pathname = '/dashboard';
@@ -46,7 +44,7 @@ export async function middleware(request: NextRequest) {
     }
   }
 
-  // 3. Auto-redirect jika akses halaman root '/' atau '/login' saat user sudah login
+  // 3. Auto-redirect jika akses '/' atau '/login' saat sudah login
   if ((request.nextUrl.pathname === '/' || request.nextUrl.pathname === '/login') && user) {
     const url = request.nextUrl.clone();
     if (user.email === 'gkhabibi1@gmail.com') {
@@ -57,10 +55,13 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  // 4. Jika semua aman, lanjutkan ke halaman yang diminta (termasuk /result)
+  // 4. Jika semua aman, lanjutkan
   return supabaseResponse;
 }
 
 export const config = {
-  matcher: ['/((?!_next/static|_next/image|favicon.ico|public|api|auth).*)'],
+  // Matcher diperbarui agar kompatibel dengan ekstensi file statis (gambar, dll)
+  matcher: [
+    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+  ],
 };
