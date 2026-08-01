@@ -1,3 +1,6 @@
+export const dynamic = "force-dynamic";
+
+
 "use client";
 
 import { FormEvent, useState, useEffect } from "react";
