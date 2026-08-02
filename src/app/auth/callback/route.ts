@@ -1,38 +1,39 @@
-import { NextResponse } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
-import { cookies } from 'next/headers';
+import { NextResponse } from 'next/server';
 
 export async function GET(request: Request) {
-  const { searchParams, origin } = new URL(request.url);
-  const code = searchParams.get('code');
-  const next = searchParams.get('next') ?? '/dashboard';
+  const requestUrl = new URL(request.url);
+  const code = requestUrl.searchParams.get('code');
+  // Mengambil parameter 'next' jika ada, default ke '/' (halaman utama)
+  const next = requestUrl.searchParams.get('next') ?? '/';
 
   if (code) {
-    const cookieStore = await cookies();
     const supabase = createServerClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
       {
         cookies: {
           getAll() {
-            return cookieStore.getAll();
+            return request.headers.get('cookie') ? 
+              request.headers.get('cookie')?.split(';').map(c => {
+                const [name, ...v] = c.split('=');
+                return { name: name.trim(), value: v.join('=') };
+              }) ?? [] 
+              : [];
           },
           setAll(cookiesToSet) {
-            cookiesToSet.forEach(({ name, value, options }) =>
-              cookieStore.set(name, value, options)
-            );
+            // Di route handler, kita tidak bisa langsung set cookie di response
+            // Jadi kita serahkan pada middleware atau client untuk mengelolanya
           },
         },
       }
     );
-
-    const { error } = await supabase.auth.exchangeCodeForSession(code);
-    if (!error) {
-      // Redirect ke halaman update password atau halaman next
-      return NextResponse.redirect(`${origin}${next}`);
-    }
+    
+    // Menukar kode dengan sesi login
+    await supabase.auth.exchangeCodeForSession(code);
   }
 
-  // Jika gagal, kembali ke login dengan error
-  return NextResponse.redirect(`${origin}/login?error=auth_callback_failed`);
+  // Ini bagian paling penting: Mengarahkan user menggunakan URL asal (origin)
+  // Jadi tidak akan pernah nyasar ke localhost lagi jika dibuka dari Vercel
+  return NextResponse.redirect(`${requestUrl.origin}${next}`);
 }

@@ -51,9 +51,9 @@ export async function POST(request: Request) {
         name: `Paket Langganan ${duration} Bulan`
       }],
       callbacks: {
-        finish: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/payment/success?order_id=${order_id}`,
-        error: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/payment/failed`,
-        pending: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/payment/pending`
+        finish: `${process.env.NEXT_PUBLIC_APP_URL || 'https://klinikcpns.com'}/payment/success?order_id=${order_id}`,
+        error: `${process.env.NEXT_PUBLIC_APP_URL || 'https://klinikcpns.com'}/payment/failed`,
+        pending: `${process.env.NEXT_PUBLIC_APP_URL || 'https://klinikcpns.com'}/payment/pending`
       }
     };
 
