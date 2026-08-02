@@ -1,39 +1,63 @@
 import { createServerClient } from '@supabase/ssr';
 import { NextResponse } from 'next/server';
+import { cookies } from 'next/headers';
 
 export async function GET(request: Request) {
   const requestUrl = new URL(request.url);
   const code = requestUrl.searchParams.get('code');
-  // Mengambil parameter 'next' jika ada, default ke '/' (halaman utama)
-  const next = requestUrl.searchParams.get('next') ?? '/';
+  let next = requestUrl.searchParams.get('next') ?? '/dashboard';
+
+  // 🛡️ KEAMANAN 1: Cegah Serangan Open Redirect
+  // Memastikan rute 'next' selalu dimulai dengan '/' (rute internal website Anda)
+  if (!next.startsWith('/')) {
+    next = '/dashboard';
+  }
 
   if (code) {
+    // 🛡️ FUNGSI: Menggunakan fungsi cookies() bawaan Next.js App Router
+    const cookieStore = await cookies();
+
     const supabase = createServerClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
       {
         cookies: {
           getAll() {
-            return request.headers.get('cookie') ? 
-              request.headers.get('cookie')?.split(';').map(c => {
-                const [name, ...v] = c.split('=');
-                return { name: name.trim(), value: v.join('=') };
-              }) ?? [] 
-              : [];
+            return cookieStore.getAll();
           },
           setAll(cookiesToSet) {
-            // Di route handler, kita tidak bisa langsung set cookie di response
-            // Jadi kita serahkan pada middleware atau client untuk mengelolanya
+            try {
+              // Menyimpan sesi login (Token) ke browser user dengan aman
+              cookiesToSet.forEach(({ name, value, options }) => {
+                cookieStore.set({ name, value, ...options });
+              });
+            } catch (error) {
+              // Tangkap error diam-diam jika dieksekusi di Server Component
+            }
           },
         },
       }
     );
     
-    // Menukar kode dengan sesi login
-    await supabase.auth.exchangeCodeForSession(code);
+    // Menukar kode tiket dengan sesi login resmi
+    const { error } = await supabase.auth.exchangeCodeForSession(code);
+    
+    // Jika token kadaluarsa atau terjadi error saat login
+    if (error) {
+      return NextResponse.redirect(`https://klinikcpns.com/login?error=GagalLogin`);
+    }
   }
 
-  // Ini bagian paling penting: Mengarahkan user menggunakan URL asal (origin)
-  // Jadi tidak akan pernah nyasar ke localhost lagi jika dibuka dari Vercel
-  return NextResponse.redirect(`${requestUrl.origin}${next}`);
+  // 🛡️ LOGIKA ANTI NYASAR VERCEL (Tetap Dipertahankan)
+  const forwardedHost = request.headers.get('x-forwarded-host');
+  const isLocalEnv = process.env.NODE_ENV === 'development';
+  
+  if (isLocalEnv) {
+    return NextResponse.redirect(`${requestUrl.origin}${next}`);
+  } else if (forwardedHost) {
+    return NextResponse.redirect(`https://${forwardedHost}${next}`);
+  } else {
+    // Jalur Darurat
+    return NextResponse.redirect(`https://klinikcpns.com${next}`);
+  }
 }
