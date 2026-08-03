@@ -4,7 +4,6 @@ const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://wqkohnufwji
 const supabaseWssUrl = supabaseUrl.replace('https://', 'wss://').replace('http://', 'ws://');
 
 const nextConfig: NextConfig = {
-  distDir: '.next-build',
   async headers() {
     return [
       {
