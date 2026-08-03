@@ -1,6 +1,6 @@
 import type { NextConfig } from "next";
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://wqkohnufwjitvldicypi.supabase.co';
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://bazoisdolttbohvqlprv.supabase.co';
 const supabaseWssUrl = supabaseUrl.replace('https://', 'wss://').replace('http://', 'ws://');
 
 const nextConfig: NextConfig = {
