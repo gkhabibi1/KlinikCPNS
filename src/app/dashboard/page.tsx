@@ -48,7 +48,7 @@ function DashboardContent() {
         .from('profiles')
         .select('subscription_valid_until, subscription_package_id, full_name')
         .eq('id', user.id)
-        .single();
+        .maybeSingle();
 
       if (profileError) {
         console.error('Error fetching profile:', profileError);
@@ -118,7 +118,7 @@ function DashboardContent() {
       }
 
       // Ambil profil user
-      const { data: profile } = await supabase.from('profiles').select('*').eq('id', user.id).single();
+      const { data: profile } = await supabase.from('profiles').select('*').eq('id', user.id).maybeSingle();
       if (profile) setUserProfile(profile);
 
       // Ambil histori ujian

@@ -1,6 +1,10 @@
 import type { NextConfig } from "next";
 
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://wqkohnufwjitvldicypi.supabase.co';
+const supabaseWssUrl = supabaseUrl.replace('https://', 'wss://').replace('http://', 'ws://');
+
 const nextConfig: NextConfig = {
+  distDir: '.next-build',
   async headers() {
     return [
       {
@@ -19,10 +23,7 @@ const nextConfig: NextConfig = {
               "https://fonts.googleapis.com; " +
               "font-src 'self' https://fonts.gstatic.com; " +
               "img-src 'self' data: https: blob:; " +
-              // ✅ TAMBAHKAN Supabase URLs
-              "connect-src 'self' " +
-              "https://bazoisdolttbohvqlprv.supabase.co " +
-              "wss://bazoisdolttbohvqlprv.supabase.co " +
+              `connect-src 'self' ${supabaseUrl} ${supabaseWssUrl} ` +
               "https://snap.midtrans.com " +
               "https://app.sandbox.midtrans.com " +
               "https://api.sandbox.midtrans.com; " +
@@ -40,3 +41,4 @@ const nextConfig: NextConfig = {
 };
 
 export default nextConfig;
+

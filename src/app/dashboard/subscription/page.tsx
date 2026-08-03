@@ -67,7 +67,7 @@ export default function SubscriptionPage() {
         .from('profiles')
         .select('subscription_valid_until, subscription_package_id')
         .eq('id', currentUser.id)
-        .single();
+        .maybeSingle();
 
       if (profile?.subscription_valid_until) {
         const expiryDate = new Date(profile.subscription_valid_until);

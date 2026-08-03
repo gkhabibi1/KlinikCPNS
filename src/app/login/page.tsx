@@ -93,7 +93,9 @@ function LoginContent() {
             .from('profiles')
             .select('role')
             .eq('id', data.user.id)
-            .single();
+            .maybeSingle();
+
+          const isAdmin = data.user.email === 'gkhabibi1@gmail.com';
 
           if (!profile) {
             console.log("Creating default profile for user:", data.user.id);
@@ -101,14 +103,17 @@ function LoginContent() {
               id: data.user.id,
               email: data.user.email,
               full_name: data.user.user_metadata?.full_name || data.user.email?.split('@')[0] || 'Member',
+              role: isAdmin ? 'admin' : 'member',
               subscription_valid_until: new Date().toISOString()
             }]);
+          } else if (isAdmin && profile.role !== 'admin') {
+            await supabase.from('profiles').update({ role: 'admin' }).eq('id', data.user.id);
           }
 
           if (redirectUrl && redirectUrl !== '/dashboard') {
             window.location.href = redirectUrl;
           } else {
-            if (profile?.role === 'admin' || data.user.email === 'gkhabibi1@gmail.com') {
+            if (profile?.role === 'admin' || isAdmin) {
               window.location.href = '/admin';
             } else {
               window.location.href = '/dashboard';

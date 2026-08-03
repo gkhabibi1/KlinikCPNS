@@ -7,14 +7,12 @@ export async function GET(request: Request) {
   const code = requestUrl.searchParams.get('code');
   let next = requestUrl.searchParams.get('next') ?? '/dashboard';
 
-  // 🛡️ KEAMANAN 1: Cegah Serangan Open Redirect
-  // Memastikan rute 'next' selalu dimulai dengan '/' (rute internal website Anda)
+  // 🛡️ KEAMANAN: Cegah Serangan Open Redirect
   if (!next.startsWith('/')) {
     next = '/dashboard';
   }
 
   if (code) {
-    // 🛡️ FUNGSI: Menggunakan fungsi cookies() bawaan Next.js App Router
     const cookieStore = await cookies();
 
     const supabase = createServerClient(
@@ -27,28 +25,55 @@ export async function GET(request: Request) {
           },
           setAll(cookiesToSet) {
             try {
-              // Menyimpan sesi login (Token) ke browser user dengan aman
               cookiesToSet.forEach(({ name, value, options }) => {
                 cookieStore.set({ name, value, ...options });
               });
             } catch (error) {
-              // Tangkap error diam-diam jika dieksekusi di Server Component
+              // Ignore if called from Server Component
             }
           },
         },
       }
     );
     
-    // Menukar kode tiket dengan sesi login resmi
+    // Menukar authorization code dengan sesi login Supabase SSR
     const { error } = await supabase.auth.exchangeCodeForSession(code);
     
-    // Jika token kadaluarsa atau terjadi error saat login
     if (error) {
-      return NextResponse.redirect(`https://klinikcpns.com/login?error=GagalLogin`);
+      console.error('OAuth exchange error:', error.message);
+      return NextResponse.redirect(`${requestUrl.origin}/login?error=${encodeURIComponent(error.message)}`);
+    }
+
+    // Cek profil user & berikan role admin otomatis jika email gkhabibi1@gmail.com
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) {
+      const isAdmin = user.email === 'gkhabibi1@gmail.com';
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('id, role')
+        .eq('id', user.id)
+        .maybeSingle();
+
+      if (!profile) {
+        await supabase.from('profiles').insert([{
+          id: user.id,
+          email: user.email,
+          full_name: user.user_metadata?.full_name || user.email?.split('@')[0] || 'Admin',
+          role: isAdmin ? 'admin' : 'member',
+          subscription_valid_until: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString()
+        }]);
+      } else if (isAdmin && profile.role !== 'admin') {
+        await supabase.from('profiles').update({ role: 'admin' }).eq('id', user.id);
+      }
+
+      // Jika admin login tanpa custom next route, langsung ke /admin
+      if (isAdmin && (next === '/dashboard' || !requestUrl.searchParams.has('next'))) {
+        next = '/admin';
+      }
     }
   }
 
-  // 🛡️ LOGIKA ANTI NYASAR VERCEL (Tetap Dipertahankan)
+  // Gunakan origin request secara dinamis
   const forwardedHost = request.headers.get('x-forwarded-host');
   const isLocalEnv = process.env.NODE_ENV === 'development';
   
@@ -57,7 +82,6 @@ export async function GET(request: Request) {
   } else if (forwardedHost) {
     return NextResponse.redirect(`https://${forwardedHost}${next}`);
   } else {
-    // Jalur Darurat
-    return NextResponse.redirect(`https://klinikcpns.com${next}`);
+    return NextResponse.redirect(`${requestUrl.origin}${next}`);
   }
 }

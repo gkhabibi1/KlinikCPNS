@@ -54,7 +54,7 @@ export default function ProfilePage() {
         .from('profiles')
         .select('*')
         .eq('id', user.id)
-        .single();
+        .maybeSingle();
 
       if (profile) {
         setUserProfile(profile);

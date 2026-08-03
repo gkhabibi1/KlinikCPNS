@@ -310,11 +310,30 @@ export default function AdminCommandCenter() {
     }
 
     // Ambil konfigurasi challenge
-    const { data: days } = await supabase
+    let { data: days } = await supabase
       .from('challenge_packages')
       .select('*, tryout_packages(id, name, exam_type)')
       .order('day_number', { ascending: true });
-    
+
+    // Jika data challenge kosong atau belum 30 hari, otomatis generate 30 hari
+    if (!days || days.length < 30) {
+      const existingDays = new Set((days || []).map((d: any) => d.day_number));
+      const missingDays = [];
+      for (let i = 1; i <= 30; i++) {
+        if (!existingDays.has(i)) {
+          missingDays.push({ day_number: i, is_active: true });
+        }
+      }
+      if (missingDays.length > 0) {
+        await supabase.from('challenge_packages').insert(missingDays);
+        const { data: refreshedDays } = await supabase
+          .from('challenge_packages')
+          .select('*, tryout_packages(id, name, exam_type)')
+          .order('day_number', { ascending: true });
+        if (refreshedDays) days = refreshedDays;
+      }
+    }
+
     if (days) setChallengeDays(days);
 
     // Ambil semua paket try out yang aktif untuk dropdown
@@ -739,24 +758,38 @@ export default function AdminCommandCenter() {
 
   const fetchBanners = async () => {
     setIsLoadingBanners(true);
-    const { data, error } = await supabase
-      .from('promotional_banners')
-      .select('*')
-      .order('display_order', { ascending: true });
-    if (data) setBanners(data);
-    if (error) console.error("Error fetching banners:", error);
-    setIsLoadingBanners(false);
+    try {
+      const { data, error } = await supabase
+        .from('promotional_banners')
+        .select('*')
+        .order('display_order', { ascending: true });
+      if (data) setBanners(data);
+      if (error && error.code !== 'PGRST205' && !error.message?.includes('Could not find the table')) {
+        console.error("Error fetching banners:", error.message || error);
+      }
+    } catch {
+      // Table may not exist in database schema yet
+    } finally {
+      setIsLoadingBanners(false);
+    }
   };
 
   const fetchUpdates = async () => {
     setIsLoadingUpdates(true);
-    const { data, error } = await supabase
-      .from('latest_updates')
-      .select('*')
-      .order('published_date', { ascending: false });
-    if (data) setUpdates(data);
-    if (error) console.error("Error fetching updates:", error);
-    setIsLoadingUpdates(false);
+    try {
+      const { data, error } = await supabase
+        .from('latest_updates')
+        .select('*')
+        .order('published_date', { ascending: false });
+      if (data) setUpdates(data);
+      if (error && error.code !== 'PGRST205' && !error.message?.includes('Could not find the table')) {
+        console.error("Error fetching updates:", error.message || error);
+      }
+    } catch {
+      // Table may not exist in database schema yet
+    } finally {
+      setIsLoadingUpdates(false);
+    }
   };
 
   // Fetch materi

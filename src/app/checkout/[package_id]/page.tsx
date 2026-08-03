@@ -116,7 +116,7 @@ export default function CheckoutPage() {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${window.location.origin}/checkout/${params.package_id}`
+          redirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(`/checkout/${params.package_id}`)}`
         }
       });
       if (error) throw error;
