@@ -23,6 +23,8 @@ const nextConfig: NextConfig = {
               "connect-src 'self' " +
               "https://bazoisdolttbohvqlprv.supabase.co " +
               "wss://bazoisdolttbohvqlprv.supabase.co " +
+              "https://wqkohnufwjitvldicypi.supabase.co " +
+              "wss://wqkohnufwjitvldicypi.supabase.co " +
               "https://snap.midtrans.com " +
               "https://app.sandbox.midtrans.com " +
               "https://api.sandbox.midtrans.com; " +
