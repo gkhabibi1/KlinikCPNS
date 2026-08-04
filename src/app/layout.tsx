@@ -17,9 +17,9 @@ export const metadata: Metadata = {
   description:
     "Persiapkan diri menghadapi seleksi CPNS dengan simulasi CAT mirip BKN, penilaian real-time, dan pembahasan mendalam.",
   icons: {
-    icon: "/favicon.png",
-    shortcut: "/favicon.png",
-    apple: "/favicon.png",
+    icon: "/icon.png",
+    shortcut: "/icon.png",
+    apple: "/icon.png",
   },
 };
 
