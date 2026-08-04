@@ -16,6 +16,11 @@ export const metadata: Metadata = {
   title: "Try Out CPNS — Simulasi CAT Realistis",
   description:
     "Persiapkan diri menghadapi seleksi CPNS dengan simulasi CAT mirip BKN, penilaian real-time, dan pembahasan mendalam.",
+  icons: {
+    icon: "/favicon.png",
+    shortcut: "/favicon.png",
+    apple: "/favicon.png",
+  },
 };
 
 export default function RootLayout({
