@@ -16,8 +16,8 @@ export default function TryoutPage() {
   const [packageData, setPackageData] = useState<any>(null);
   const [questions, setQuestions] = useState<any[]>([]);
   const [currentQuestion, setCurrentQuestion] = useState(0);
-  const [answers, setAnswers] = useState<{ [key: number]: string }>({});
-  const [markedQuestions, setMarkedQuestions] = useState<{ [key: number]: boolean }>({});
+  const [answers, setAnswers] = useState<Record<number, string>>({});
+  const [markedQuestions, setMarkedQuestions] = useState<Record<number, boolean>>({});
   const [timeLeft, setTimeLeft] = useState(6000);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -62,7 +62,8 @@ export default function TryoutPage() {
       let skorTKP = 0;
 
       questions.forEach((q, idx) => {
-        const userAnswer = (answers[idx] ?? answers[q.question_number])?.toUpperCase();
+        const qNum = typeof q.question_number === 'number' ? q.question_number : Number(q.question_number);
+        const userAnswer = (answers[idx] ?? answers[qNum])?.toUpperCase();
         if (!userAnswer) return;
 
         if (q.question_category === 'TWK' && userAnswer === q.correct_answer?.toUpperCase()) {
@@ -402,7 +403,7 @@ export default function TryoutPage() {
               </div>
               <div className="flex items-center gap-2">
                 <div className="w-4 h-4 bg-yellow-400 rounded"></div>
-                <span className="text-slate-600">Ragu ({Object.keys(markedQuestions).filter(k => markedQuestions[k]).length})</span>
+                <span className="text-slate-600">Ragu ({Object.values(markedQuestions).filter(Boolean).length})</span>
               </div>
               <div className="flex items-center gap-2">
                 <div className="w-4 h-4 bg-blue-600 rounded"></div>
@@ -482,7 +483,7 @@ export default function TryoutPage() {
                 </div>
                 <div className="flex items-center gap-2">
                   <div className="w-3 h-3 bg-yellow-400 rounded"></div>
-                  <span className="text-slate-600">Ragu ({Object.keys(markedQuestions).filter(k => markedQuestions[k]).length})</span>
+                  <span className="text-slate-600">Ragu ({Object.values(markedQuestions).filter(Boolean).length})</span>
                 </div>
               </div>
             </div>
