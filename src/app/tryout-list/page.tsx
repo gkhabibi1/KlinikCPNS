@@ -86,7 +86,6 @@ export default function TryoutListPage() {
           (pkg: any) => !challengePackageIds.has(pkg.id)
         );
 
-        console.log(`Menampilkan ${filteredPackages.length} dari ${allPackages?.length || 0} paket (${challengePackageIds.size} di-filter untuk challenge)`);
         setPackages(filteredPackages);
 
         const pkgData = filteredPackages;
@@ -148,7 +147,7 @@ export default function TryoutListPage() {
 
   return (
     <MemberLayout>
-      <div className="space-y-6 p-6 md:p-8 max-w-6xl mx-auto">
+      <div className="space-y-6 p-4 md:p-8 max-w-6xl mx-auto">
         {/* Tab Navigation */}
         <div className="flex gap-4 border-b border-slate-200">
           <button
@@ -216,69 +215,101 @@ export default function TryoutListPage() {
             </p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
             {packages.map(pkg => {
               const isLocked = pkg.is_premium && isExpired;
               const latestScore = latestScores[pkg.id] ?? -1;
               const history = examHistory[pkg.id] ?? [];
+              const isFree = pkg.is_free || !pkg.is_premium;
 
               return (
-                <div key={pkg.id} className={`bg-white p-5 rounded-xl border shadow-sm relative ${isLocked ? 'opacity-75' : ''}`}>
+                <div 
+                  key={pkg.id} 
+                  className={`bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm relative flex flex-col ${
+                    isLocked ? 'opacity-75' : ''
+                  }`}
+                >
+                  {/* Lock Overlay */}
                   {isLocked && (
-                    <div className="absolute inset-0 bg-white/60 backdrop-blur-sm flex flex-col items-center justify-center rounded-xl z-10">
-                      <div className="text-4xl mb-2">🔒</div>
-                      <div className="font-bold text-slate-800">Akses Terkunci</div>
+                    <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-[2px] z-10 flex items-center justify-center rounded-xl">
+                      <div className="text-center text-white p-2">
+                        <svg className="w-8 h-8 mx-auto mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                        </svg>
+                        <p className="text-xs font-bold">Premium</p>
+                      </div>
                     </div>
                   )}
 
-                  <div className="flex justify-between items-start mb-3">
-                    <span className={`text-xs font-bold px-2 py-1 rounded uppercase ${
-                      pkg.is_premium ? 'bg-purple-100 text-purple-700' : 'bg-green-100 text-green-700'
+                  {/* Badge Gratis/Premium */}
+                  <div className="p-3 pb-2">
+                    <span className={`inline-block text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                      isFree 
+                        ? 'bg-green-100 text-green-700' 
+                        : 'bg-amber-100 text-amber-700'
                     }`}>
-                      {pkg.is_premium ? 'PREMIUM' : 'GRATIS'}
+                      {isFree ? 'GRATIS' : 'PREMIUM'}
                     </span>
                   </div>
 
-                  <h3 className="font-bold text-lg mb-2">{pkg.name}</h3>
-                  <p className="text-sm text-slate-500 mb-4">{pkg.description || 'Tidak ada deskripsi'}</p>
+                  {/* Nama Paket */}
+                  <div className="px-3 pb-2 flex-1">
+                    <h3 className="font-bold text-slate-800 text-sm leading-tight line-clamp-2 mb-1">
+                      {pkg.name}
+                    </h3>
+                    <p className="text-[10px] text-slate-500 line-clamp-2">
+                      {pkg.description || 'Gratis untuk All Member'}
+                    </p>
+                  </div>
 
                   {/* Nilai Terakhir */}
-                  <div className="mb-4 p-3 bg-slate-50 rounded-lg border border-slate-200">
-                    <div className="text-xs text-slate-500 mb-1">Nilai Terakhir</div>
-                    <div className="text-2xl font-bold text-slate-800">
-                      {latestScore === -1 ? (
-                        <span className="text-slate-400">-</span>
-                      ) : (
-                        <span className={latestScore >= 200 ? 'text-green-600' : 'text-blue-600'}>
-                          {latestScore}
-                        </span>
-                      )}
+                  <div className="px-3 pb-2">
+                    <div className="bg-slate-50 rounded-lg p-2 border border-slate-100">
+                      <div className="text-[9px] text-slate-500 mb-0.5">Nilai Terakhir</div>
+                      <div className={`font-bold text-base ${
+                        latestScore === -1 
+                          ? 'text-slate-400' 
+                          : latestScore >= 200 
+                          ? 'text-green-600' 
+                          : 'text-blue-600'
+                      }`}>
+                        {latestScore === -1 ? '-' : latestScore}
+                      </div>
                     </div>
                   </div>
 
-                  {/* Tombol History */}
+                  {/* Tombol History (jika ada) */}
                   {history.length > 0 && (
-                    <button
-                      onClick={() => openHistoryModal(pkg)}
-                      className="w-full mb-3 py-2 border border-blue-600 text-blue-600 rounded-lg text-sm font-medium hover:bg-blue-50 transition-colors flex items-center justify-center gap-2"
-                    >
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                      </svg>
-                      Lihat History ({history.length}x)
-                    </button>
+                    <div className="px-3 pb-2">
+                      <button
+                        onClick={() => {
+                          setSelectedPackage(pkg);
+                          setShowHistoryModal(true);
+                        }}
+                        className="w-full text-[10px] text-blue-600 font-medium py-1.5 border border-blue-200 rounded-lg hover:bg-blue-50 transition-colors flex items-center justify-center gap-1"
+                      >
+                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        History ({history.length}x)
+                      </button>
+                    </div>
                   )}
 
-                  <Link
-                    href={`/tryout/${pkg.id}`}
-                    className={`block text-center py-2.5 rounded-lg font-medium transition-colors ${
-                      isLocked
-                        ? 'bg-slate-200 text-slate-400 cursor-not-allowed'
-                        : 'bg-slate-900 text-white hover:bg-slate-800'
-                    }`}
-                  >
-                    Mulai Ujian
-                  </Link>
+                  {/* Tombol Mulai Ujian */}
+                  <div className="p-3 pt-0">
+                    <Link
+                      href={`/tryout/${pkg.id}`}
+                      className={`block w-full text-center py-2.5 rounded-lg font-semibold text-xs transition-colors ${
+                        isLocked 
+                          ? 'bg-slate-300 text-slate-500 cursor-not-allowed' 
+                          : 'bg-slate-900 hover:bg-slate-800 text-white'
+                      }`}
+                      onClick={(e) => isLocked && e.preventDefault()}
+                    >
+                      {isLocked ? '🔒 Terkunci' : 'Mulai Ujian'}
+                    </Link>
+                  </div>
                 </div>
               );
             })}
