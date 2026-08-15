@@ -13,9 +13,13 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Try Out CPNS — Simulasi CAT Realistis",
+  metadataBase: new URL('https://klinikcpns.com'),
+  title: {
+    default: "Try Out CPNS & P3K Gratis 2026 | Simulasi CAT BKN - Klinik CPNS",
+    template: "%s | Klinik CPNS",
+  },
   description:
-    "Persiapkan diri menghadapi seleksi CPNS dengan simulasi CAT mirip BKN, penilaian real-time, dan pembahasan mendalam.",
+    "Platform Try Out CPNS dan P3K online terbaik dengan sistem penilaian resmi BKN, pembahasan lengkap, dan simulasi CAT persis seperti ujian asli. Mulai latihan gratis sekarang!",
   icons: {
     icon: "/icon.png",
     shortcut: "/icon.png",

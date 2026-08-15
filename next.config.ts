@@ -4,6 +4,18 @@ const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://bazoisdoltt
 const supabaseWssUrl = supabaseUrl.replace('https://', 'wss://').replace('http://', 'ws://');
 
 const nextConfig: NextConfig = {
+  images: {
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'ik.imagekit.io',
+      },
+      {
+        protocol: 'https',
+        hostname: '**.supabase.co',
+      },
+    ],
+  },
   async headers() {
     return [
       {
