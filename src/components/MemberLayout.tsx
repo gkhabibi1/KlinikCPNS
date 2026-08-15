@@ -190,6 +190,10 @@ function MemberLayoutContent({ children }: MemberLayoutProps) {
         <nav className="p-3 space-y-1 flex-1 overflow-y-auto">
           <Link
             href="/dashboard"
+            onClick={(e) => {
+              e.preventDefault();
+              router.push('/dashboard');
+            }}
             className={`flex items-center px-3 py-2 rounded-md text-sm font-medium transition-colors ${
               isDashboardActive 
                 ? 'bg-slate-900 text-white' 
@@ -246,6 +250,10 @@ function MemberLayoutContent({ children }: MemberLayoutProps) {
           
           <Link
             href="/dashboard?tab=subscription"
+            onClick={(e) => {
+              e.preventDefault();
+              router.push('/dashboard?tab=subscription');
+            }}
             className={`flex items-center px-3 py-2 rounded-md text-sm font-medium transition-colors ${
               isSubscriptionActive 
                 ? 'bg-slate-900 text-white' 
@@ -335,6 +343,10 @@ function MemberLayoutContent({ children }: MemberLayoutProps) {
           {/* Home */}
           <Link
             href="/dashboard"
+            onClick={(e) => {
+              e.preventDefault();
+              router.push('/dashboard');
+            }}
             className={`flex flex-col items-center py-2 transition-all ${
               isDashboardActive ? 'text-blue-600' : 'text-slate-500'
             }`}
@@ -374,6 +386,10 @@ function MemberLayoutContent({ children }: MemberLayoutProps) {
           {/* Paket */}
           <Link
             href="/dashboard?tab=subscription"
+            onClick={(e) => {
+              e.preventDefault();
+              router.push('/dashboard?tab=subscription');
+            }}
             className={`flex flex-col items-center py-2 transition-all ${
               isSubscriptionActive ? 'text-blue-600' : 'text-slate-500'
             }`}
