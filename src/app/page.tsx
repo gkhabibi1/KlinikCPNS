@@ -60,12 +60,11 @@ function Header() {
     <header className="sticky top-0 z-50 bg-white/90 backdrop-blur border-b border-slate-100">
       <div className="max-w-6xl mx-auto px-5 md:px-8 h-16 flex items-center justify-between">
         <a href="#top" className="flex items-center gap-2.5 shrink-0">
-          <span className="w-9 h-9 rounded-xl bg-blue-600 flex items-center justify-center">
-            <Stethoscope className="w-5 h-5 text-white" strokeWidth={2.25} />
-          </span>
-          <span className="font-extrabold text-slate-900 text-[17px] tracking-tight">
-            Klinik CPNS
-          </span>
+          <img
+            src="https://ik.imagekit.io/e2yna5qg8/Logo%20Klinik%20CPNS.png"
+            alt="Klinik CPNS Logo"
+            className="h-9 md:h-10 w-auto object-contain"
+          />
         </a>
 
         <nav className="hidden lg:flex items-center gap-8">
@@ -211,11 +210,13 @@ function Hero() {
         </div>
 
         <div className="relative">
-          <ImageSlot
-            label="Foto ASN / peserta lolos CPNS mengenakan seragam Korpri, pose percaya diri"
-            ratio="aspect-[4/5]"
-            className="shadow-xl shadow-blue-100"
-          />
+          <div className="overflow-hidden rounded-3xl border border-slate-100 shadow-xl shadow-blue-100/60">
+            <img
+              src="https://ik.imagekit.io/e2yna5qg8/Home%201.jpg"
+              alt="Persiapkan Lolos CPNS 2026"
+              className="w-full h-auto max-h-[520px] object-cover rounded-3xl"
+            />
+          </div>
 
           {/* floating "prescription" card — signature element preview */}
           <div className="absolute -bottom-6 -left-6 md:-left-10 w-56 bg-white rounded-2xl border border-slate-100 shadow-xl shadow-slate-200/70 p-4">
@@ -308,10 +309,11 @@ function Opportunity() {
         </div>
 
         <div className="grid grid-cols-2 gap-4">
-          <div className="col-span-2">
-            <ImageSlot
-              label="Infografis / grafik data: jumlah formasi CPNS 2026 dibanding tahun lalu"
-              ratio="aspect-[16/9]"
+          <div className="col-span-2 overflow-hidden rounded-2xl border border-slate-100 shadow-md">
+            <img
+              src="https://ik.imagekit.io/e2yna5qg8/Home%202.jpg"
+              alt="Peluang CPNS 2026"
+              className="w-full h-52 sm:h-64 object-cover rounded-2xl"
             />
           </div>
           <div className="bg-blue-50 rounded-2xl p-5 flex flex-col gap-1">
@@ -988,12 +990,13 @@ function Footer() {
   return (
     <footer className="bg-slate-950 py-12">
       <div className="max-w-6xl mx-auto px-5 md:px-8 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
-        <div className="flex items-center gap-2.5">
-          <span className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center">
-            <Stethoscope className="w-4.5 h-4.5 text-white" />
-          </span>
-          <span className="font-bold text-white text-sm">Klinik CPNS</span>
-        </div>
+        <a href="#top" className="flex items-center gap-2.5 shrink-0">
+          <img
+            src="https://ik.imagekit.io/e2yna5qg8/Logo%20Klinik%20CPNS.png"
+            alt="Klinik CPNS Logo"
+            className="h-8 md:h-9 w-auto object-contain brightness-0 invert"
+          />
+        </a>
         <nav className="flex flex-wrap gap-x-6 gap-y-2 text-sm text-slate-400">
           <a href="#peluang" className="hover:text-white transition-colors">
             Kenapa Sekarang

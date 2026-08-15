@@ -190,15 +190,16 @@ function LoginContent() {
     <div className="flex min-h-full flex-1 items-center justify-center bg-gradient-to-br from-blue-50 via-white to-blue-100 px-4 py-12">
       <div className="w-full max-w-md">
         <div className="mb-8 text-center">
-          <Image src="/login_logo.png" alt="Logo" width={80} height={80} className="mx-auto mb-4" />
           <button type="button" onClick={() => router.back()} className="mb-4 flex items-center text-sm text-blue-600 hover:underline">
             ← Kembali
           </button>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900">
-            Try Out CPNS
-          </h1>
-          <p className="mt-2 text-sm text-slate-500">
-            Persiapkan diri Anda menghadapi seleksi CPNS
+          <img
+            src="https://ik.imagekit.io/e2yna5qg8/Logo%20Klinik%20CPNS.png"
+            alt="Logo Klinik CPNS"
+            className="h-12 w-auto mx-auto mb-3 object-contain"
+          />
+          <p className="text-sm text-slate-500">
+            Persiapkan diri Anda menghadapi seleksi CPNS 2026
           </p>
         </div>
 

@@ -156,7 +156,13 @@ function MemberLayoutContent({ children }: MemberLayoutProps) {
       {/* SIDEBAR - HANYA TAMPIL DI DESKTOP */}
       <aside className={`hidden md:flex flex-col ${isSidebarOpen ? 'w-64' : 'w-20'} bg-white border-r border-slate-200 h-screen sticky top-0 overflow-y-auto transition-all duration-300 z-20 flex-shrink-0`}>
         <div className="p-6 border-b border-slate-200 flex items-center justify-between flex-shrink-0">
-          <h1 className={`text-2xl font-bold text-blue-600 ${!isSidebarOpen && 'hidden'}`}>CPNSMaster</h1>
+          <Link href="/dashboard" className={`flex items-center ${!isSidebarOpen && 'hidden'}`}>
+            <img
+              src="https://ik.imagekit.io/e2yna5qg8/Logo%20Klinik%20CPNS.png"
+              alt="Logo Klinik CPNS"
+              className="h-8 w-auto object-contain"
+            />
+          </Link>
           <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="text-slate-400 hover:text-slate-800 p-1.5 rounded-lg hover:bg-slate-50 transition-colors">
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16"></path>

@@ -466,8 +466,12 @@ export default function CheckoutPage() {
       {/* Header */}
       <header className="bg-white border-b border-slate-200 px-6 py-4">
         <div className="max-w-6xl mx-auto flex items-center justify-between">
-          <Link href="/" className="font-bold text-xl text-slate-800">
-            CPNS<span className="text-blue-600">Master</span>
+          <Link href="/" className="flex items-center">
+            <img
+              src="https://ik.imagekit.io/e2yna5qg8/Logo%20Klinik%20CPNS.png"
+              alt="Logo Klinik CPNS"
+              className="h-8 md:h-9 w-auto object-contain"
+            />
           </Link>
           {user && (
             <Link href="/dashboard" className="text-sm text-slate-600 hover:text-slate-800">
