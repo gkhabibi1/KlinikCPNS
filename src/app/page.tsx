@@ -313,7 +313,7 @@ function Opportunity() {
             <img
               src="https://ik.imagekit.io/e2yna5qg8/Home%202.jpg"
               alt="Peluang CPNS 2026"
-              className="w-full h-52 sm:h-64 object-cover rounded-2xl"
+              className="w-full h-auto rounded-2xl"
             />
           </div>
           <div className="bg-blue-50 rounded-2xl p-5 flex flex-col gap-1">
