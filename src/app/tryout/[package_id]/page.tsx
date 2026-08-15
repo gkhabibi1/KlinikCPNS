@@ -5,17 +5,24 @@ import { useParams, useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabaseClient';
 import FormattedText from '@/components/FormattedText';
 
+const Latex = ({ children }: { children: string }) => {
+  return <FormattedText text={children} inline={true} />;
+};
+
 export default function TryoutPage() {
   const params = useParams();
   const router = useRouter();
   
   const [packageData, setPackageData] = useState<any>(null);
   const [questions, setQuestions] = useState<any[]>([]);
-  const [currentQuestion, setCurrentQuestion] = useState(1);
+  const [currentQuestion, setCurrentQuestion] = useState(0);
   const [answers, setAnswers] = useState<{ [key: number]: string }>({});
   const [markedQuestions, setMarkedQuestions] = useState<{ [key: number]: boolean }>({});
-  const [timeLeft, setTimeLeft] = useState(6000); // 100 menit = 6000 detik
+  const [timeLeft, setTimeLeft] = useState(6000);
   const [isLoading, setIsLoading] = useState(true);
+
+  // STEP 1: State untuk Toggle Panel Mobile
+  const [showQuestionPanel, setShowQuestionPanel] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -39,38 +46,28 @@ export default function TryoutPage() {
   }, [params.package_id]);
 
   const handleFinish = async (isAutoSubmit = false) => {
-    console.log('=== HANDLE FINISH DIMULAI ===');
-    
     if (!isAutoSubmit && !confirm('Apakah Anda yakin ingin mengakhiri ujian?')) {
       return;
     }
 
     try {
-      console.log('1. Mendapatkan user...');
       const { data: { user: currentUser } } = await supabase.auth.getUser();
       const { data: { session } } = await supabase.auth.getSession();
       
       let user = currentUser || session?.user || null;
       let dbSaveSuccess = false;
 
-      if (user) {
-        console.log('✅ User ditemukan:', user.id);
-      } else {
-        console.warn('⚠️ Session tidak ditemukan (Auth glitch). Hasil akan disimpan di perangkat ini sebagai backup.');
-      }
-
-      console.log('2. Menghitung skor...');
       let skorTWK = 0;
       let skorTIU = 0;
       let skorTKP = 0;
 
-      questions.forEach((q) => {
-        const userAnswer = answers[q.question_number]?.toUpperCase();
+      questions.forEach((q, idx) => {
+        const userAnswer = (answers[idx] ?? answers[q.question_number])?.toUpperCase();
         if (!userAnswer) return;
 
-        if (q.question_category === 'TWK' && userAnswer === q.correct_answer) {
+        if (q.question_category === 'TWK' && userAnswer === q.correct_answer?.toUpperCase()) {
           skorTWK += 5;
-        } else if (q.question_category === 'TIU' && userAnswer === q.correct_answer) {
+        } else if (q.question_category === 'TIU' && userAnswer === q.correct_answer?.toUpperCase()) {
           skorTIU += 5;
         } else if (q.question_category === 'TKP') {
           try {
@@ -86,14 +83,7 @@ export default function TryoutPage() {
       const total = skorTWK + skorTIU + skorTKP;
       const isLulus = skorTWK >= 65 && skorTIU >= 80 && skorTKP >= 166;
 
-      console.log('✅ Skor:', { TWK: skorTWK, TIU: skorTIU, TKP: skorTKP, Total: total, Lulus: isLulus });
-
-      // 3. Simpan ke Database
       if (user) {
-        console.log('3. Menyimpan ke database...');
-        
-        // PERHATIAN: Pastikan nama-nama key ini SAMA PERSIS dengan kolom di tabel exam_results Anda.
-        // Hapus `skor_total` atau `total_score` sesuai dengan mana yang sebenarnya Anda gunakan di Supabase.
         const payload = {
           user_id: user.id,
           package_id: params.package_id,
@@ -104,21 +94,16 @@ export default function TryoutPage() {
           is_passed: isLulus
         };
 
-        // PERUBAHAN: Payload dibungkus dengan array [...] dan ditambahkan .select()
         const { data: insertData, error: insertError } = await supabase
           .from('exam_results')
           .insert([payload])
           .select();
 
         if (insertError) {
-          // PERUBAHAN: Pesan error lebih detail agar kita tahu penyebab pastinya (misal: RLS policy atau nama kolom salah)
-          console.error('❌ Error insert ke DB:', insertError.message, insertError.details);
-          alert('Perhatian: Gagal menyimpan data ke database server. Pesan error: ' + insertError.message);
+          console.error('❌ Error insert ke DB:', insertError.message);
         } else {
-          console.log('✅ Berhasil disimpan ke database:', insertData);
           dbSaveSuccess = true;
 
-          // Cek apakah paket ini adalah bagian dari challenge
           const { data: challengeDay } = await supabase
             .from('challenge_packages')
             .select('day_number')
@@ -126,7 +111,6 @@ export default function TryoutPage() {
             .single();
 
           if (challengeDay && user) {
-            // Cek apakah user punya progress challenge aktif
             const { data: userProgress } = await supabase
               .from('challenge_progress')
               .select('id, current_day')
@@ -150,7 +134,6 @@ export default function TryoutPage() {
                 targetDesc = 'Total Skor ≥ 460';
               }
 
-              // Simpan ke challenge_daily_scores
               await supabase
                 .from('challenge_daily_scores')
                 .insert([{
@@ -165,13 +148,11 @@ export default function TryoutPage() {
                 }]);
 
               if (isChallengePassed) {
-                // Update current_day
                 await supabase
                   .from('challenge_progress')
                   .update({ current_day: dayNum + 1 })
                   .eq('id', userProgress.id);
 
-                // Cek apakah sudah selesai 30 hari
                 if (dayNum === 30) {
                   await supabase
                     .from('challenge_progress')
@@ -179,7 +160,6 @@ export default function TryoutPage() {
                     .eq('id', userProgress.id);
                 }
               } else {
-                // Jika nilai target tidak tercapai, challenge gagal dan harus ulang dari awal
                 await supabase
                   .from('challenge_progress')
                   .update({
@@ -193,8 +173,6 @@ export default function TryoutPage() {
         }
       }
 
-      // 4. Simpan ke localStorage
-      console.log('4. Menyimpan ke localStorage...');
       const reviewData = {
         package_name: packageData?.name || 'Try Out',
         answers: answers,
@@ -215,10 +193,6 @@ export default function TryoutPage() {
       localStorage.setItem('latest_exam_review', JSON.stringify(reviewData));
       localStorage.removeItem(`exam_start_${params.package_id}`);
       
-      console.log('✅ localStorage saved');
-
-      // 5. PERUBAHAN: Gunakan router.replace dari Next.js agar tidak memutus eksekusi jaringan secara paksa
-      console.log('5. Redirecting ke /result...');
       router.replace(`/result?package_id=${params.package_id}`);
 
     } catch (error: any) {
@@ -227,13 +201,11 @@ export default function TryoutPage() {
     }
   };
 
-  // Gunakan ref untuk handleFinish agar callback di setInterval selalu mendapat scope state terbaru
   const handleFinishRef = useRef(handleFinish);
   useEffect(() => {
     handleFinishRef.current = handleFinish;
   }, [answers, markedQuestions, questions, packageData]);
 
-  // Timer countdown
   useEffect(() => {
     const savedStartTime = localStorage.getItem(`exam_start_${params.package_id}`);
     if (!savedStartTime) {
@@ -248,7 +220,7 @@ export default function TryoutPage() {
       setTimeLeft((prev) => {
         if (prev <= 1) {
           clearInterval(timer);
-          handleFinishRef.current(true); // Memanggil submit via ref terbaru
+          handleFinishRef.current(true);
           return 0;
         }
         return prev - 1;
@@ -265,230 +237,301 @@ export default function TryoutPage() {
     return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
   };
 
-  const handleAnswer = (answer: string) => {
-    setAnswers({ ...answers, [currentQuestion]: answer });
+  const handleAnswer = (option: string) => {
+    setAnswers(prev => ({ ...prev, [currentQuestion]: option }));
   };
 
-  const toggleMark = (qNumber: number) => {
-    setMarkedQuestions(prev => ({ ...prev, [qNumber]: !prev[qNumber] }));
+  const toggleMark = (qIndex: number) => {
+    setMarkedQuestions(prev => ({ ...prev, [qIndex]: !prev[qIndex] }));
+  };
+
+  const goToQuestion = (idx: number) => {
+    if (idx >= 0 && idx < questions.length) {
+      setCurrentQuestion(idx);
+    }
   };
 
   if (isLoading) {
-    return <div className="min-h-screen flex items-center justify-center bg-slate-50">
-      <div className="text-slate-500 font-medium">Memuat soal...</div>
-    </div>;
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-slate-50">
+        <div className="text-slate-500 font-medium">Memuat soal...</div>
+      </div>
+    );
   }
 
-  const currentQ = questions.find(q => q.question_number === currentQuestion);
-  const answeredCount = Object.keys(answers).length;
-  const totalSoal = questions.length;
-
   return (
-    <div className="min-h-screen bg-slate-100 font-sans">
-      {/* HEADER BAR */}
-      <header className="bg-white border-b border-slate-200 px-6 py-3 flex items-center justify-between sticky top-0 z-30 shadow-sm">
-        <div className="flex items-center gap-4">
-          <button 
-            onClick={() => router.push('/tryout-list')}
-            className="text-slate-500 hover:text-slate-800"
-          >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
-            </svg>
-          </button>
-          <div>
-            <div className="text-xs text-slate-500">Kerjakan Latihan</div>
-            <h1 className="font-bold text-slate-800">{packageData?.name || 'Try Out'}</h1>
-          </div>
+    <div className="min-h-screen bg-slate-50">
+      {/* HEADER - Sticky */}
+      <div className="sticky top-0 z-40 bg-white border-b border-slate-200 shadow-sm px-4 py-3 flex justify-between items-center">
+        <h2 className="font-bold text-base md:text-lg text-slate-800 truncate max-w-[60%]">
+          {packageData?.name}
+        </h2>
+        <div className={`text-base md:text-xl font-mono font-bold px-3 py-1.5 rounded-lg ${
+          timeLeft < 300 ? 'bg-red-100 text-red-600 animate-pulse' : 'bg-slate-100 text-slate-800'
+        }`}>
+          ⏱️ {formatTime(timeLeft)}
         </div>
-        <div className="flex items-center gap-4">
-          <div className="text-right">
-            <div className="text-xs text-slate-500">Waktu Tersisa</div>
-            <div className={`text-xl font-mono font-bold ${timeLeft < 300 ? 'text-red-600 animate-pulse' : 'text-slate-800'}`}>
-              {formatTime(timeLeft)}
-            </div>
-          </div>
-        </div>
-      </header>
+      </div>
 
-      {/* MAIN LAYOUT: 2 KOLOM */}
-      <div className="flex gap-4 p-4 max-w-[1600px] mx-auto">
+      {/* MAIN CONTENT */}
+      <div className="flex flex-col md:flex-row max-w-7xl mx-auto">
         
-        {/* KOLOM KIRI: SOAL & JAWABAN */}
-        <div className="flex-1 bg-white rounded-lg shadow-sm border border-slate-200 p-6 min-h-[calc(100vh-120px)]">
-          {currentQ ? (
-            <>
-              {/* Header Soal */}
-              <div className="flex items-center justify-between mb-6 pb-4 border-b border-slate-100">
-                <h2 className="text-lg font-bold text-slate-800">
-                  Soal No. {currentQ.question_number}
-                </h2>
-                <span className="text-xs font-semibold px-3 py-1 rounded-full bg-blue-100 text-blue-700">
-                  {currentQ.question_category}
-                </span>
-              </div>
-
-              {/* Teks Soal */}
-              <div className="mb-6">
-                <div className="text-slate-800 leading-relaxed text-[15px]">
-                  <FormattedText text={currentQ.question_text} inline={false} />
-                </div>
-                {currentQ.question_image_url && (
-                  <img 
-                    src={currentQ.question_image_url} 
-                    alt="Gambar Soal" 
-                    className="mt-4 max-w-full max-h-80 rounded-lg border border-slate-200"
-                  />
-                )}
-              </div>
-
-              {/* Pilihan Jawaban */}
-              <div className="space-y-3">
-                {['a', 'b', 'c', 'd', 'e'].map((opt) => {
-                  const optionKey = `option_${opt}` as keyof typeof currentQ;
-                  const imageKey = `option_${opt}_image_url` as keyof typeof currentQ;
-                  const isSelected = answers[currentQuestion] === opt.toUpperCase();
-                  
-                  return (
-                    <button
-                      key={opt}
-                      onClick={() => handleAnswer(opt.toUpperCase())}
-                      className={`w-full text-left p-4 rounded-lg border-2 transition-all flex items-start gap-3 ${
-                        isSelected
-                          ? 'border-blue-500 bg-blue-50'
-                          : 'border-slate-200 hover:border-slate-300 hover:bg-slate-50'
-                      }`}
-                    >
-                      <span className={`font-bold text-sm flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${
-                        isSelected ? 'bg-blue-600 text-white' : 'bg-slate-200 text-slate-700'
-                      }`}>
-                        {opt.toUpperCase()}
-                      </span>
-                      <div className="flex-1 text-slate-800 text-[15px]">
-                        <FormattedText text={currentQ[optionKey]} inline={false} />
-                        {currentQ[imageKey] && (
-                          <img 
-                            src={currentQ[imageKey]} 
-                            alt={`Pilihan ${opt.toUpperCase()}`}
-                            className="mt-2 max-h-32 rounded border border-slate-200"
-                          />
-                        )}
-                      </div>
-                    </button>
-                  );
-                })}
-              </div>
-
-              {/* Tombol Navigasi Bawah */}
-              <div className="flex items-center justify-between mt-8 pt-6 border-t border-slate-100">
-                <button
-                  onClick={() => toggleMark(currentQuestion)}
-                  className={`px-4 py-2 rounded-lg text-sm font-medium border transition-colors ${
-                    markedQuestions[currentQuestion]
-                      ? 'bg-yellow-100 border-yellow-400 text-yellow-700'
-                      : 'bg-white border-slate-300 text-slate-600 hover:bg-slate-50'
-                  }`}
-                >
-                  {markedQuestions[currentQuestion] ? '🚩 Ragu-ragu' : '🏳️ Tandai Ragu-ragu'}
-                </button>
-
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => setCurrentQuestion(Math.max(1, currentQuestion - 1))}
-                    disabled={currentQuestion === 1}
-                    className="px-4 py-2 border border-slate-300 rounded-lg text-sm font-medium disabled:opacity-50 hover:bg-slate-50"
-                  >
-                    ← Sebelumnya
-                  </button>
-                  <button
-                    onClick={() => setCurrentQuestion(Math.min(questions.length, currentQuestion + 1))}
-                    disabled={currentQuestion === questions.length}
-                    className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium disabled:opacity-50 hover:bg-blue-700"
-                  >
-                    Selanjutnya →
-                  </button>
-                </div>
-              </div>
-            </>
-          ) : (
-            <div className="text-center py-20 text-slate-500">
-              Belum ada soal dalam paket ini
+        {/* KOLOM KIRI - Soal & Pilihan */}
+        <div className="flex-1 p-4 md:p-6 pb-24 md:pb-6">
+          <div className="bg-white rounded-xl border border-slate-200 p-4 md:p-6 shadow-sm">
+            {/* Nomor Soal & Kategori */}
+            <div className="flex items-center justify-between mb-4">
+              <span className="text-xs font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded">
+                Soal {currentQuestion + 1} dari {questions.length}
+              </span>
+              <span className={`text-xs font-bold px-2 py-1 rounded ${
+                questions[currentQuestion]?.question_category === 'TWK' ? 'bg-purple-100 text-purple-700' :
+                questions[currentQuestion]?.question_category === 'TIU' ? 'bg-green-100 text-green-700' :
+                'bg-orange-100 text-orange-700'
+              }`}>
+                {questions[currentQuestion]?.question_category || 'Umum'}
+              </span>
             </div>
-          )}
-        </div>
 
-        {/* KOLOM KANAN: NAVIGASI SOAL (STICKY) */}
-        <div className="w-72 flex-shrink-0">
-          <div className="sticky top-20 space-y-4">
-            
-            {/* Status Pengerjaan */}
-            <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-4">
-              <div className="text-center mb-3">
-                <div className="text-xs text-slate-500 mb-1">Sudah selesai ?</div>
-                <div className="text-lg font-bold text-slate-800">
-                  {answeredCount} <span className="text-sm font-normal text-slate-500">dari {totalSoal}</span>
-                </div>
-              </div>
-              
+            {/* Teks Soal */}
+            <div className="mb-6">
+              <Latex>{questions[currentQuestion]?.question_text || ''}</Latex>
+              {questions[currentQuestion]?.question_image_url && (
+                <img 
+                  src={questions[currentQuestion]?.question_image_url} 
+                  alt="Gambar Soal" 
+                  className="mt-4 max-w-full max-h-80 rounded-lg border border-slate-200"
+                />
+              )}
+            </div>
+
+            {/* Pilihan Jawaban */}
+            <div className="space-y-3">
+              {['A', 'B', 'C', 'D', 'E'].map((option) => {
+                const optionKey = `option_${option.toLowerCase()}`;
+                const optionText = questions[currentQuestion]?.[optionKey];
+                if (!optionText) return null;
+                
+                const isSelected = answers[currentQuestion] === option;
+                
+                return (
+                  <button
+                    key={option}
+                    onClick={() => handleAnswer(option)}
+                    className={`w-full text-left p-4 rounded-lg border-2 transition-all flex items-start gap-3 ${
+                      isSelected 
+                        ? 'border-blue-600 bg-blue-50' 
+                        : 'border-slate-200 hover:border-slate-300 bg-white'
+                    }`}
+                  >
+                    <span className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm flex-shrink-0 ${
+                      isSelected ? 'bg-blue-600 text-white' : 'bg-slate-200 text-slate-700'
+                    }`}>
+                      {option}
+                    </span>
+                    <span className="text-sm md:text-base text-slate-700 pt-1">
+                      <Latex>{optionText}</Latex>
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* TOMBOL NAVIGASI - Mobile Friendly */}
+          <div className="fixed bottom-0 left-0 right-0 md:static bg-white border-t border-slate-200 p-3 md:p-4 md:mt-4 md:border-0 md:rounded-xl md:shadow-sm z-30">
+            <div className="flex gap-2 max-w-7xl mx-auto">
+              {/* Tombol Ragu-ragu */}
               <button
-                onClick={() => handleFinish(false)}
-                className="w-full py-2.5 bg-red-600 text-white rounded-lg text-sm font-bold hover:bg-red-700 transition-colors shadow-sm"
+                onClick={() => toggleMark(currentQuestion)}
+                className={`flex-1 md:flex-none md:w-32 py-3 rounded-lg font-semibold text-xs md:text-sm transition-all flex items-center justify-center gap-1 ${
+                  markedQuestions[currentQuestion]
+                    ? 'bg-yellow-400 text-yellow-900'
+                    : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                }`}
               >
-                SELESAI
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 21v-4m0 0V5a2 2 0 012-2h6.5l1 1H21l-3 6 3 6h-8.5l-1-1H5a2 2 0 00-2 2zm9-13.5V9" />
+                </svg>
+                <span className="hidden md:inline">Ragu-ragu</span>
+                <span className="md:hidden">Tandai</span>
+              </button>
+
+              {/* Tombol Sebelumnya */}
+              <button
+                onClick={() => goToQuestion(currentQuestion - 1)}
+                disabled={currentQuestion === 0}
+                className="flex-1 py-3 rounded-lg font-semibold text-xs md:text-sm bg-slate-100 text-slate-700 hover:bg-slate-200 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                ← Prev
+              </button>
+
+              {/* Tombol Nomor Soal (Mobile Only) */}
+              <button
+                onClick={() => setShowQuestionPanel(!showQuestionPanel)}
+                className="md:hidden flex-1 py-3 rounded-lg font-semibold text-xs bg-blue-600 text-white hover:bg-blue-700 flex items-center justify-center gap-1"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 10h16M4 14h16M4 18h16" />
+                </svg>
+                No. Soal
+              </button>
+
+              {/* Tombol Selanjutnya */}
+              <button
+                onClick={() => goToQuestion(currentQuestion + 1)}
+                disabled={currentQuestion === questions.length - 1}
+                className="flex-1 md:flex-[2] py-3 rounded-lg font-semibold text-xs md:text-sm bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Selanjutnya →
               </button>
             </div>
+          </div>
+        </div>
 
-            {/* Grid Nomor Soal */}
-            <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-4">
-              <h3 className="text-sm font-bold text-slate-700 mb-3 text-center">Nomor Soal</h3>
-              <div className="grid grid-cols-7 gap-1.5">
-                {questions.map((q) => {
-                  const isAnswered = !!answers[q.question_number];
-                  const isMarked = markedQuestions[q.question_number];
-                  const isCurrent = currentQuestion === q.question_number;
-                  
-                  let bgColor = 'bg-slate-100 text-slate-600 border-slate-200';
-                  if (isAnswered && isMarked) bgColor = 'bg-yellow-400 text-white border-yellow-500';
-                  else if (isAnswered) bgColor = 'bg-green-500 text-white border-green-600';
-                  else if (isMarked) bgColor = 'bg-yellow-400 text-white border-yellow-500';
-                  if (isCurrent) bgColor = 'bg-blue-600 text-white border-blue-700 ring-2 ring-blue-300';
-
-                  return (
-                    <button
-                      key={q.id}
-                      onClick={() => setCurrentQuestion(q.question_number)}
-                      className={`aspect-square rounded text-xs font-bold border transition-all hover:scale-105 ${bgColor}`}
-                    >
-                      {q.question_number}
-                    </button>
-                  );
-                })}
+        {/* KOLOM KANAN - Panel Nomor Soal (Desktop) */}
+        <div className="hidden md:block w-80 p-4 md:p-6 md:sticky md:top-20 md:h-fit">
+          <div className="bg-white rounded-xl border border-slate-200 p-4 shadow-sm">
+            <h3 className="font-bold text-sm text-slate-800 mb-3">Navigasi Soal</h3>
+            
+            {/* Status */}
+            <div className="grid grid-cols-2 gap-2 mb-4 text-xs">
+              <div className="flex items-center gap-2">
+                <div className="w-4 h-4 bg-green-500 rounded"></div>
+                <span className="text-slate-600">Dijawab ({Object.keys(answers).length})</span>
               </div>
-
-              {/* Legenda Warna */}
-              <div className="mt-4 space-y-1.5 text-[10px] text-slate-600">
-                <div className="flex items-center gap-2">
-                  <div className="w-4 h-4 bg-slate-100 border border-slate-300 rounded"></div>
-                  <span>Belum Dijawab</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="w-4 h-4 bg-green-500 rounded"></div>
-                  <span>Sudah Dijawab</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="w-4 h-4 bg-yellow-400 rounded"></div>
-                  <span>Ragu-ragu</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="w-4 h-4 bg-blue-600 rounded"></div>
-                  <span>Soal Aktif</span>
-                </div>
+              <div className="flex items-center gap-2">
+                <div className="w-4 h-4 bg-yellow-400 rounded"></div>
+                <span className="text-slate-600">Ragu ({Object.keys(markedQuestions).filter(k => markedQuestions[k]).length})</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-4 h-4 bg-blue-600 rounded"></div>
+                <span className="text-slate-600">Aktif</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-4 h-4 bg-slate-200 rounded"></div>
+                <span className="text-slate-600">Belum</span>
               </div>
             </div>
 
+            {/* Grid Nomor */}
+            <div className="grid grid-cols-7 gap-1.5 mb-4">
+              {questions.map((_, idx) => {
+                const isAnswered = answers[idx] !== undefined;
+                const isMarked = markedQuestions[idx];
+                const isCurrent = idx === currentQuestion;
+                
+                return (
+                  <button
+                    key={idx}
+                    onClick={() => goToQuestion(idx)}
+                    className={`w-full aspect-square rounded text-xs font-bold transition-all ${
+                      isCurrent 
+                        ? 'bg-blue-600 text-white ring-2 ring-blue-300' 
+                        : isMarked
+                        ? 'bg-yellow-400 text-yellow-900'
+                        : isAnswered
+                        ? 'bg-green-500 text-white'
+                        : 'bg-slate-200 text-slate-700 hover:bg-slate-300'
+                    }`}
+                  >
+                    {idx + 1}
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Tombol Selesai */}
+            <button
+              onClick={() => handleFinish(false)}
+              className="w-full bg-red-600 hover:bg-red-700 text-white py-3 rounded-lg font-bold text-sm transition-colors"
+            >
+              🏁 SELESAI UJIAN
+            </button>
           </div>
         </div>
       </div>
+
+      {/* PANEL NOMOR SOAL MOBILE - Bottom Sheet */}
+      {showQuestionPanel && (
+        <div className="fixed inset-0 bg-black/50 z-50 md:hidden" onClick={() => setShowQuestionPanel(false)}>
+          <div 
+            className="absolute bottom-0 left-0 right-0 bg-white rounded-t-2xl max-h-[80vh] overflow-y-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Handle */}
+            <div className="sticky top-0 bg-white border-b border-slate-200 p-4 rounded-t-2xl">
+              <div className="w-12 h-1 bg-slate-300 rounded-full mx-auto mb-3"></div>
+              <div className="flex items-center justify-between">
+                <h3 className="font-bold text-slate-800">Navigasi Soal</h3>
+                <button
+                  onClick={() => setShowQuestionPanel(false)}
+                  className="text-slate-400 hover:text-slate-600"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+              
+              {/* Status */}
+              <div className="grid grid-cols-2 gap-2 mt-3 text-xs">
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 bg-green-500 rounded"></div>
+                  <span className="text-slate-600">Dijawab ({Object.keys(answers).length})</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 bg-yellow-400 rounded"></div>
+                  <span className="text-slate-600">Ragu ({Object.keys(markedQuestions).filter(k => markedQuestions[k]).length})</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Grid Nomor */}
+            <div className="p-4">
+              <div className="grid grid-cols-8 gap-2">
+                {questions.map((_, idx) => {
+                  const isAnswered = answers[idx] !== undefined;
+                  const isMarked = markedQuestions[idx];
+                  const isCurrent = idx === currentQuestion;
+                  
+                  return (
+                    <button
+                      key={idx}
+                      onClick={() => {
+                        goToQuestion(idx);
+                        setShowQuestionPanel(false);
+                      }}
+                      className={`aspect-square rounded-lg text-sm font-bold transition-all ${
+                        isCurrent 
+                          ? 'bg-blue-600 text-white ring-2 ring-blue-300' 
+                          : isMarked
+                          ? 'bg-yellow-400 text-yellow-900'
+                          : isAnswered
+                          ? 'bg-green-500 text-white'
+                          : 'bg-slate-200 text-slate-700'
+                      }`}
+                    >
+                      {idx + 1}
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Tombol Selesai */}
+              <button
+                onClick={() => {
+                  setShowQuestionPanel(false);
+                  handleFinish(false);
+                }}
+                className="w-full bg-red-600 hover:bg-red-700 text-white py-3 rounded-lg font-bold text-sm mt-4"
+              >
+                🏁 SELESAI UJIAN
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -20,6 +20,7 @@ function DashboardContent() {
   const [banners, setBanners] = useState<any[]>([]);
   const [updates, setUpdates] = useState<any[]>([]);
   const [packages, setPackages] = useState<any[]>([]);
+  const [benefits, setBenefits] = useState<{ [packageId: string]: any[] }>({});
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -124,6 +125,21 @@ function DashboardContent() {
         .eq('is_active', true)
         .order('display_order');
       if (packagesData) setPackages(packagesData);
+
+      const { data: benefitsData } = await supabase
+        .from('subscription_benefits')
+        .select('*')
+        .eq('is_active', true)
+        .order('display_order');
+
+      if (benefitsData) {
+        const benefitsMap: { [key: string]: any[] } = {};
+        benefitsData.forEach((b: any) => {
+          if (!benefitsMap[b.package_id]) benefitsMap[b.package_id] = [];
+          benefitsMap[b.package_id].push(b);
+        });
+        setBenefits(benefitsMap);
+      }
 
       setIsLoading(false);
     };
@@ -406,25 +422,86 @@ function DashboardContent() {
                 </div>
               </div>
 
-              {/* Package Cards */}
+              {/* Package Cards dengan Harga, Durasi Bulan, dan Benefit Admin */}
               <div className="space-y-4">
-                <h2 className="text-lg font-bold text-slate-800">Pilih Paket</h2>
-                {packages.map(pkg => (
-                  <div key={pkg.id} className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm">
-                    <div className="bg-gradient-to-r from-blue-600 to-indigo-700 px-4 py-3 text-white">
-                      <h3 className="font-bold text-lg">{pkg.name}</h3>
-                      <p className="text-blue-100 text-xs mt-1">{pkg.description}</p>
-                    </div>
-                    <div className="p-4">
-                      <Link
-                        href={`/checkout/${pkg.id}`}
-                        className="block w-full bg-blue-600 hover:bg-blue-700 text-white text-center py-3 rounded-lg font-medium transition-colors"
-                      >
-                        Pilih Paket
-                      </Link>
-                    </div>
+                <h2 className="text-lg font-bold text-slate-800">Pilih Paket Langganan</h2>
+                {packages.length === 0 ? (
+                  <div className="bg-white p-6 rounded-xl border border-slate-200 text-center text-slate-500 text-sm">
+                    Belum ada paket langganan yang tersedia.
                   </div>
-                ))}
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {packages.map(pkg => {
+                      const packageBenefits = benefits[pkg.id] || [];
+                      const isLifetime = pkg.duration_months === 999;
+                      
+                      return (
+                        <div key={pkg.id} className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm flex flex-col justify-between hover:shadow-md transition-shadow">
+                          <div>
+                            {/* Header Card */}
+                            <div className="bg-gradient-to-r from-blue-600 to-indigo-700 px-4 py-3 text-white">
+                              <div className="flex items-center justify-between">
+                                <div>
+                                  <h3 className="font-bold text-lg">{pkg.name}</h3>
+                                  <p className="text-blue-100 text-xs mt-0.5">{pkg.description}</p>
+                                </div>
+                                <div className="text-right">
+                                  <div className="font-bold text-lg">
+                                    Rp {(pkg.price || 0).toLocaleString('id-ID')}
+                                  </div>
+                                  <div className="text-xs text-blue-100">
+                                    {isLifetime ? 'Lifetime' : `${pkg.duration_months || 1} Bulan`}
+                                  </div>
+                                </div>
+                              </div>
+                              {pkg.discount_label && (
+                                <span className="inline-block mt-2 bg-white/20 backdrop-blur text-white text-[10px] font-bold px-2 py-0.5 rounded-full">
+                                  {pkg.discount_label}
+                                </span>
+                              )}
+                            </div>
+
+                            {/* List Benefit Dari Panel Admin */}
+                            <div className="p-4">
+                              <div className="text-[10px] font-semibold text-slate-500 uppercase tracking-wide mb-2">
+                                Benefit Paket:
+                              </div>
+                              <ul className="space-y-2">
+                                {packageBenefits.length > 0 ? (
+                                  packageBenefits.map((benefit: any) => (
+                                    <li key={benefit.id} className="flex items-start gap-2 text-xs text-slate-700">
+                                      <svg className="w-4 h-4 text-green-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M5 13l4 4L19 7" />
+                                      </svg>
+                                      <span className="leading-tight">{benefit.benefit_text}</span>
+                                    </li>
+                                  ))
+                                ) : (
+                                  <li className="flex items-start gap-2 text-xs text-slate-700">
+                                    <svg className="w-4 h-4 text-green-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M5 13l4 4L19 7" />
+                                    </svg>
+                                    <span className="leading-tight">Akses penuh ke semua try out & materi CPNS</span>
+                                  </li>
+                                )}
+                              </ul>
+                            </div>
+                          </div>
+
+                          {/* Tombol Akses / Checkout */}
+                          <div className="p-4 pt-0">
+                            <Link
+                              href={`/checkout/${pkg.id}`}
+                              className="block w-full bg-blue-600 hover:bg-blue-700 text-white text-center py-2.5 rounded-lg font-semibold text-sm transition-colors shadow-sm"
+                            >
+                              Pilih Paket
+                            </Link>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
             </div>
           )}
