@@ -4,9 +4,19 @@ import { NextResponse, type NextRequest } from 'next/server';
 export async function proxy(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request });
 
+  const userAgent = request.headers.get('user-agent') || '';
+  const isBot = /googlebot|bingbot|yandex|baiduspider|facebookexternalhit|twitterbot|rogerbot|linkedinbot|embedly|quora link preview|showyouhave|outbrain|pinterest|slackbot|vkShare|W3C_Validator|Google-InspectionTool/i.test(userAgent);
+
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
+
+  if (!supabaseUrl || !supabaseAnonKey) {
+    return supabaseResponse;
+  }
+
   const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    supabaseUrl,
+    supabaseAnonKey,
     {
       cookies: {
         getAll() { return request.cookies.getAll(); },
@@ -23,9 +33,13 @@ export async function proxy(request: NextRequest) {
 
   const isAdminRoute = request.nextUrl.pathname.startsWith('/admin');
   const isProtectedRoute = request.nextUrl.pathname.startsWith('/dashboard') || 
-                           request.nextUrl.pathname.startsWith('/tryout') || 
-                           request.nextUrl.pathname.startsWith('/result') || 
-                           request.nextUrl.pathname.startsWith('/checkout');
+                           request.nextUrl.pathname.startsWith('/tryout/') || 
+                           request.nextUrl.pathname.startsWith('/result');
+
+  // Bots (Googlebot, dll) selalu diizinkan mengakses halaman publik (/, /tryout-list, /checkout, sitemap, robots, dll)
+  if (isBot && !isProtectedRoute && !isAdminRoute) {
+    return supabaseResponse;
+  }
 
   // 1. Jika route diproteksi dan user BELUM login -> redirect ke login
   if (isProtectedRoute && !user) {
@@ -44,8 +58,8 @@ export async function proxy(request: NextRequest) {
     }
   }
 
-  // 3. Auto-redirect jika akses '/' atau '/login' saat sudah login
-  if ((request.nextUrl.pathname === '/' || request.nextUrl.pathname === '/login') && user) {
+  // 3. Redirect ke dashboard jika sudah login dan membuka /login
+  if (request.nextUrl.pathname === '/login' && user && !isBot) {
     const url = request.nextUrl.clone();
     if (user.email === 'gkhabibi1@gmail.com') {
       url.pathname = '/admin';
@@ -60,8 +74,7 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  // Matcher disesuaikan agar lolos dari bug Vercel Edge Runtime
   matcher: [
-    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+    '/((?!_next/static|_next/image|favicon.ico|sitemap\\.xml|robots\\.txt|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
   ],
 };

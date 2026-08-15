@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabaseClient";
+import Link from "next/link";
 import {
   Stethoscope,
   ClipboardCheck,
@@ -54,6 +55,7 @@ function Header() {
     { label: "Resep Kami", href: "#resep" },
     { label: "Paket", href: "#paket" },
     { label: "Testimoni", href: "#testimoni" },
+    { label: "Blog", href: "/blog" },
     { label: "FAQ", href: "#faq" },
   ];
   return (
