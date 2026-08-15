@@ -20,6 +20,8 @@ function DashboardContent() {
   const [banners, setBanners] = useState<any[]>([]);
   const [updates, setUpdates] = useState<any[]>([]);
   const [packages, setPackages] = useState<any[]>([]);
+  const [benefits, setBenefits] = useState<{ [packageId: string]: any[] }>({});
+  const [tryoutPackages, setTryoutPackages] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -92,8 +94,9 @@ function DashboardContent() {
         .order('created_at', { ascending: false })
         .limit(5);
       
+      let mappedHistory: any[] = [];
       if (history) {
-        const mappedHistory = history.map((item: any) => {
+        mappedHistory = history.map((item: any) => {
           const twk = item.skor_twk ?? item.score_twk ?? 0;
           const tiu = item.skor_tiu ?? item.score_tiu ?? 0;
           const tkp = item.skor_tkp ?? item.score_tkp ?? 0;
@@ -125,6 +128,36 @@ function DashboardContent() {
         .order('display_order');
       if (packagesData) setPackages(packagesData);
 
+      const { data: benefitsData } = await supabase
+        .from('subscription_benefits')
+        .select('*')
+        .eq('is_active', true)
+        .order('display_order');
+
+      if (benefitsData) {
+        const benefitsMap: { [key: string]: any[] } = {};
+        benefitsData.forEach((b: any) => {
+          if (!benefitsMap[b.package_id]) benefitsMap[b.package_id] = [];
+          benefitsMap[b.package_id].push(b);
+        });
+        setBenefits(benefitsMap);
+      }
+
+      const { data: tryoutsData } = await supabase
+        .from('tryout_packages')
+        .select('*')
+        .eq('is_active', true)
+        .order('created_at', { ascending: false });
+
+      if (tryoutsData) {
+        const tryoutsWithScores = tryoutsData.map((tp: any) => {
+          const userResult = mappedHistory?.find((h: any) => h.package_id === tp.id || h.tryout_package_id === tp.id);
+          const lastScore = userResult ? (userResult.skor_total ?? userResult.total_score) : null;
+          return { ...tp, last_score: lastScore };
+        });
+        setTryoutPackages(tryoutsWithScores);
+      }
+
       setIsLoading(false);
     };
 
@@ -135,19 +168,6 @@ function DashboardContent() {
   const isExpired = hasSubscription 
     ? new Date(userProfile.subscription_valid_until) < new Date() 
     : true;
-
-  const formatPrice = (price: number) => {
-    if (price === 0) return 'Gratis';
-    if (!price) return 'Gratis';
-    return `Rp ${price.toLocaleString('id-ID')}`;
-  };
-
-  const formatDuration = (months: number) => {
-    if (!months) return '';
-    if (months === 999) return 'Selamanya';
-    if (months === 1) return '1 Bulan';
-    return `${months} Bulan`;
-  };
 
   if (isLoading) {
     return (
@@ -198,46 +218,46 @@ function DashboardContent() {
           </div>
         </div>
 
-        {/* MOBILE NAVIGATION - Tab Menu */}
-        <div className="flex gap-2 px-4 -mt-10 mb-6 md:mx-6 md:mt-0">
+        {/* TAB NAVIGATION (REVISI 2) */}
+        <div className="flex gap-2 -mt-10 mb-6 px-4 md:mx-6 md:mt-0">
           <button
             onClick={() => {
               setActiveTab('overview');
               router.replace('/dashboard');
             }}
-            className={`flex-1 py-3 px-4 rounded-xl font-semibold text-sm shadow-lg transition-all ${
+            className={`flex-1 py-3 px-4 rounded-xl font-semibold text-sm transition-all ${
               activeTab === 'overview' 
-                ? 'bg-white text-blue-600' 
-                : 'bg-white/80 text-slate-600'
+                ? 'bg-white text-blue-600 shadow-md ring-1 ring-blue-100' 
+                : 'bg-white text-slate-600 hover:shadow-md'
             }`}
           >
-            📊 Overview
+            Overview
           </button>
           <button
             onClick={() => {
               setActiveTab('subscription');
               router.replace('/dashboard?tab=subscription');
             }}
-            className={`flex-1 py-3 px-4 rounded-xl font-semibold text-sm shadow-lg transition-all ${
+            className={`flex-1 py-3 px-4 rounded-xl font-semibold text-sm transition-all ${
               activeTab === 'subscription' 
-                ? 'bg-white text-blue-600' 
-                : 'bg-white/80 text-slate-600'
+                ? 'bg-white text-blue-600 shadow-md ring-1 ring-blue-100' 
+                : 'bg-white text-slate-600 hover:shadow-md'
             }`}
           >
-            💎 Paket
+            Paket
           </button>
           <button
             onClick={() => {
               setActiveTab('notifications');
               router.replace('/dashboard?tab=notifications');
             }}
-            className={`flex-1 py-3 px-4 rounded-xl font-semibold text-sm shadow-lg transition-all ${
+            className={`flex-1 py-3 px-4 rounded-xl font-semibold text-sm transition-all ${
               activeTab === 'notifications' 
-                ? 'bg-white text-blue-600' 
-                : 'bg-white/80 text-slate-600'
+                ? 'bg-white text-blue-600 shadow-md ring-1 ring-blue-100' 
+                : 'bg-white text-slate-600 hover:shadow-md'
             }`}
           >
-            🔔 Notif
+            Notif
           </button>
         </div>
 
@@ -248,7 +268,7 @@ function DashboardContent() {
           {activeTab === 'overview' && (
             <div className="space-y-6">
               
-              {/* Quick Actions - Horizontal Scroll */}
+              {/* Quick Actions - Menu Navigasi */}
               <div>
                 <h2 className="text-lg font-bold text-slate-800 mb-3">Aksi Cepat</h2>
                 <div className="flex gap-3 overflow-x-auto pb-2 -mx-4 px-4 md:mx-0 md:px-0">
@@ -270,6 +290,58 @@ function DashboardContent() {
                   </Link>
                 </div>
               </div>
+
+              {/* Try Out Tersedia - 2 Per Baris di Mobile (REVISI 4) */}
+              {tryoutPackages.length > 0 && (
+                <div>
+                  <h2 className="text-lg font-bold text-slate-800 mb-3">Try Out Tersedia</h2>
+                  <div className="grid grid-cols-2 gap-3">
+                    {tryoutPackages.slice(0, 6).map(pkg => (
+                      <Link 
+                        key={pkg.id} 
+                        href={`/tryout/${pkg.id}`}
+                        className="bg-white rounded-xl border border-slate-200 p-3 shadow-sm hover:shadow-md transition-all"
+                      >
+                        {/* Badge Kategori */}
+                        <span className={`inline-block text-[9px] font-bold px-1.5 py-0.5 rounded mb-2 ${
+                          pkg.exam_type === 'CPNS' 
+                            ? 'bg-blue-100 text-blue-700' 
+                            : 'bg-green-100 text-green-700'
+                        }`}>
+                          {pkg.exam_type || 'CPNS'}
+                        </span>
+                        
+                        {/* Nama Paket */}
+                        <h3 className="font-bold text-slate-800 text-xs mb-1 line-clamp-2 leading-tight">
+                          {pkg.name}
+                        </h3>
+                        
+                        {/* Info */}
+                        <div className="text-[10px] text-slate-500 mb-2">
+                          {pkg.total_questions || 110} Soal
+                        </div>
+                        
+                        {/* Nilai Terakhir */}
+                        <div className="bg-slate-50 rounded-lg p-2 text-center">
+                          <div className="text-[9px] text-slate-500">Nilai Terakhir</div>
+                          <div className="font-bold text-blue-600 text-sm">
+                            {pkg.last_score !== null && pkg.last_score !== undefined ? pkg.last_score : '-'}
+                          </div>
+                        </div>
+                      </Link>
+                    ))}
+                  </div>
+                  
+                  {tryoutPackages.length > 6 && (
+                    <Link 
+                      href="/tryout-list" 
+                      className="block text-center text-sm text-blue-600 font-medium mt-3"
+                    >
+                      Lihat Semua Try Out →
+                    </Link>
+                  )}
+                </div>
+              )}
 
               {/* Banners - Horizontal Scroll */}
               {banners.length > 0 && (
@@ -426,45 +498,82 @@ function DashboardContent() {
                 </div>
               </div>
 
-              {/* Package Cards */}
-              <div className="space-y-4">
-                <h2 className="text-lg font-bold text-slate-800">Pilih Paket Langganan</h2>
+              {/* Card Paket Langganan dengan Benefit (REVISI 3) */}
+              <div>
+                <h2 className="text-lg font-bold text-slate-800 mb-3">Pilih Paket Langganan</h2>
+
                 {packages.length === 0 ? (
                   <div className="bg-white p-6 rounded-xl border border-slate-200 text-center text-slate-500 text-sm">
                     Belum ada paket langganan yang tersedia.
                   </div>
                 ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {packages.map(pkg => (
-                      <div key={pkg.id} className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm flex flex-col justify-between">
-                        <div>
-                          <div className="bg-gradient-to-r from-blue-600 to-indigo-700 px-4 py-3 text-white flex items-center justify-between">
-                            <div>
-                              <h3 className="font-bold text-lg">{pkg.name}</h3>
-                              {pkg.duration_months && (
-                                <span className="inline-block bg-white/20 text-white text-[10px] font-bold px-2 py-0.5 rounded-full mt-1">
-                                  {formatDuration(pkg.duration_months)}
-                                </span>
+                  <div className="space-y-3">
+                    {packages.map(pkg => {
+                      const packageBenefits = benefits[pkg.id] || [];
+                      const isLifetime = pkg.duration_months === 999;
+                      
+                      return (
+                        <div key={pkg.id} className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm">
+                          {/* Header Card */}
+                          <div className="bg-gradient-to-r from-blue-600 to-indigo-700 px-4 py-3 text-white">
+                            <div className="flex items-center justify-between">
+                              <div>
+                                <h3 className="font-bold text-base">{pkg.name}</h3>
+                                <p className="text-blue-100 text-xs mt-0.5">{pkg.description}</p>
+                              </div>
+                              <div className="text-right">
+                                <div className="font-bold text-lg">
+                                  Rp {(pkg.price || 0).toLocaleString('id-ID')}
+                                </div>
+                                <div className="text-xs text-blue-100">
+                                  {isLifetime ? 'Lifetime' : `${pkg.duration_months || 1} Bulan`}
+                                </div>
+                              </div>
+                            </div>
+                            {pkg.discount_label && (
+                              <span className="inline-block mt-2 bg-white/20 backdrop-blur text-white text-[10px] font-bold px-2 py-0.5 rounded-full">
+                                {pkg.discount_label}
+                              </span>
+                            )}
+                          </div>
+
+                          {/* Benefit List */}
+                          <div className="p-3">
+                            <div className="text-[10px] font-semibold text-slate-500 uppercase tracking-wide mb-2">
+                              Yang Anda Dapatkan:
+                            </div>
+                            <ul className="space-y-1.5">
+                              {packageBenefits.slice(0, 4).map((benefit: any) => (
+                                <li key={benefit.id} className="flex items-start gap-2 text-xs text-slate-700">
+                                  <svg className="w-3.5 h-3.5 text-green-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7" />
+                                  </svg>
+                                  <span className="leading-tight">{benefit.benefit_text}</span>
+                                </li>
+                              ))}
+                              {packageBenefits.length > 4 && (
+                                <li className="text-[10px] text-blue-600 font-medium pl-5.5">
+                                  +{packageBenefits.length - 4} manfaat lainnya
+                                </li>
                               )}
-                            </div>
-                            <div className="text-right">
-                              <div className="text-xl font-extrabold">{formatPrice(pkg.price)}</div>
-                            </div>
+                              {packageBenefits.length === 0 && (
+                                <li className="text-xs text-slate-400 italic">Belum ada benefit</li>
+                              )}
+                            </ul>
                           </div>
-                          <div className="p-4">
-                            <p className="text-slate-600 text-sm mb-3">{pkg.description || 'Akses penuh ke materi & tryout premium.'}</p>
+
+                          {/* Tombol */}
+                          <div className="px-3 pb-3">
+                            <Link
+                              href={`/checkout/${pkg.id}`}
+                              className="block w-full bg-blue-600 hover:bg-blue-700 text-white text-center py-2.5 rounded-lg font-semibold text-sm transition-colors"
+                            >
+                              Pilih Paket
+                            </Link>
                           </div>
                         </div>
-                        <div className="p-4 pt-0">
-                          <Link
-                            href={`/checkout/${pkg.id}`}
-                            className="block w-full bg-blue-600 hover:bg-blue-700 text-white text-center py-2.5 rounded-lg font-medium transition-colors text-sm"
-                          >
-                            Pilih Paket
-                          </Link>
-                        </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 )}
               </div>

@@ -26,10 +26,21 @@ body {
 }
 
 /* Safe Area untuk iPhone dengan notch */
+.pb-safe {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
 .safe-area-pb {
   padding-bottom: env(safe-area-inset-bottom);
 }
 
 .h-safe-area-inset-bottom {
   height: env(safe-area-inset-bottom);
+}
+
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }

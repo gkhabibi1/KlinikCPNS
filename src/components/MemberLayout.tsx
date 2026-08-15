@@ -329,71 +329,76 @@ function MemberLayoutContent({ children }: MemberLayoutProps) {
         </main>
       </div>
 
-      {/* BOTTOM NAVIGATION - HANYA TAMPIL DI MOBILE */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 shadow-lg z-50 safe-area-pb">
-        <div className="grid grid-cols-4 gap-1">
-          {/* Dashboard */}
+      {/* BOTTOM NAVIGATION - MOBILE (REVISI 1) */}
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 z-50 pb-safe">
+        <div className="grid grid-cols-5 gap-1 px-2 pt-2">
+          {/* Home */}
           <Link
             href="/dashboard"
-            className={`flex flex-col items-center py-3 px-2 transition-colors ${
-              isDashboardActive 
-                ? 'text-blue-600' 
-                : 'text-slate-600'
+            className={`flex flex-col items-center py-2 transition-all ${
+              isDashboardActive ? 'text-blue-600' : 'text-slate-500'
             }`}
           >
-            <svg className="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-5 h-5 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
             </svg>
             <span className="text-[10px] font-medium">Home</span>
           </Link>
-          
-          {/* Try Out */}
+
+          {/* Materi */}
+          <Link 
+            href="/dashboard/materi" 
+            className={`flex flex-col items-center py-2 transition-all ${
+              pathname === '/dashboard/materi' ? 'text-blue-600' : 'text-slate-500'
+            }`}
+          >
+            <svg className="w-5 h-5 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+            </svg>
+            <span className="text-[10px] font-medium">Materi</span>
+          </Link>
+
+          {/* Try Out - TENGAH HIGHLIGHT */}
           <Link 
             href="/tryout-list" 
-            className={`flex flex-col items-center py-3 px-2 transition-colors ${
-              pathname === '/tryout-list' 
-                ? 'text-blue-600' 
-                : 'text-slate-600'
-            }`}
+            className="flex flex-col items-center -mt-6"
           >
-            <svg className="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-            </svg>
-            <span className="text-[10px] font-medium">Try Out</span>
+            <div className="bg-gradient-to-br from-blue-600 to-indigo-700 w-14 h-14 rounded-2xl flex items-center justify-center shadow-lg shadow-blue-500/40 ring-4 ring-white">
+              <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+              </svg>
+            </div>
+            <span className="text-[10px] font-bold text-blue-600 mt-1">Try Out</span>
           </Link>
-          
-          {/* Beli Langganan */}
+
+          {/* Paket */}
           <Link
             href="/dashboard?tab=subscription"
-            className={`flex flex-col items-center py-3 px-2 transition-colors ${
-              isSubscriptionActive 
-                ? 'text-blue-600' 
-                : 'text-slate-600'
+            className={`flex flex-col items-center py-2 transition-all ${
+              isSubscriptionActive ? 'text-blue-600' : 'text-slate-500'
             }`}
           >
-            <svg className="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-5 h-5 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
             </svg>
             <span className="text-[10px] font-medium">Paket</span>
           </Link>
-          
-          {/* Menu Profil */}
-          <Link
-            href="/dashboard/profile"
-            className={`flex flex-col items-center py-3 px-2 transition-colors ${
-              pathname === '/dashboard/profile' 
-                ? 'text-blue-600' 
-                : 'text-slate-600'
+
+          {/* Profil */}
+          <Link 
+            href="/dashboard/profile" 
+            className={`flex flex-col items-center py-2 transition-all ${
+              pathname === '/dashboard/profile' ? 'text-blue-600' : 'text-slate-500'
             }`}
           >
-            <svg className="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-5 h-5 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
             </svg>
             <span className="text-[10px] font-medium">Profil</span>
           </Link>
         </div>
         
-        {/* Safe Area Padding untuk iPhone dengan notch */}
+        {/* Safe area untuk iPhone */}
         <div className="h-safe-area-inset-bottom bg-white"></div>
       </nav>
     </div>
