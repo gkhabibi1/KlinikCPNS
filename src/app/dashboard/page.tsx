@@ -40,7 +40,10 @@ function DashboardContent() {
       // Cari voucher
       const { data: voucher, error } = await supabase
         .from('voucher_codes')
-        .select('*')
+        .select(`
+          *,
+          subscription_packages (duration_months)
+        `)
         .eq('code', activationVoucherCode.toUpperCase().trim())
         .eq('voucher_category', 'activation')
         .single();
@@ -60,15 +63,19 @@ function DashboardContent() {
         return;
       }
 
-      // Ambil info paket dari reseller allocation (atau default)
-      // Untuk simplicity, kita pakai paket default atau bisa di-set di voucher
-      const durationMonths = 6; // Default, bisa di-customize
+      // Ambil info durasi paket dari voucher_codes -> subscription_packages
+      const durationMonths = voucher.subscription_packages?.duration_months || 6;
       
       // Base date: jika user masih punya masa aktif, perpanjang dari tanggal tersebut
       const currentExpiry = userProfile?.subscription_valid_until ? new Date(userProfile.subscription_valid_until) : null;
       const baseDate = (currentExpiry && currentExpiry > new Date()) ? currentExpiry : new Date();
       const newExpiry = new Date(baseDate);
-      newExpiry.setMonth(newExpiry.getMonth() + durationMonths);
+      
+      if (durationMonths === 999) {
+        newExpiry.setFullYear(2099);
+      } else {
+        newExpiry.setMonth(newExpiry.getMonth() + durationMonths);
+      }
       
       const { error: updateError } = await supabase
         .from('profiles')

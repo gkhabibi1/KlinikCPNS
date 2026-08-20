@@ -215,7 +215,7 @@ export default function AdminCommandCenter() {
     is_published: false
   });
 
-  // State untuk Reseller
+  // State untuk Reseller (REVISI)
   const [resellers, setResellers] = useState<any[]>([]);
   const [showResellerModal, setShowResellerModal] = useState(false);
   const [editingReseller, setEditingReseller] = useState<any>(null);
@@ -224,10 +224,8 @@ export default function AdminCommandCenter() {
     password: '',
     full_name: '',
     reseller_code: '',
-    checkout_link: '',
-    allocations: [] as { package_id: string; total_quota: number }[]
+    token_balance: 0
   });
-  const [subscriptionPackagesForAllocation, setSubscriptionPackagesForAllocation] = useState<any[]>([]);
 
   const fetchBlogPosts = async () => {
     const { data, error } = await supabase
@@ -320,27 +318,18 @@ export default function AdminCommandCenter() {
       .from('resellers')
       .select(`
         *,
-        reseller_voucher_allocations (
-          id,
-          package_id,
-          total_quota,
-          used_quota,
-          remaining_quota,
-          subscription_packages (name)
-        )
+        voucher_codes (id)
       `)
       .order('created_at', { ascending: false });
     
-    if (data) setResellers(data);
-  };
-
-  const fetchPackagesForAllocation = async () => {
-    const { data } = await supabase
-      .from('subscription_packages')
-      .select('id, name')
-      .eq('is_active', true);
-    
-    if (data) setSubscriptionPackagesForAllocation(data);
+    if (data) {
+      // Hitung jumlah voucher per reseller
+      const resellersWithCount = data.map((r: any) => ({
+        ...r,
+        voucher_count: r.voucher_codes?.length || 0
+      }));
+      setResellers(resellersWithCount);
+    }
   };
 
   const handleSaveReseller = async (e: React.FormEvent) => {
@@ -352,7 +341,7 @@ export default function AdminCommandCenter() {
     }
 
     try {
-      // 1. Generate reseller code jika kosong
+      // Generate reseller code jika kosong
       const { data: codeData } = await supabase.rpc('generate_reseller_code');
       const finalCode = resellerForm.reseller_code || codeData;
 
@@ -362,7 +351,7 @@ export default function AdminCommandCenter() {
           .from('resellers')
           .update({
             full_name: resellerForm.full_name,
-            checkout_link: resellerForm.checkout_link,
+            token_balance: resellerForm.token_balance,
             updated_at: new Date().toISOString()
           })
           .eq('id', editingReseller.id);
@@ -370,7 +359,7 @@ export default function AdminCommandCenter() {
         if (error) throw error;
         alert('✅ Reseller berhasil diupdate!');
       } else {
-        // Buat user baru di auth.users
+        // Buat user baru di auth
         const { data: authData, error: authError } = await supabase.auth.admin.createUser({
           email: resellerForm.email,
           password: resellerForm.password || 'Reseller123!',
@@ -383,37 +372,20 @@ export default function AdminCommandCenter() {
 
         if (authError) throw authError;
 
-        // 2. Insert reseller
-        const { data: resellerData, error: resellerError } = await supabase
+        // Insert reseller
+        const { error: resellerError } = await supabase
           .from('resellers')
           .insert([{
             user_id: authData.user.id,
             email: resellerForm.email,
             full_name: resellerForm.full_name,
             reseller_code: finalCode,
-            checkout_link: resellerForm.checkout_link
-          }])
-          .select()
-          .single();
+            token_balance: resellerForm.token_balance
+          }]);
 
         if (resellerError) throw resellerError;
 
-        // 3. Insert allocations
-        for (const alloc of resellerForm.allocations) {
-          if (alloc.total_quota > 0) {
-            await supabase
-              .from('reseller_voucher_allocations')
-              .insert([{
-                reseller_id: resellerData.id,
-                package_id: alloc.package_id,
-                total_quota: alloc.total_quota,
-                used_quota: 0,
-                remaining_quota: alloc.total_quota
-              }]);
-          }
-        }
-
-        alert(`✅ Reseller berhasil dibuat!\nKode: ${finalCode}\nEmail: ${resellerForm.email}\nPassword: ${resellerForm.password || 'Reseller123!'}`);
+        alert(`✅ Reseller berhasil dibuat!\nKode: ${finalCode}\nEmail: ${resellerForm.email}\nPassword: ${resellerForm.password || 'Reseller123!'}\nToken: ${resellerForm.token_balance}`);
       }
 
       setShowResellerModal(false);
@@ -423,8 +395,7 @@ export default function AdminCommandCenter() {
         password: '',
         full_name: '',
         reseller_code: '',
-        checkout_link: '',
-        allocations: []
+        token_balance: 0
       });
       fetchResellers();
     } catch (error: any) {
@@ -451,29 +422,24 @@ export default function AdminCommandCenter() {
       password: '',
       full_name: reseller.full_name,
       reseller_code: reseller.reseller_code,
-      checkout_link: reseller.checkout_link || '',
-      allocations: reseller.reseller_voucher_allocations?.map((a: any) => ({
-        package_id: a.package_id,
-        total_quota: a.total_quota
-      })) || []
+      token_balance: reseller.token_balance || 0
     });
     setShowResellerModal(true);
   };
 
-  const updateAllocation = (packageId: string, quota: number) => {
-    const existing = resellerForm.allocations.find(a => a.package_id === packageId);
-    if (existing) {
-      setResellerForm({
-        ...resellerForm,
-        allocations: resellerForm.allocations.map(a => 
-          a.package_id === packageId ? { ...a, total_quota: quota } : a
-        )
-      });
+  const handleAddTokens = async (resellerId: string, currentBalance: number, amount: number) => {
+    const newBalance = currentBalance + amount;
+    
+    const { error } = await supabase
+      .from('resellers')
+      .update({ token_balance: newBalance })
+      .eq('id', resellerId);
+
+    if (error) {
+      alert('Gagal update token: ' + error.message);
     } else {
-      setResellerForm({
-        ...resellerForm,
-        allocations: [...resellerForm.allocations, { package_id: packageId, total_quota: quota }]
-      });
+      alert(`✅ Berhasil! Token balance sekarang: ${newBalance}`);
+      fetchResellers();
     }
   };
 
@@ -1330,6 +1296,7 @@ export default function AdminCommandCenter() {
     if (activeTab === 'materials') fetchMaterials();
     if (activeTab === 'subscription-packages') fetchSubscriptionPackages();
     if (activeTab === 'transactions') fetchTransactions();
+    if (activeTab === 'resellers') fetchResellers();
   }, [activeTab]);
   /* eslint-enable react-hooks/set-state-in-effect */
 
@@ -1896,7 +1863,7 @@ export default function AdminCommandCenter() {
               Blog
             </button>
             <button 
-              onClick={() => { setActiveTab('resellers'); fetchResellers(); fetchPackagesForAllocation(); }} 
+              onClick={() => { setActiveTab('resellers'); fetchResellers(); }} 
               className={`w-full flex items-center px-4 py-3 rounded-lg text-sm font-medium transition-colors ${
                 activeTab === 'resellers' ? 'bg-blue-600 text-white' : 'text-slate-400 hover:bg-slate-800'
               }`}
@@ -4463,7 +4430,7 @@ export default function AdminCommandCenter() {
                 <div className="flex justify-between items-center">
                   <div>
                     <h2 className="text-2xl font-bold text-slate-800 mb-2">Manajemen Reseller</h2>
-                    <p className="text-slate-500">Kelola reseller dan alokasi voucher mereka</p>
+                    <p className="text-slate-500">Kelola reseller dan token mereka</p>
                   </div>
                   <button
                     onClick={() => {
@@ -4473,8 +4440,7 @@ export default function AdminCommandCenter() {
                         password: '',
                         full_name: '',
                         reseller_code: '',
-                        checkout_link: '',
-                        allocations: []
+                        token_balance: 0
                       });
                       setShowResellerModal(true);
                     }}
@@ -4495,8 +4461,9 @@ export default function AdminCommandCenter() {
                         <th className="p-4 text-left text-xs font-semibold text-slate-600">Kode</th>
                         <th className="p-4 text-left text-xs font-semibold text-slate-600">Nama</th>
                         <th className="p-4 text-left text-xs font-semibold text-slate-600">Email</th>
+                        <th className="p-4 text-center text-xs font-semibold text-slate-600">Token</th>
+                        <th className="p-4 text-center text-xs font-semibold text-slate-600">Voucher Dibuat</th>
                         <th className="p-4 text-left text-xs font-semibold text-slate-600">Link Checkout</th>
-                        <th className="p-4 text-center text-xs font-semibold text-slate-600">Status</th>
                         <th className="p-4 text-center text-xs font-semibold text-slate-600">Aksi</th>
                       </tr>
                     </thead>
@@ -4504,13 +4471,40 @@ export default function AdminCommandCenter() {
                       {resellers.map((reseller) => (
                         <tr key={reseller.id} className="hover:bg-slate-50">
                           <td className="p-4">
-                            <div className="font-mono font-bold text-blue-600 text-lg">{reseller.reseller_code}</div>
+                            <div className="font-mono font-bold text-purple-600 text-lg">{reseller.reseller_code}</div>
                             <div className="text-xs text-slate-500">
-                              Home: klinikcpns.com/r/{reseller.reseller_code}
+                              klinikcpns.com/r/{reseller.reseller_code}
                             </div>
                           </td>
                           <td className="p-4 font-medium text-slate-800">{reseller.full_name}</td>
                           <td className="p-4 text-sm text-slate-600">{reseller.email}</td>
+                          <td className="p-4 text-center">
+                            <div className="flex items-center justify-center gap-2">
+                              <span className={`font-bold text-lg ${
+                                reseller.token_balance > 10 ? 'text-green-600' : 
+                                reseller.token_balance > 0 ? 'text-amber-600' : 'text-red-600'
+                              }`}>
+                                {reseller.token_balance}
+                              </span>
+                              <button
+                                onClick={() => {
+                                  const amount = prompt(`Tambah token untuk ${reseller.full_name}:\n(Masukkan angka positif untuk tambah, negatif untuk kurangi)`);
+                                  if (amount !== null && !isNaN(parseInt(amount))) {
+                                    handleAddTokens(reseller.id, reseller.token_balance, parseInt(amount));
+                                  }
+                                }}
+                                className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded hover:bg-blue-200"
+                                title="Tambah/Kurang Token"
+                              >
+                                ±
+                              </button>
+                            </div>
+                          </td>
+                          <td className="p-4 text-center">
+                            <span className="bg-slate-100 text-slate-700 px-3 py-1 rounded-full text-sm font-bold">
+                              {reseller.voucher_count}
+                            </span>
+                          </td>
                           <td className="p-4">
                             {reseller.checkout_link ? (
                               <a 
@@ -4524,13 +4518,6 @@ export default function AdminCommandCenter() {
                             ) : (
                               <span className="text-xs text-slate-400 italic">Belum diset</span>
                             )}
-                          </td>
-                          <td className="p-4 text-center">
-                            <span className={`px-2 py-1 rounded-full text-xs font-bold ${
-                              reseller.is_active ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-700'
-                            }`}>
-                              {reseller.is_active ? 'Aktif' : 'Nonaktif'}
-                            </span>
                           </td>
                           <td className="p-4">
                             <div className="flex items-center justify-center gap-2">
@@ -4552,7 +4539,7 @@ export default function AdminCommandCenter() {
                       ))}
                       {resellers.length === 0 && (
                         <tr>
-                          <td colSpan={6} className="p-8 text-center text-slate-500">
+                          <td colSpan={7} className="p-8 text-center text-slate-500">
                             Belum ada reseller
                           </td>
                         </tr>
@@ -4563,115 +4550,80 @@ export default function AdminCommandCenter() {
 
                 {/* Modal Tambah/Edit Reseller */}
                 {showResellerModal && (
-                  <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 overflow-y-auto">
-                    <div className="bg-white rounded-xl max-w-2xl w-full max-h-[90vh] overflow-hidden shadow-2xl my-8">
-                      <div className="bg-gradient-to-r from-blue-600 to-indigo-700 px-6 py-4 flex justify-between items-center">
+                  <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+                    <div className="bg-white rounded-xl max-w-lg w-full max-h-[90vh] overflow-y-auto shadow-2xl">
+                      <div className="bg-gradient-to-r from-purple-600 to-indigo-700 px-6 py-4 flex justify-between items-center">
                         <h3 className="text-xl font-bold text-white">
                           {editingReseller ? 'Edit Reseller' : 'Tambah Reseller Baru'}
                         </h3>
                         <button
                           onClick={() => setShowResellerModal(false)}
-                          className="text-white/80 hover:text-white text-2xl w-10 h-10 flex items-center justify-center rounded-lg hover:bg-white/10"
+                          className="text-white/80 hover:text-white text-2xl"
                         >
                           ×
                         </button>
                       </div>
 
-                      <form onSubmit={handleSaveReseller} className="p-6 overflow-y-auto max-h-[calc(90vh-140px)] space-y-4">
-                        <div className="grid grid-cols-2 gap-4">
-                          <div className="col-span-2">
-                            <label className="block text-sm font-medium text-slate-700 mb-1">Nama Lengkap *</label>
-                            <input
-                              type="text"
-                              value={resellerForm.full_name}
-                              onChange={(e) => setResellerForm({...resellerForm, full_name: e.target.value})}
-                              className="w-full border border-slate-300 rounded-lg p-2.5 text-sm"
-                              required
-                            />
-                          </div>
-
-                          <div>
-                            <label className="block text-sm font-medium text-slate-700 mb-1">Email *</label>
-                            <input
-                              type="email"
-                              value={resellerForm.email}
-                              onChange={(e) => setResellerForm({...resellerForm, email: e.target.value})}
-                              className="w-full border border-slate-300 rounded-lg p-2.5 text-sm"
-                              required
-                              disabled={!!editingReseller}
-                            />
-                          </div>
-
-                          {!editingReseller && (
-                            <div>
-                              <label className="block text-sm font-medium text-slate-700 mb-1">Password *</label>
-                              <input
-                                type="password"
-                                value={resellerForm.password}
-                                onChange={(e) => setResellerForm({...resellerForm, password: e.target.value})}
-                                className="w-full border border-slate-300 rounded-lg p-2.5 text-sm"
-                                placeholder="Minimal 6 karakter"
-                                required
-                              />
-                            </div>
-                          )}
-
-                          <div>
-                            <label className="block text-sm font-medium text-slate-700 mb-1">Kode Reseller (5 karakter)</label>
-                            <input
-                              type="text"
-                              value={resellerForm.reseller_code}
-                              onChange={(e) => setResellerForm({...resellerForm, reseller_code: e.target.value.toUpperCase().slice(0, 5)})}
-                              className="w-full border border-slate-300 rounded-lg p-2.5 text-sm font-mono"
-                              placeholder="Auto-generate jika kosong"
-                              maxLength={5}
-                            />
-                            <p className="text-xs text-slate-500 mt-1">Kosongkan untuk auto-generate</p>
-                          </div>
-
-                          <div className="col-span-2">
-                            <label className="block text-sm font-medium text-slate-700 mb-1">Link Checkout Custom</label>
-                            <input
-                              type="url"
-                              value={resellerForm.checkout_link}
-                              onChange={(e) => setResellerForm({...resellerForm, checkout_link: e.target.value})}
-                              className="w-full border border-slate-300 rounded-lg p-2.5 text-sm"
-                              placeholder="https://klinikcpns.com/checkout/..."
-                            />
-                            <p className="text-xs text-slate-500 mt-1">Link ini akan digunakan di semua tombol pembelian di halaman reseller</p>
-                          </div>
+                      <form onSubmit={handleSaveReseller} className="p-6 space-y-4">
+                        <div>
+                          <label className="block text-sm font-medium text-slate-700 mb-1">Nama Lengkap *</label>
+                          <input
+                            type="text"
+                            value={resellerForm.full_name}
+                            onChange={(e) => setResellerForm({...resellerForm, full_name: e.target.value})}
+                            className="w-full border border-slate-300 rounded-lg p-2.5 text-sm"
+                            required
+                          />
                         </div>
 
-                        {/* Alokasi Voucher per Paket */}
-                        <div className="border-t pt-4">
-                          <h4 className="font-bold text-slate-800 mb-3"> Alokasi Voucher Masa Aktif per Paket</h4>
-                          <p className="text-xs text-slate-500 mb-3">
-                            Tentukan berapa banyak voucher gratis yang bisa di-generate reseller untuk setiap paket
-                          </p>
-                          
-                          <div className="space-y-2">
-                            {subscriptionPackagesForAllocation.map(pkg => {
-                              const currentAlloc = resellerForm.allocations.find(a => a.package_id === pkg.id);
-                              return (
-                                <div key={pkg.id} className="flex items-center gap-3 p-3 bg-slate-50 rounded-lg">
-                                  <div className="flex-1">
-                                    <div className="font-medium text-slate-800 text-sm">{pkg.name}</div>
-                                  </div>
-                                  <div className="w-32">
-                                    <input
-                                      type="number"
-                                      min="0"
-                                      value={currentAlloc?.total_quota || 0}
-                                      onChange={(e) => updateAllocation(pkg.id, parseInt(e.target.value) || 0)}
-                                      className="w-full border border-slate-300 rounded-lg p-2 text-sm"
-                                      placeholder="0"
-                                    />
-                                  </div>
-                                  <div className="text-xs text-slate-500 w-20">voucher</div>
-                                </div>
-                              );
-                            })}
+                        <div>
+                          <label className="block text-sm font-medium text-slate-700 mb-1">Email *</label>
+                          <input
+                            type="email"
+                            value={resellerForm.email}
+                            onChange={(e) => setResellerForm({...resellerForm, email: e.target.value})}
+                            className="w-full border border-slate-300 rounded-lg p-2.5 text-sm"
+                            required
+                            disabled={!!editingReseller}
+                          />
+                        </div>
+
+                        {!editingReseller && (
+                          <div>
+                            <label className="block text-sm font-medium text-slate-700 mb-1">Password *</label>
+                            <input
+                              type="password"
+                              value={resellerForm.password}
+                              onChange={(e) => setResellerForm({...resellerForm, password: e.target.value})}
+                              className="w-full border border-slate-300 rounded-lg p-2.5 text-sm"
+                              placeholder="Minimal 6 karakter"
+                              required
+                            />
                           </div>
+                        )}
+
+                        <div>
+                          <label className="block text-sm font-medium text-slate-700 mb-1">Kode Reseller (5 karakter)</label>
+                          <input
+                            type="text"
+                            value={resellerForm.reseller_code}
+                            onChange={(e) => setResellerForm({...resellerForm, reseller_code: e.target.value.toUpperCase().slice(0, 5)})}
+                            className="w-full border border-slate-300 rounded-lg p-2.5 text-sm font-mono"
+                            placeholder="Auto-generate jika kosong"
+                            maxLength={5}
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-sm font-medium text-slate-700 mb-1">Token Balance *</label>
+                          <input
+                            type="number"
+                            min="0"
+                            value={resellerForm.token_balance}
+                            onChange={(e) => setResellerForm({...resellerForm, token_balance: parseInt(e.target.value) || 0})}
+                            className="w-full border border-slate-300 rounded-lg p-2.5 text-sm"
+                            placeholder="0"
+                          />
                         </div>
 
                         <div className="flex gap-3 pt-4 border-t">
@@ -4684,7 +4636,7 @@ export default function AdminCommandCenter() {
                           </button>
                           <button
                             type="submit"
-                            className="flex-1 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium"
+                            className="flex-1 py-2.5 bg-purple-600 text-white rounded-lg hover:bg-purple-700 font-medium"
                           >
                             {editingReseller ? 'Update Reseller' : 'Buat Reseller'}
                           </button>
