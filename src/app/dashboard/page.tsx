@@ -23,6 +23,91 @@ function DashboardContent() {
   const [benefits, setBenefits] = useState<{ [packageId: string]: any[] }>({});
   const [isLoading, setIsLoading] = useState(true);
 
+  const [activationVoucherCode, setActivationVoucherCode] = useState('');
+  const [isClaiming, setIsClaiming] = useState(false);
+  const [activationVoucherResult, setActivationVoucherResult] = useState<any>(null);
+
+  const handleClaimActivationVoucher = async () => {
+    if (!activationVoucherCode.trim()) return;
+    
+    setIsClaiming(true);
+    setActivationVoucherResult(null);
+
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      // Cari voucher
+      const { data: voucher, error } = await supabase
+        .from('voucher_codes')
+        .select('*')
+        .eq('code', activationVoucherCode.toUpperCase().trim())
+        .eq('voucher_category', 'activation')
+        .single();
+
+      if (error || !voucher) {
+        setActivationVoucherResult({ success: false, message: 'Kode voucher tidak ditemukan atau bukan voucher masa aktif.' });
+        return;
+      }
+
+      if (!voucher.is_active) {
+        setActivationVoucherResult({ success: false, message: 'Voucher sudah tidak aktif.' });
+        return;
+      }
+
+      if (voucher.current_uses >= voucher.max_uses) {
+        setActivationVoucherResult({ success: false, message: 'Kuota voucher sudah habis.' });
+        return;
+      }
+
+      // Ambil info paket dari reseller allocation (atau default)
+      // Untuk simplicity, kita pakai paket default atau bisa di-set di voucher
+      const durationMonths = 6; // Default, bisa di-customize
+      
+      // Base date: jika user masih punya masa aktif, perpanjang dari tanggal tersebut
+      const currentExpiry = userProfile?.subscription_valid_until ? new Date(userProfile.subscription_valid_until) : null;
+      const baseDate = (currentExpiry && currentExpiry > new Date()) ? currentExpiry : new Date();
+      const newExpiry = new Date(baseDate);
+      newExpiry.setMonth(newExpiry.getMonth() + durationMonths);
+      
+      const { error: updateError } = await supabase
+        .from('profiles')
+        .update({ subscription_valid_until: newExpiry.toISOString() })
+        .eq('id', user.id);
+
+      if (updateError) throw updateError;
+
+      // Update voucher usage
+      await supabase
+        .from('voucher_codes')
+        .update({ current_uses: voucher.current_uses + 1 })
+        .eq('id', voucher.id);
+
+      // Simpan riwayat
+      await supabase
+        .from('user_activated_vouchers')
+        .insert([{
+          user_id: user.id,
+          voucher_code_id: voucher.id,
+          reseller_id: voucher.reseller_id,
+          duration_months: durationMonths,
+          activated_at: new Date().toISOString()
+        }]);
+
+      setActivationVoucherResult({ 
+        success: true, 
+        message: `✅ Voucher berhasil diklaim! Langganan Anda aktif hingga ${newExpiry.toLocaleDateString('id-ID')}` 
+      });
+      setActivationVoucherCode('');
+      setUserProfile({...userProfile, subscription_valid_until: newExpiry.toISOString()});
+
+    } catch (err: any) {
+      setActivationVoucherResult({ success: false, message: 'Error: ' + err.message });
+    } finally {
+      setIsClaiming(false);
+    }
+  };
+
   useEffect(() => {
     const tabFromUrl = searchParams ? searchParams.get('tab') : null;
     if (tabFromUrl === 'subscription') {
@@ -250,6 +335,41 @@ function DashboardContent() {
           {/* TAB: OVERVIEW */}
           {activeTab === 'overview' && (
             <div className="space-y-6">
+              
+              {/* KLAIM VOUCHER MASA AKTIF */}
+              <div className="bg-gradient-to-r from-purple-50 to-indigo-50 rounded-xl border border-purple-200 p-6">
+                <h2 className="text-lg font-bold text-slate-800 mb-2">🎟️ Klaim Voucher Masa Aktif</h2>
+                <p className="text-sm text-slate-600 mb-4">
+                  Punya kode voucher masa aktif dari reseller atau promo? Masukkan di sini untuk mengaktifkan langganan Anda.
+                </p>
+                
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={activationVoucherCode}
+                    onChange={(e) => setActivationVoucherCode(e.target.value)}
+                    placeholder="Contoh: ABC12-XYZ78"
+                    className="flex-1 border border-slate-300 rounded-lg px-4 py-2.5 text-sm uppercase focus:ring-2 focus:ring-purple-500 focus:outline-none"
+                  />
+                  <button
+                    onClick={handleClaimActivationVoucher}
+                    disabled={isClaiming}
+                    className="bg-purple-600 hover:bg-purple-700 disabled:bg-purple-300 text-white px-6 py-2.5 rounded-lg font-medium text-sm"
+                  >
+                    {isClaiming ? 'Memproses...' : 'Klaim'}
+                  </button>
+                </div>
+
+                {activationVoucherResult && (
+                  <div className={`mt-3 p-3 rounded-lg ${
+                    activationVoucherResult.success 
+                      ? 'bg-green-100 text-green-800' 
+                      : 'bg-red-100 text-red-800'
+                  }`}>
+                    <p className="text-sm font-medium">{activationVoucherResult.message}</p>
+                  </div>
+                )}
+              </div>
               
               {/* Quick Actions - Horizontal Scroll */}
               <div>

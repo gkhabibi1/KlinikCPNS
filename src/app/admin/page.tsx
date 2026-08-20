@@ -78,7 +78,7 @@ const CATEGORY_LIMITS: { [key: string]: number } = {
 
 export default function AdminCommandCenter() {
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState<'analytics' | 'members' | 'packages' | 'challenge' | 'materials' | 'banners' | 'updates' | 'subscription-packages' | 'transactions' | 'vouchers' | 'blog'>('analytics');
+  const [activeTab, setActiveTab] = useState<'analytics' | 'members' | 'packages' | 'challenge' | 'materials' | 'banners' | 'updates' | 'subscription-packages' | 'transactions' | 'vouchers' | 'blog' | 'resellers'>('analytics');
 
   // Protect admin route: ensure user is authenticated
   useEffect(() => {
@@ -215,6 +215,20 @@ export default function AdminCommandCenter() {
     is_published: false
   });
 
+  // State untuk Reseller
+  const [resellers, setResellers] = useState<any[]>([]);
+  const [showResellerModal, setShowResellerModal] = useState(false);
+  const [editingReseller, setEditingReseller] = useState<any>(null);
+  const [resellerForm, setResellerForm] = useState({
+    email: '',
+    password: '',
+    full_name: '',
+    reseller_code: '',
+    checkout_link: '',
+    allocations: [] as { package_id: string; total_quota: number }[]
+  });
+  const [subscriptionPackagesForAllocation, setSubscriptionPackagesForAllocation] = useState<any[]>([]);
+
   const fetchBlogPosts = async () => {
     const { data, error } = await supabase
       .from('blog_posts')
@@ -299,6 +313,168 @@ export default function AdminCommandCenter() {
       is_published: post.is_published
     });
     setShowBlogModal(true);
+  };
+
+  const fetchResellers = async () => {
+    const { data, error } = await supabase
+      .from('resellers')
+      .select(`
+        *,
+        reseller_voucher_allocations (
+          id,
+          package_id,
+          total_quota,
+          used_quota,
+          remaining_quota,
+          subscription_packages (name)
+        )
+      `)
+      .order('created_at', { ascending: false });
+    
+    if (data) setResellers(data);
+  };
+
+  const fetchPackagesForAllocation = async () => {
+    const { data } = await supabase
+      .from('subscription_packages')
+      .select('id, name')
+      .eq('is_active', true);
+    
+    if (data) setSubscriptionPackagesForAllocation(data);
+  };
+
+  const handleSaveReseller = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!resellerForm.email || !resellerForm.full_name) {
+      alert('Email dan nama wajib diisi!');
+      return;
+    }
+
+    try {
+      // 1. Generate reseller code jika kosong
+      const { data: codeData } = await supabase.rpc('generate_reseller_code');
+      const finalCode = resellerForm.reseller_code || codeData;
+
+      if (editingReseller) {
+        // Update reseller existing
+        const { error } = await supabase
+          .from('resellers')
+          .update({
+            full_name: resellerForm.full_name,
+            checkout_link: resellerForm.checkout_link,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', editingReseller.id);
+        
+        if (error) throw error;
+        alert('✅ Reseller berhasil diupdate!');
+      } else {
+        // Buat user baru di auth.users
+        const { data: authData, error: authError } = await supabase.auth.admin.createUser({
+          email: resellerForm.email,
+          password: resellerForm.password || 'Reseller123!',
+          email_confirm: true,
+          user_metadata: {
+            full_name: resellerForm.full_name,
+            role: 'reseller'
+          }
+        });
+
+        if (authError) throw authError;
+
+        // 2. Insert reseller
+        const { data: resellerData, error: resellerError } = await supabase
+          .from('resellers')
+          .insert([{
+            user_id: authData.user.id,
+            email: resellerForm.email,
+            full_name: resellerForm.full_name,
+            reseller_code: finalCode,
+            checkout_link: resellerForm.checkout_link
+          }])
+          .select()
+          .single();
+
+        if (resellerError) throw resellerError;
+
+        // 3. Insert allocations
+        for (const alloc of resellerForm.allocations) {
+          if (alloc.total_quota > 0) {
+            await supabase
+              .from('reseller_voucher_allocations')
+              .insert([{
+                reseller_id: resellerData.id,
+                package_id: alloc.package_id,
+                total_quota: alloc.total_quota,
+                used_quota: 0,
+                remaining_quota: alloc.total_quota
+              }]);
+          }
+        }
+
+        alert(`✅ Reseller berhasil dibuat!\nKode: ${finalCode}\nEmail: ${resellerForm.email}\nPassword: ${resellerForm.password || 'Reseller123!'}`);
+      }
+
+      setShowResellerModal(false);
+      setEditingReseller(null);
+      setResellerForm({
+        email: '',
+        password: '',
+        full_name: '',
+        reseller_code: '',
+        checkout_link: '',
+        allocations: []
+      });
+      fetchResellers();
+    } catch (error: any) {
+      alert('Gagal menyimpan: ' + error.message);
+    }
+  };
+
+  const handleDeleteReseller = async (id: string) => {
+    if (!confirm('Hapus reseller ini? Semua voucher yang sudah di-generate akan tetap aktif.')) return;
+    
+    const { error } = await supabase.from('resellers').delete().eq('id', id);
+    if (error) {
+      alert('Gagal menghapus: ' + error.message);
+    } else {
+      alert('✅ Reseller dihapus');
+      fetchResellers();
+    }
+  };
+
+  const handleEditReseller = (reseller: any) => {
+    setEditingReseller(reseller);
+    setResellerForm({
+      email: reseller.email,
+      password: '',
+      full_name: reseller.full_name,
+      reseller_code: reseller.reseller_code,
+      checkout_link: reseller.checkout_link || '',
+      allocations: reseller.reseller_voucher_allocations?.map((a: any) => ({
+        package_id: a.package_id,
+        total_quota: a.total_quota
+      })) || []
+    });
+    setShowResellerModal(true);
+  };
+
+  const updateAllocation = (packageId: string, quota: number) => {
+    const existing = resellerForm.allocations.find(a => a.package_id === packageId);
+    if (existing) {
+      setResellerForm({
+        ...resellerForm,
+        allocations: resellerForm.allocations.map(a => 
+          a.package_id === packageId ? { ...a, total_quota: quota } : a
+        )
+      });
+    } else {
+      setResellerForm({
+        ...resellerForm,
+        allocations: [...resellerForm.allocations, { package_id: packageId, total_quota: quota }]
+      });
+    }
   };
 
   // State untuk Voucher
@@ -1719,6 +1895,17 @@ export default function AdminCommandCenter() {
               </svg>
               Blog
             </button>
+            <button 
+              onClick={() => { setActiveTab('resellers'); fetchResellers(); fetchPackagesForAllocation(); }} 
+              className={`w-full flex items-center px-4 py-3 rounded-lg text-sm font-medium transition-colors ${
+                activeTab === 'resellers' ? 'bg-blue-600 text-white' : 'text-slate-400 hover:bg-slate-800'
+              }`}
+            >
+              <svg className="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+              </svg>
+              Manajemen Reseller
+            </button>
             </nav>
             <button onClick={handleLogout} className="mt-2 w-full flex items-center px-4 py-3 rounded-lg text-sm font-medium text-slate-400 hover:bg-slate-800 hover:text-white">
               <svg className="w-4 h-4 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1744,6 +1931,7 @@ export default function AdminCommandCenter() {
             {activeTab === 'transactions' && 'Detail Transaksi'}
             {activeTab === 'vouchers' && 'Manajemen Voucher'}
             {activeTab === 'blog' && 'Kelola Blog'}
+            {activeTab === 'resellers' && 'Manajemen Reseller'}
           </h1>
         </header>
 
@@ -4261,6 +4449,244 @@ export default function AdminCommandCenter() {
                             className="flex-1 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium"
                           >
                             {editingBlog ? 'Update Artikel' : 'Simpan Artikel'}
+                          </button>
+                        </div>
+                      </form>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {activeTab === 'resellers' && (
+              <div className="space-y-6">
+                <div className="flex justify-between items-center">
+                  <div>
+                    <h2 className="text-2xl font-bold text-slate-800 mb-2">Manajemen Reseller</h2>
+                    <p className="text-slate-500">Kelola reseller dan alokasi voucher mereka</p>
+                  </div>
+                  <button
+                    onClick={() => {
+                      setEditingReseller(null);
+                      setResellerForm({
+                        email: '',
+                        password: '',
+                        full_name: '',
+                        reseller_code: '',
+                        checkout_link: '',
+                        allocations: []
+                      });
+                      setShowResellerModal(true);
+                    }}
+                    className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium flex items-center gap-2"
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
+                    </svg>
+                    Tambah Reseller
+                  </button>
+                </div>
+
+                {/* List Reseller */}
+                <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+                  <table className="w-full">
+                    <thead className="bg-slate-50 border-b border-slate-200">
+                      <tr>
+                        <th className="p-4 text-left text-xs font-semibold text-slate-600">Kode</th>
+                        <th className="p-4 text-left text-xs font-semibold text-slate-600">Nama</th>
+                        <th className="p-4 text-left text-xs font-semibold text-slate-600">Email</th>
+                        <th className="p-4 text-left text-xs font-semibold text-slate-600">Link Checkout</th>
+                        <th className="p-4 text-center text-xs font-semibold text-slate-600">Status</th>
+                        <th className="p-4 text-center text-xs font-semibold text-slate-600">Aksi</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100">
+                      {resellers.map((reseller) => (
+                        <tr key={reseller.id} className="hover:bg-slate-50">
+                          <td className="p-4">
+                            <div className="font-mono font-bold text-blue-600 text-lg">{reseller.reseller_code}</div>
+                            <div className="text-xs text-slate-500">
+                              Home: klinikcpns.com/r/{reseller.reseller_code}
+                            </div>
+                          </td>
+                          <td className="p-4 font-medium text-slate-800">{reseller.full_name}</td>
+                          <td className="p-4 text-sm text-slate-600">{reseller.email}</td>
+                          <td className="p-4">
+                            {reseller.checkout_link ? (
+                              <a 
+                                href={reseller.checkout_link} 
+                                target="_blank" 
+                                rel="noopener noreferrer"
+                                className="text-xs text-blue-600 hover:underline truncate block max-w-[200px]"
+                              >
+                                {reseller.checkout_link}
+                              </a>
+                            ) : (
+                              <span className="text-xs text-slate-400 italic">Belum diset</span>
+                            )}
+                          </td>
+                          <td className="p-4 text-center">
+                            <span className={`px-2 py-1 rounded-full text-xs font-bold ${
+                              reseller.is_active ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-700'
+                            }`}>
+                              {reseller.is_active ? 'Aktif' : 'Nonaktif'}
+                            </span>
+                          </td>
+                          <td className="p-4">
+                            <div className="flex items-center justify-center gap-2">
+                              <button
+                                onClick={() => handleEditReseller(reseller)}
+                                className="text-blue-600 hover:text-blue-800 text-sm font-medium"
+                              >
+                                Edit
+                              </button>
+                              <button
+                                onClick={() => handleDeleteReseller(reseller.id)}
+                                className="text-red-600 hover:text-red-800 text-sm font-medium"
+                              >
+                                Hapus
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                      {resellers.length === 0 && (
+                        <tr>
+                          <td colSpan={6} className="p-8 text-center text-slate-500">
+                            Belum ada reseller
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* Modal Tambah/Edit Reseller */}
+                {showResellerModal && (
+                  <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 overflow-y-auto">
+                    <div className="bg-white rounded-xl max-w-2xl w-full max-h-[90vh] overflow-hidden shadow-2xl my-8">
+                      <div className="bg-gradient-to-r from-blue-600 to-indigo-700 px-6 py-4 flex justify-between items-center">
+                        <h3 className="text-xl font-bold text-white">
+                          {editingReseller ? 'Edit Reseller' : 'Tambah Reseller Baru'}
+                        </h3>
+                        <button
+                          onClick={() => setShowResellerModal(false)}
+                          className="text-white/80 hover:text-white text-2xl w-10 h-10 flex items-center justify-center rounded-lg hover:bg-white/10"
+                        >
+                          ×
+                        </button>
+                      </div>
+
+                      <form onSubmit={handleSaveReseller} className="p-6 overflow-y-auto max-h-[calc(90vh-140px)] space-y-4">
+                        <div className="grid grid-cols-2 gap-4">
+                          <div className="col-span-2">
+                            <label className="block text-sm font-medium text-slate-700 mb-1">Nama Lengkap *</label>
+                            <input
+                              type="text"
+                              value={resellerForm.full_name}
+                              onChange={(e) => setResellerForm({...resellerForm, full_name: e.target.value})}
+                              className="w-full border border-slate-300 rounded-lg p-2.5 text-sm"
+                              required
+                            />
+                          </div>
+
+                          <div>
+                            <label className="block text-sm font-medium text-slate-700 mb-1">Email *</label>
+                            <input
+                              type="email"
+                              value={resellerForm.email}
+                              onChange={(e) => setResellerForm({...resellerForm, email: e.target.value})}
+                              className="w-full border border-slate-300 rounded-lg p-2.5 text-sm"
+                              required
+                              disabled={!!editingReseller}
+                            />
+                          </div>
+
+                          {!editingReseller && (
+                            <div>
+                              <label className="block text-sm font-medium text-slate-700 mb-1">Password *</label>
+                              <input
+                                type="password"
+                                value={resellerForm.password}
+                                onChange={(e) => setResellerForm({...resellerForm, password: e.target.value})}
+                                className="w-full border border-slate-300 rounded-lg p-2.5 text-sm"
+                                placeholder="Minimal 6 karakter"
+                                required
+                              />
+                            </div>
+                          )}
+
+                          <div>
+                            <label className="block text-sm font-medium text-slate-700 mb-1">Kode Reseller (5 karakter)</label>
+                            <input
+                              type="text"
+                              value={resellerForm.reseller_code}
+                              onChange={(e) => setResellerForm({...resellerForm, reseller_code: e.target.value.toUpperCase().slice(0, 5)})}
+                              className="w-full border border-slate-300 rounded-lg p-2.5 text-sm font-mono"
+                              placeholder="Auto-generate jika kosong"
+                              maxLength={5}
+                            />
+                            <p className="text-xs text-slate-500 mt-1">Kosongkan untuk auto-generate</p>
+                          </div>
+
+                          <div className="col-span-2">
+                            <label className="block text-sm font-medium text-slate-700 mb-1">Link Checkout Custom</label>
+                            <input
+                              type="url"
+                              value={resellerForm.checkout_link}
+                              onChange={(e) => setResellerForm({...resellerForm, checkout_link: e.target.value})}
+                              className="w-full border border-slate-300 rounded-lg p-2.5 text-sm"
+                              placeholder="https://klinikcpns.com/checkout/..."
+                            />
+                            <p className="text-xs text-slate-500 mt-1">Link ini akan digunakan di semua tombol pembelian di halaman reseller</p>
+                          </div>
+                        </div>
+
+                        {/* Alokasi Voucher per Paket */}
+                        <div className="border-t pt-4">
+                          <h4 className="font-bold text-slate-800 mb-3"> Alokasi Voucher Masa Aktif per Paket</h4>
+                          <p className="text-xs text-slate-500 mb-3">
+                            Tentukan berapa banyak voucher gratis yang bisa di-generate reseller untuk setiap paket
+                          </p>
+                          
+                          <div className="space-y-2">
+                            {subscriptionPackagesForAllocation.map(pkg => {
+                              const currentAlloc = resellerForm.allocations.find(a => a.package_id === pkg.id);
+                              return (
+                                <div key={pkg.id} className="flex items-center gap-3 p-3 bg-slate-50 rounded-lg">
+                                  <div className="flex-1">
+                                    <div className="font-medium text-slate-800 text-sm">{pkg.name}</div>
+                                  </div>
+                                  <div className="w-32">
+                                    <input
+                                      type="number"
+                                      min="0"
+                                      value={currentAlloc?.total_quota || 0}
+                                      onChange={(e) => updateAllocation(pkg.id, parseInt(e.target.value) || 0)}
+                                      className="w-full border border-slate-300 rounded-lg p-2 text-sm"
+                                      placeholder="0"
+                                    />
+                                  </div>
+                                  <div className="text-xs text-slate-500 w-20">voucher</div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+
+                        <div className="flex gap-3 pt-4 border-t">
+                          <button
+                            type="button"
+                            onClick={() => setShowResellerModal(false)}
+                            className="flex-1 py-2.5 border border-slate-300 rounded-lg text-slate-700 hover:bg-slate-50"
+                          >
+                            Batal
+                          </button>
+                          <button
+                            type="submit"
+                            className="flex-1 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium"
+                          >
+                            {editingReseller ? 'Update Reseller' : 'Buat Reseller'}
                           </button>
                         </div>
                       </form>
