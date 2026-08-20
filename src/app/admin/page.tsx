@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabaseClient';
+import { supabaseAdmin } from '@/lib/supabase-admin';
 import FormattedText from '@/components/FormattedText';
 
 interface Profile {
@@ -359,8 +360,8 @@ export default function AdminCommandCenter() {
         if (error) throw error;
         alert('✅ Reseller berhasil diupdate!');
       } else {
-        // Buat user baru di auth
-        const { data: authData, error: authError } = await supabase.auth.admin.createUser({
+        // ✅ GUNAKAN supabaseAdmin untuk create user
+        const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
           email: resellerForm.email,
           password: resellerForm.password || 'Reseller123!',
           email_confirm: true,
@@ -370,7 +371,10 @@ export default function AdminCommandCenter() {
           }
         });
 
-        if (authError) throw authError;
+        if (authError) {
+          console.error('Auth error:', authError);
+          throw new Error('Gagal membuat user: ' + authError.message);
+        }
 
         // Insert reseller
         const { error: resellerError } = await supabase
@@ -399,6 +403,7 @@ export default function AdminCommandCenter() {
       });
       fetchResellers();
     } catch (error: any) {
+      console.error('Error:', error);
       alert('Gagal menyimpan: ' + error.message);
     }
   };
