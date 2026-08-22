@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabaseClient';
-import { supabaseAdmin } from '@/lib/supabase-admin';
 import FormattedText from '@/components/FormattedText';
 
 interface Profile {
@@ -360,34 +359,23 @@ export default function AdminCommandCenter() {
         if (error) throw error;
         alert('✅ Reseller berhasil diupdate!');
       } else {
-        // ✅ GUNAKAN supabaseAdmin untuk create user
-        const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
-          email: resellerForm.email,
-          password: resellerForm.password || 'Reseller123!',
-          email_confirm: true,
-          user_metadata: {
-            full_name: resellerForm.full_name,
-            role: 'reseller'
-          }
-        });
-
-        if (authError) {
-          console.error('Auth error:', authError);
-          throw new Error('Gagal membuat user: ' + authError.message);
-        }
-
-        // Insert reseller
-        const { error: resellerError } = await supabase
-          .from('resellers')
-          .insert([{
-            user_id: authData.user.id,
+        const res = await fetch('/api/admin/create-reseller', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
             email: resellerForm.email,
+            password: resellerForm.password || 'Reseller123!',
             full_name: resellerForm.full_name,
             reseller_code: finalCode,
             token_balance: resellerForm.token_balance
-          }]);
+          })
+        });
 
-        if (resellerError) throw resellerError;
+        const resData = await res.json();
+
+        if (!res.ok) {
+          throw new Error(resData.message || 'Gagal membuat reseller');
+        }
 
         alert(`✅ Reseller berhasil dibuat!\nKode: ${finalCode}\nEmail: ${resellerForm.email}\nPassword: ${resellerForm.password || 'Reseller123!'}\nToken: ${resellerForm.token_balance}`);
       }
