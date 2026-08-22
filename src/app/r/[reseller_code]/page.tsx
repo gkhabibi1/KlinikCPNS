@@ -42,6 +42,7 @@ export default async function ResellerHomePage({ params }: PageProps) {
     <KlinikCPNSLandingPage 
       resellerCode={code} 
       resellerName={reseller.full_name} 
+      customCheckoutLink={reseller.checkout_link}
       discountPercentage={10} 
     />
   );

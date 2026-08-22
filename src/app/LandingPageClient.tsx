@@ -614,7 +614,15 @@ function PlanCard({
   );
 }
 
-function Pricing({ resellerCode, discountPercentage = 0 }: { resellerCode?: string; discountPercentage?: number }) {
+function Pricing({
+  resellerCode,
+  customCheckoutLink,
+  discountPercentage = 0,
+}: {
+  resellerCode?: string;
+  customCheckoutLink?: string;
+  discountPercentage?: number;
+}) {
   const [plans, setPlans] = useState<any[]>([]);
 
   useEffect(() => {
@@ -664,7 +672,9 @@ function Pricing({ resellerCode, discountPercentage = 0 }: { resellerCode?: stri
                 ? pkg.subscription_benefits.map((b: any) => b.benefit_text)
                 : ['Akses Try Out SKD', 'Pembahasan Soal', 'Sistem Ranking'];
 
-              const checkoutUrl = resellerCode
+              const checkoutUrl = (customCheckoutLink && customCheckoutLink.trim() !== '')
+                ? customCheckoutLink
+                : resellerCode
                 ? `/checkout/${pkg.id}?ref=${resellerCode}`
                 : `/checkout/${pkg.id}`;
 
@@ -698,7 +708,7 @@ function Pricing({ resellerCode, discountPercentage = 0 }: { resellerCode?: stri
                   "Ranking nasional realtime",
                 ]}
                 ctaText="Ambil Resep 1 Bulan"
-                href="/login?mode=register"
+                href={customCheckoutLink && customCheckoutLink.trim() !== '' ? customCheckoutLink : "/login?mode=register"}
               />
               <PlanCard
                 name="Resep 3 Bulan + Garansi"
@@ -715,7 +725,7 @@ function Pricing({ resellerCode, discountPercentage = 0 }: { resellerCode?: stri
                   "Update materi kisi-kisi 2026",
                 ]}
                 ctaText="Ambil Resep 3 Bulan"
-                href="/login?mode=register"
+                href={customCheckoutLink && customCheckoutLink.trim() !== '' ? customCheckoutLink : "/login?mode=register"}
               />
               <PlanCard
                 name="Resep 6 Bulan (Intensif)"
@@ -729,7 +739,7 @@ function Pricing({ resellerCode, discountPercentage = 0 }: { resellerCode?: stri
                   "Bank soal HOTS eksklusif",
                 ]}
                 ctaText="Ambil Resep 6 Bulan"
-                href="/login?mode=register"
+                href={customCheckoutLink && customCheckoutLink.trim() !== '' ? customCheckoutLink : "/login?mode=register"}
               />
             </>
           )}
@@ -991,12 +1001,14 @@ function StickyCTA() {
 export interface LandingPageProps {
   resellerCode?: string;
   resellerName?: string;
+  customCheckoutLink?: string;
   discountPercentage?: number;
 }
 
 export default function KlinikCPNSLandingPage({
   resellerCode,
   resellerName,
+  customCheckoutLink,
   discountPercentage = 0,
 }: LandingPageProps = {}) {
   useEffect(() => {
@@ -1026,7 +1038,7 @@ export default function KlinikCPNSLandingPage({
       <Opportunity />
       <Resep />
       <Challenge />
-      <Pricing resellerCode={resellerCode} discountPercentage={discountPercentage} />
+      <Pricing resellerCode={resellerCode} customCheckoutLink={customCheckoutLink} discountPercentage={discountPercentage} />
       <Testimonials />
       <FAQ />
       <FinalCTA />
