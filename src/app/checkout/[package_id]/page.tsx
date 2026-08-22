@@ -25,23 +25,45 @@ export default function CheckoutPage() {
   const [agreedToTerms, setAgreedToTerms] = useState(false);
   const [benefits, setBenefits] = useState<any[]>([]);
 
-  // State untuk Voucher
+  // State untuk Voucher & Reseller
   const [voucherCode, setVoucherCode] = useState('');
   const [appliedVoucher, setAppliedVoucher] = useState<any>(null);
   const [isCheckingVoucher, setIsCheckingVoucher] = useState(false);
   const [voucherError, setVoucherError] = useState('');
+  const [resellerCode, setResellerCode] = useState<string | null>(null);
+  const [resellerDiscountPercent, setResellerDiscountPercent] = useState<number>(0);
+
+  useEffect(() => {
+    try {
+      const urlParams = new URLSearchParams(window.location.search);
+      const ref = urlParams.get('ref') || localStorage.getItem('reseller_code');
+      if (ref) {
+        setResellerCode(ref.toUpperCase());
+        setResellerDiscountPercent(10);
+      }
+    } catch (e) {
+      console.error('Error checking reseller referral:', e);
+    }
+  }, []);
 
   // Hitung Harga Final
   const originalPrice = packageData?.price || 0;
-  const discountAmount = appliedVoucher 
-    ? appliedVoucher.type === 'percent' 
-      ? Math.floor(originalPrice * (appliedVoucher.value / 100))
-      : appliedVoucher.type === 'fixed' 
-      ? appliedVoucher.value 
-      : originalPrice // Jika 'free', diskon 100%
+  
+  const resellerDiscountAmount = resellerDiscountPercent > 0 
+    ? Math.round(originalPrice * (resellerDiscountPercent / 100)) 
     : 0;
 
-  const finalPrice = Math.max(0, originalPrice - discountAmount);
+  const priceAfterReseller = Math.max(0, originalPrice - resellerDiscountAmount);
+
+  const discountAmount = appliedVoucher 
+    ? appliedVoucher.type === 'percent' 
+      ? Math.floor(priceAfterReseller * (appliedVoucher.value / 100))
+      : appliedVoucher.type === 'fixed' 
+      ? appliedVoucher.value 
+      : priceAfterReseller // Jika 'free', diskon 100%
+    : 0;
+
+  const finalPrice = Math.max(0, priceAfterReseller - discountAmount);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -663,15 +685,22 @@ export default function CheckoutPage() {
               <div className="space-y-2 mb-6">
                 <div className="flex justify-between text-sm">
                   <span className="text-slate-600">Harga Normal</span>
-                  <span className={`font-medium ${appliedVoucher ? 'text-slate-400 line-through' : 'text-slate-800'}`}>
+                  <span className={`font-medium ${resellerDiscountAmount > 0 || appliedVoucher ? 'text-slate-400 line-through' : 'text-slate-800'}`}>
                     Rp {originalPrice.toLocaleString('id-ID')}
                   </span>
                 </div>
                 
+                {resellerDiscountAmount > 0 && (
+                  <div className="flex justify-between text-sm text-blue-600 font-medium">
+                    <span>Diskon Reseller (10%)</span>
+                    <span>- Rp {resellerDiscountAmount.toLocaleString('id-ID')}</span>
+                  </div>
+                )}
+
                 {appliedVoucher && (
-                  <div className="flex justify-between text-sm text-green-600">
+                  <div className="flex justify-between text-sm text-green-600 font-medium">
                     <span>Diskon Voucher</span>
-                    <span className="font-medium">- Rp {discountAmount.toLocaleString('id-ID')}</span>
+                    <span>- Rp {discountAmount.toLocaleString('id-ID')}</span>
                   </div>
                 )}
               </div>

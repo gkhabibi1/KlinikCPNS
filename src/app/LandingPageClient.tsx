@@ -507,6 +507,7 @@ function Challenge() {
 interface PlanCardProps {
   name: string;
   price: string;
+  originalPrice?: string;
   period: string;
   badge?: string;
   popular?: boolean;
@@ -519,6 +520,7 @@ interface PlanCardProps {
 function PlanCard({
   name,
   price,
+  originalPrice,
   period,
   badge,
   popular,
@@ -557,17 +559,29 @@ function PlanCard({
           {desc}
         </p>
 
-        <div className="flex items-baseline gap-1 mb-6 pb-6 border-b border-slate-100 dark:border-slate-800">
-          <span className="text-3xl md:text-4xl font-extrabold tracking-tight">
-            {price}
-          </span>
-          <span
-            className={`text-xs ${
-              popular ? "text-slate-400" : "text-slate-500"
-            }`}
-          >
-            /{period}
-          </span>
+        <div className="flex flex-col mb-6 pb-6 border-b border-slate-100 dark:border-slate-800">
+          {originalPrice && (
+            <div className="flex items-center gap-2 mb-1">
+              <span className="line-through text-xs text-slate-400 font-semibold">
+                {originalPrice}
+              </span>
+              <span className="bg-red-500 text-white font-extrabold text-[10px] px-2 py-0.5 rounded-full shadow-sm">
+                Hemat 10%
+              </span>
+            </div>
+          )}
+          <div className="flex items-baseline gap-1">
+            <span className="text-3xl md:text-4xl font-extrabold tracking-tight">
+              {price}
+            </span>
+            <span
+              className={`text-xs ${
+                popular ? "text-slate-400" : "text-slate-500"
+              }`}
+            >
+              /{period}
+            </span>
+          </div>
         </div>
 
         <ul className="space-y-3 mb-8">
@@ -600,7 +614,7 @@ function PlanCard({
   );
 }
 
-function Pricing() {
+function Pricing({ resellerCode, discountPercentage = 0 }: { resellerCode?: string; discountPercentage?: number }) {
   const [plans, setPlans] = useState<any[]>([]);
 
   useEffect(() => {
@@ -635,26 +649,38 @@ function Pricing() {
         <div className="grid md:grid-cols-3 gap-8 items-stretch">
           {plans.length > 0 ? (
             plans.map((pkg, idx) => {
+              const rawPrice = pkg.price || 0;
+              const hasDiscount = discountPercentage > 0 && rawPrice > 0;
+              const finalPriceVal = hasDiscount
+                ? Math.round(rawPrice * (1 - discountPercentage / 100))
+                : rawPrice;
+
               const formatPrice = (val: number) => {
                 if (val === 0) return 'Gratis';
                 return `Rp${val.toLocaleString('id-ID')}`;
               };
+
               const benefitsList = pkg.subscription_benefits
                 ? pkg.subscription_benefits.map((b: any) => b.benefit_text)
                 : ['Akses Try Out SKD', 'Pembahasan Soal', 'Sistem Ranking'];
+
+              const checkoutUrl = resellerCode
+                ? `/checkout/${pkg.id}?ref=${resellerCode}`
+                : `/checkout/${pkg.id}`;
 
               return (
                 <PlanCard
                   key={pkg.id || idx}
                   name={pkg.name}
-                  price={formatPrice(pkg.price)}
+                  price={formatPrice(finalPriceVal)}
+                  originalPrice={hasDiscount ? formatPrice(rawPrice) : undefined}
                   period={`${pkg.duration_days} hari`}
-                  badge={idx === 1 ? 'Paling Populer' : undefined}
+                  badge={idx === 1 ? 'Paling Populer' : hasDiscount ? 'Harga Reseller 10% Off' : undefined}
                   popular={idx === 1}
                   desc={pkg.description || 'Akses penuh ke semua fitur simulasi CAT.'}
                   features={benefitsList}
                   ctaText="Pilih Paket Ini"
-                  href={`/checkout/${pkg.id}`}
+                  href={checkoutUrl}
                 />
               );
             })
@@ -962,15 +988,45 @@ function StickyCTA() {
 /* ----------------------------------------------------------------------- */
 /*  Page                                                                    */
 /* ----------------------------------------------------------------------- */
-export default function KlinikCPNSLandingPage() {
+export interface LandingPageProps {
+  resellerCode?: string;
+  resellerName?: string;
+  discountPercentage?: number;
+}
+
+export default function KlinikCPNSLandingPage({
+  resellerCode,
+  resellerName,
+  discountPercentage = 0,
+}: LandingPageProps = {}) {
+  useEffect(() => {
+    if (resellerCode) {
+      try {
+        localStorage.setItem('reseller_code', resellerCode);
+      } catch (e) {
+        console.error('Error saving reseller_code to localStorage:', e);
+      }
+    }
+  }, [resellerCode]);
+
   return (
     <main className="font-sans antialiased bg-white pb-16 sm:pb-0">
+      {resellerCode && (
+        <div className="bg-gradient-to-r from-blue-700 via-indigo-700 to-purple-700 text-white text-xs md:text-sm font-semibold py-3 px-4 text-center sticky top-0 z-[60] shadow-lg flex items-center justify-center gap-2">
+          <span className="bg-amber-400 text-slate-950 font-black px-2.5 py-0.5 rounded text-[11px] uppercase tracking-wider shadow-sm">
+            Promo Reseller {discountPercentage || 10}% OFF
+          </span>
+          <span>
+            Anda diundang oleh <strong>{resellerName || resellerCode}</strong>! Semua paket otomatis hemat {discountPercentage || 10}%.
+          </span>
+        </div>
+      )}
       <Header />
       <Hero />
       <Opportunity />
       <Resep />
       <Challenge />
-      <Pricing />
+      <Pricing resellerCode={resellerCode} discountPercentage={discountPercentage} />
       <Testimonials />
       <FAQ />
       <FinalCTA />
