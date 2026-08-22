@@ -614,6 +614,16 @@ function PlanCard({
   );
 }
 
+const formatExternalUrl = (url?: string) => {
+  if (!url) return '';
+  const trimmed = url.trim();
+  if (!trimmed) return '';
+  if (trimmed.startsWith('/') || trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
+    return trimmed;
+  }
+  return `https://${trimmed}`;
+};
+
 function Pricing({
   resellerCode,
   customCheckoutLink,
@@ -638,6 +648,9 @@ function Pricing({
     };
     fetchPlans();
   }, []);
+
+  const formattedCustomLink = formatExternalUrl(customCheckoutLink);
+  const fallbackUrl = formattedCustomLink || "/login?mode=register";
 
   return (
     <section id="paket" className="bg-white py-20 md:py-28">
@@ -672,8 +685,8 @@ function Pricing({
                 ? pkg.subscription_benefits.map((b: any) => b.benefit_text)
                 : ['Akses Try Out SKD', 'Pembahasan Soal', 'Sistem Ranking'];
 
-              const checkoutUrl = (customCheckoutLink && customCheckoutLink.trim() !== '')
-                ? customCheckoutLink
+              const checkoutUrl = formattedCustomLink
+                ? formattedCustomLink
                 : resellerCode
                 ? `/checkout/${pkg.id}?ref=${resellerCode}`
                 : `/checkout/${pkg.id}`;
@@ -708,7 +721,7 @@ function Pricing({
                   "Ranking nasional realtime",
                 ]}
                 ctaText="Ambil Resep 1 Bulan"
-                href={customCheckoutLink && customCheckoutLink.trim() !== '' ? customCheckoutLink : "/login?mode=register"}
+                href={fallbackUrl}
               />
               <PlanCard
                 name="Resep 3 Bulan + Garansi"
@@ -725,7 +738,7 @@ function Pricing({
                   "Update materi kisi-kisi 2026",
                 ]}
                 ctaText="Ambil Resep 3 Bulan"
-                href={customCheckoutLink && customCheckoutLink.trim() !== '' ? customCheckoutLink : "/login?mode=register"}
+                href={fallbackUrl}
               />
               <PlanCard
                 name="Resep 6 Bulan (Intensif)"
@@ -739,7 +752,7 @@ function Pricing({
                   "Bank soal HOTS eksklusif",
                 ]}
                 ctaText="Ambil Resep 6 Bulan"
-                href={customCheckoutLink && customCheckoutLink.trim() !== '' ? customCheckoutLink : "/login?mode=register"}
+                href={fallbackUrl}
               />
             </>
           )}
