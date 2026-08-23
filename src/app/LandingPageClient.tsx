@@ -347,10 +347,11 @@ interface RxCardProps {
   desc: string;
   icon: React.ElementType;
   imageLabel: string;
+  imageUrl?: string;
   reverse?: boolean;
 }
 
-function RxCard({ eyebrow, title, desc, icon: Icon, imageLabel, reverse }: RxCardProps) {
+function RxCard({ eyebrow, title, desc, icon: Icon, imageLabel, imageUrl, reverse }: RxCardProps) {
   return (
     <div
       className={`bg-white rounded-3xl border border-slate-100 shadow-sm shadow-slate-100 overflow-hidden flex flex-col lg:items-stretch ${
@@ -373,10 +374,20 @@ function RxCard({ eyebrow, title, desc, icon: Icon, imageLabel, reverse }: RxCar
         <p className="mt-2 text-sm text-slate-600 leading-relaxed">{desc}</p>
       </div>
       <div className="lg:w-1/2 p-6 pt-0 lg:p-8">
-        <ImageSlot
-          label={imageLabel}
-          ratio="aspect-[16/10] lg:aspect-auto lg:h-full"
-        />
+        {imageUrl ? (
+          <div className="relative aspect-[16/10] lg:aspect-auto lg:h-full w-full overflow-hidden rounded-2xl border border-slate-100 bg-slate-50 flex items-center justify-center">
+            <img
+              src={imageUrl}
+              alt={title}
+              className="w-full h-full object-cover rounded-2xl"
+            />
+          </div>
+        ) : (
+          <ImageSlot
+            label={imageLabel}
+            ratio="aspect-[16/10] lg:aspect-auto lg:h-full"
+          />
+        )}
       </div>
     </div>
   );
@@ -406,6 +417,7 @@ function Resep() {
             title="399 Paket Try Out Lengkap + Pembahasan"
             desc="Bank soal terbesar dengan pembahasan detail di setiap butir, biar kamu ngerti bukan cuma hafal jawaban."
             imageLabel="Screenshot / bukti visual jumlah paket soal (399 paket) di dashboard"
+            imageUrl="https://ik.imagekit.io/e2yna5qg8/ChatGPT%20Image%20Aug%2023,%202026,%2005_55_53%20AM_11zon.png"
           />
           <RxCard
             eyebrow="Simulasi Nyata"
@@ -413,6 +425,7 @@ function Resep() {
             title="Simulasi CAT Seperti Ujian Asli"
             desc="Tampilan, waktu, dan sistem penilaian dibuat semirip mungkin dengan CAT BKN — nggak ada kejutan di hari-H."
             imageLabel="Screenshot tampilan simulasi CAT / interface ujian di aplikasi"
+            imageUrl="https://ik.imagekit.io/e2yna5qg8/ChatGPT%20Image%20Aug%2023,%202026,%2005_59_08%20AM_11zon.png"
             reverse
           />
           <RxCard
@@ -421,6 +434,7 @@ function Resep() {
             title="Materi Terbaru Sesuai Kisi-Kisi"
             desc="Selalu diperbarui mengikuti kisi-kisi resmi terbaru, jadi kamu latihan soal yang relevan — bukan soal basi."
             imageLabel="Foto modul / rangkuman materi terbaru sesuai kisi-kisi"
+            imageUrl="https://ik.imagekit.io/e2yna5qg8/ChatGPT%20Image%20Aug%2023,%202026,%2006_42_10%20AM_11zon.png"
           />
         </div>
       </div>
@@ -488,11 +502,13 @@ function Challenge() {
             </div>
 
             <div className="lg:col-span-5">
-              <ImageSlot
-                label="Mockup / visual kalender 30 Days Challenge dengan centang (streak) tiap hari"
-                ratio="aspect-[4/3]"
-                className="!border-slate-700 !bg-slate-800/80 shadow-2xl"
-              />
+              <div className="relative aspect-[4/3] w-full overflow-hidden rounded-2xl border border-slate-700 bg-slate-800 shadow-2xl flex items-center justify-center">
+                <img
+                  src="https://ik.imagekit.io/e2yna5qg8/ChatGPT%20Image%20Aug%2023,%202026,%2006_30_27%20AM_11zon.png"
+                  alt="30 Days CPNS Challenge: Rahasia konsisten tanpa tapi"
+                  className="w-full h-full object-cover rounded-2xl"
+                />
+              </div>
             </div>
           </div>
         </div>
