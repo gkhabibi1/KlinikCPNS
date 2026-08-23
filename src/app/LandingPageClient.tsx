@@ -160,17 +160,17 @@ function Hero() {
         <div>
           <div className="inline-flex items-center gap-2 bg-blue-50 border border-blue-100 text-blue-700 text-xs font-semibold px-3.5 py-1.5 rounded-full mb-6">
             <FileText className="w-3.5 h-3.5" />
-            Resep Sukses CPNS 2026
+            Resep Sukses KlinikCPNS 2026
           </div>
 
           <h1 className="text-4xl md:text-[42px] lg:text-5xl font-extrabold text-slate-900 leading-[1.12] tracking-tight">
-            Persiapkan Lolos CPNS 2026 dengan{" "}
-            <span className="text-blue-600">Resep Simulasi CAT</span>{" "}
-            Terlengkap
+            Persiapkan Lolos CPNS 2026 bersama{" "}
+            <span className="text-blue-600">KlinikCPNS</span> dengan Resep Simulasi CAT Terlengkap
           </h1>
 
           <p className="mt-5 text-base md:text-lg text-slate-600 leading-relaxed max-w-xl">
-            Satu-satunya bimbel CPNS yang{" "}
+            Satu-satunya bimbel CPNS di{" "}
+            <span className="font-semibold text-slate-900">KlinikCPNS</span> yang{" "}
             <span className="font-semibold text-slate-900">
               berani kasih GARANSI UANG KEMBALI
             </span>
@@ -183,7 +183,7 @@ function Hero() {
               className="inline-flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold px-6 py-3.5 rounded-full transition-colors shadow-lg shadow-blue-200"
             >
               <Coffee className="w-4.5 h-4.5" />
-              Mulai Try Out, Cuma Seharga Kopi
+              Mulai Try Out KlinikCPNS, Cuma Seharga Kopi
             </a>
             <a
               href="#resep"
@@ -205,7 +205,7 @@ function Hero() {
               ))}
             </div>
             <p className="text-sm text-slate-600">
-              <span className="font-bold text-slate-900">7.800+ member</span>{" "}
+              <span className="font-bold text-slate-900">7.800+ member KlinikCPNS</span>{" "}
               sudah terdaftar dan latihan bareng kami
             </p>
           </div>
@@ -215,7 +215,7 @@ function Hero() {
           <div className="overflow-hidden rounded-3xl border border-slate-100 shadow-xl shadow-blue-100/60">
             <img
               src="https://ik.imagekit.io/e2yna5qg8/Home%201.jpg"
-              alt="Persiapkan Lolos CPNS 2026"
+              alt="Persiapkan Lolos CPNS 2026 di KlinikCPNS"
               className="w-full h-auto max-h-[520px] object-cover rounded-3xl"
             />
           </div>
@@ -227,7 +227,7 @@ function Hero() {
                 Rx
               </span>
               <p className="text-[11px] font-bold text-slate-900 tracking-tight">
-                Resep Klinik CPNS
+                Resep KlinikCPNS
               </p>
             </div>
             <ul className="space-y-1.5">
@@ -262,7 +262,7 @@ function Hero() {
         <div className="max-w-6xl mx-auto px-5 md:px-8 py-3.5 flex items-center justify-center gap-2.5 text-center">
           <ShieldCheck className="w-4.5 h-4.5 text-blue-400 shrink-0" />
           <p className="text-xs md:text-sm text-white font-medium">
-            Satu-satunya yang berani{" "}
+            KlinikCPNS — Satu-satunya yang berani{" "}
             <span className="font-extrabold text-blue-400">
               GARANSI UANG KEMBALI
             </span>{" "}
@@ -283,10 +283,10 @@ function Opportunity() {
       <div className="max-w-6xl mx-auto px-5 md:px-8 grid lg:grid-cols-2 gap-12 items-center">
         <div>
           <p className="text-xs font-bold text-blue-600 uppercase tracking-wider mb-3">
-            Kenapa Harus Sekarang
+            Kenapa Harus KlinikCPNS Sekarang
           </p>
           <h2 className="text-3xl md:text-4xl font-extrabold text-slate-900 leading-tight tracking-tight">
-            Tahun ini, peluangmu lolos CPNS lebih besar dari biasanya
+            Tahun ini, peluangmu lolos CPNS 2026 bersama KlinikCPNS lebih besar
           </h2>
           <p className="mt-5 text-slate-600 leading-relaxed">
             Berdasarkan data formasi yang dibuka, kesempatan CPNS 2026 lebih
@@ -295,16 +295,16 @@ function Opportunity() {
             terbuka.
           </p>
           <p className="mt-4 text-slate-900 font-semibold leading-relaxed">
-            Tapi ingat: kalau cuma belajar teori tanpa latihan soal, kamu
+            Tapi ingat: kalau cuma belajar teori tanpa latihan soal di KlinikCPNS, kamu
             tetap nggak akan lolos.
           </p>
           <p className="mt-4 text-slate-600 leading-relaxed">
             Maka dari itu, di{" "}
             <span className="font-semibold text-slate-900">
-              Klinik CPNS
+              KlinikCPNS
             </span>
             , kami nggak cuma kasih materi — kami kasih{" "}
-            <span className="font-semibold text-blue-600">resep</span>: satu
+            <span className="font-semibold text-blue-600">resep KlinikCPNS</span>: satu
             paket latihan terarah yang sudah terbukti bikin member kami
             terbiasa menghadapi ujian asli.
           </p>
@@ -314,7 +314,7 @@ function Opportunity() {
           <div className="col-span-2 overflow-hidden rounded-2xl border border-slate-100 shadow-md">
             <img
               src="https://ik.imagekit.io/e2yna5qg8/Home%202.jpg"
-              alt="Peluang CPNS 2026"
+              alt="Peluang Lolos CPNS 2026 - KlinikCPNS"
               className="w-full h-auto rounded-2xl"
             />
           </div>
@@ -329,7 +329,7 @@ function Opportunity() {
             <Users className="w-5 h-5 text-blue-400 mb-1" />
             <p className="text-2xl font-extrabold text-white">7.800+</p>
             <p className="text-xs text-slate-300 leading-snug">
-              member sudah latihan bareng Klinik CPNS
+              member sudah latihan bareng KlinikCPNS
             </p>
           </div>
         </div>
@@ -399,40 +399,40 @@ function Resep() {
       <div className="max-w-6xl mx-auto px-5 md:px-8">
         <div className="max-w-2xl mb-14">
           <p className="text-xs font-bold text-blue-600 uppercase tracking-wider mb-3">
-            Resep Klinik CPNS
+            Resep Lolos KlinikCPNS
           </p>
           <h2 className="text-3xl md:text-4xl font-extrabold text-slate-900 leading-tight tracking-tight">
-            3 resep yang bikin persiapanmu beda
+            3 resep latihan KlinikCPNS yang bikin persiapanmu beda
           </h2>
           <p className="mt-4 text-slate-600 leading-relaxed">
-            Setiap resep dirancang untuk satu tujuan: bikin kamu terbiasa,
+            Setiap resep di KlinikCPNS dirancang untuk satu tujuan: bikin kamu terbiasa,
             bukan cuma tahu.
           </p>
         </div>
 
         <div className="flex flex-col gap-6">
           <RxCard
-            eyebrow="Dosis Latihan"
+            eyebrow="Dosis Latihan KlinikCPNS"
             icon={ClipboardCheck}
-            title="399 Paket Try Out Lengkap + Pembahasan"
-            desc="Bank soal terbesar dengan pembahasan detail di setiap butir, biar kamu ngerti bukan cuma hafal jawaban."
+            title="399 Paket Try Out CPNS Lengkap + Pembahasan KlinikCPNS"
+            desc="Bank soal terbesar di KlinikCPNS dengan pembahasan detail di setiap butir, biar kamu ngerti bukan cuma hafal jawaban."
             imageLabel="Screenshot / bukti visual jumlah paket soal (399 paket) di dashboard"
             imageUrl="https://ik.imagekit.io/e2yna5qg8/ChatGPT%20Image%20Aug%2023,%202026,%2005_55_53%20AM_11zon.png"
           />
           <RxCard
-            eyebrow="Simulasi Nyata"
+            eyebrow="Simulasi Nyata KlinikCPNS"
             icon={Stethoscope}
-            title="Simulasi CAT Seperti Ujian Asli"
+            title="Simulasi CAT BKN Seperti Ujian Asli di KlinikCPNS"
             desc="Tampilan, waktu, dan sistem penilaian dibuat semirip mungkin dengan CAT BKN — nggak ada kejutan di hari-H."
             imageLabel="Screenshot tampilan simulasi CAT / interface ujian di aplikasi"
             imageUrl="https://ik.imagekit.io/e2yna5qg8/ChatGPT%20Image%20Aug%2023,%202026,%2005_59_08%20AM_11zon.png"
             reverse
           />
           <RxCard
-            eyebrow="Materi Terkini"
+            eyebrow="Materi Terkini KlinikCPNS"
             icon={FileText}
-            title="Materi Terbaru Sesuai Kisi-Kisi"
-            desc="Selalu diperbarui mengikuti kisi-kisi resmi terbaru, jadi kamu latihan soal yang relevan — bukan soal basi."
+            title="Materi Terbaru Sesuai Kisi-Kisi Resmi KlinikCPNS"
+            desc="Selalu diperbarui mengikuti kisi-kisi resmi terbaru, jadi kamu latihan soal CPNS yang relevan — bukan soal basi."
             imageLabel="Foto modul / rangkuman materi terbaru sesuai kisi-kisi"
             imageUrl="https://ik.imagekit.io/e2yna5qg8/ChatGPT%20Image%20Aug%2023,%202026,%2006_42_10%20AM_11zon.png"
           />
@@ -456,19 +456,19 @@ function Challenge() {
             <div className="lg:col-span-7">
               <div className="inline-flex items-center gap-2 bg-blue-500/20 border border-blue-400/30 text-blue-300 text-xs font-semibold px-3.5 py-1.5 rounded-full mb-6">
                 <Flame className="w-4 h-4 text-amber-400" />
-                Fitur Unggulan — Garansi Uang Kembali
+                Fitur Unggulan KlinikCPNS — Garansi Uang Kembali
               </div>
 
               <h2 className="text-3xl md:text-4xl font-extrabold leading-tight tracking-tight">
-                30 Days CPNS Challenge: Rahasia konsisten tanpa tapi
+                30 Days CPNS Challenge KlinikCPNS: Rahasia konsisten tanpa tapi
               </h2>
 
               <p className="mt-4 text-slate-300 text-base md:text-lg leading-relaxed">
-                Tiap hari kamu wajib selesaikan 1 paket try out dengan target
+                Tiap hari kamu wajib selesaikan 1 paket try out di KlinikCPNS dengan target
                 nilai yang terus meningkat. Selesaikan 30 hari tanpa putus —
                 kalau kamu tetap nggak lolos tes CPNS,{" "}
                 <span className="font-bold text-white underline decoration-blue-400 underline-offset-4">
-                  uangmu kami kembalikan 100%
+                  uangmu kami kembalikan 100% dari KlinikCPNS
                 </span>
                 .
               </p>
@@ -673,13 +673,13 @@ function Pricing({
       <div className="max-w-6xl mx-auto px-5 md:px-8">
         <div className="text-center max-w-2xl mx-auto mb-16">
           <p className="text-xs font-bold text-blue-600 uppercase tracking-wider mb-3">
-            Pilihan Resep Paket
+            Pilihan Resep Paket KlinikCPNS
           </p>
           <h2 className="text-3xl md:text-4xl font-extrabold text-slate-900 leading-tight tracking-tight">
-            Investasi seharga kopi untuk masa depan ASN
+            Investasi Paket KlinikCPNS Seharga Kopi untuk Masa Depan ASN
           </h2>
           <p className="mt-4 text-slate-600 text-base leading-relaxed">
-            Pilih durasi resep yang paling sesuai dengan target persiapanmu.
+            Pilih durasi resep KlinikCPNS yang paling sesuai dengan target persiapanmu.
           </p>
         </div>
 
@@ -699,7 +699,7 @@ function Pricing({
 
               const benefitsList = pkg.subscription_benefits
                 ? pkg.subscription_benefits.map((b: any) => b.benefit_text)
-                : ['Akses Try Out SKD', 'Pembahasan Soal', 'Sistem Ranking'];
+                : ['Akses Try Out SKD KlinikCPNS', 'Pembahasan Soal Detail', 'Sistem Ranking Nasional'];
 
               const checkoutUrl = formattedCustomLink
                 ? formattedCustomLink
@@ -716,9 +716,9 @@ function Pricing({
                   period={`${pkg.duration_days} hari`}
                   badge={idx === 1 ? 'Paling Populer' : hasDiscount ? 'Harga Reseller 10% Off' : undefined}
                   popular={idx === 1}
-                  desc={pkg.description || 'Akses penuh ke semua fitur simulasi CAT.'}
+                  desc={pkg.description || 'Akses penuh ke semua fitur simulasi CAT KlinikCPNS.'}
                   features={benefitsList}
-                  ctaText="Pilih Paket Ini"
+                  ctaText="Pilih Paket KlinikCPNS Ini"
                   href={checkoutUrl}
                 />
               );
@@ -726,13 +726,13 @@ function Pricing({
           ) : (
             <>
               <PlanCard
-                name="Resep 1 Bulan"
+                name="Resep 1 Bulan KlinikCPNS"
                 price="Rp49.000"
                 period="bulan"
-                desc="Cocok untuk pemanasan dan latihan cepat menjelang tes."
+                desc="Cocok untuk pemanasan dan latihan cepat menjelang tes di KlinikCPNS."
                 features={[
-                  "399 paket try out TWK, TIU, TKP",
-                  "Simulasi CAT BKN realtime",
+                  "399 paket try out TWK, TIU, TKP KlinikCPNS",
+                  "Simulasi CAT BKN realtime KlinikCPNS",
                   "Pembahasan detail & kunci jawaban",
                   "Ranking nasional realtime",
                 ]}
@@ -740,32 +740,32 @@ function Pricing({
                 href={fallbackUrl}
               />
               <PlanCard
-                name="Resep 3 Bulan + Garansi"
+                name="Resep 3 Bulan KlinikCPNS + Garansi"
                 price="Rp99.000"
                 period="3 bulan"
                 badge="Rekomendasi Utama"
                 popular
-                desc="Paket paling banyak dipilih member Klinik CPNS."
+                desc="Paket paling banyak dipilih member KlinikCPNS."
                 features={[
-                  "Semua fitur Resep 1 Bulan",
-                  "Akses 30 Days CPNS Challenge",
+                  "Semua fitur Resep 1 Bulan KlinikCPNS",
+                  "Akses 30 Days CPNS Challenge KlinikCPNS",
                   "GARANSI UANG KEMBALI 100%",
-                  "Grup diskusi & konsultasi",
+                  "Grup diskusi & konsultasi KlinikCPNS",
                   "Update materi kisi-kisi 2026",
                 ]}
                 ctaText="Ambil Resep 3 Bulan"
                 href={fallbackUrl}
               />
               <PlanCard
-                name="Resep 6 Bulan (Intensif)"
+                name="Resep 6 Bulan KlinikCPNS (Intensif)"
                 price="Rp149.000"
                 period="6 bulan"
-                desc="Untuk kamu yang mau persiapan matang jauh-jauh hari."
+                desc="Untuk kamu yang mau persiapan matang jauh-jauh hari di KlinikCPNS."
                 features={[
-                  "Semua fitur Resep 3 Bulan",
-                  "Garansi Uang Kembali 100%",
+                  "Semua fitur Resep 3 Bulan KlinikCPNS",
+                  "Garansi Uang Kembali 100% KlinikCPNS",
                   "Akses materi P3K (opsional)",
-                  "Bank soal HOTS eksklusif",
+                  "Bank soal HOTS eksklusif KlinikCPNS",
                 ]}
                 ctaText="Ambil Resep 6 Bulan"
                 href={fallbackUrl}
@@ -811,7 +811,7 @@ function TestimonialCard({ name, role, quote }: TestimonialCardProps) {
       </p>
       <div className="mt-4 inline-flex items-center gap-1.5 text-[11px] font-bold text-blue-600 bg-blue-50 w-fit px-2.5 py-1 rounded-full">
         <BadgeCheck className="w-3.5 h-3.5" />
-        Lolos CPNS
+        Lolos CPNS bersama KlinikCPNS
       </div>
     </div>
   );
@@ -823,19 +823,19 @@ function Testimonials() {
       name: "Dian A.",
       role: "Lolos di Kementerian Keuangan",
       quote:
-        "Karena rutin latihan try out tiap hari, pas ujian asli rasanya kayak udah pernah ngerjain sebelumnya. Nggak grogi sama sekali.",
+        "Karena rutin latihan try out di KlinikCPNS tiap hari, pas ujian asli rasanya kayak udah pernah ngerjain sebelumnya. Nggak grogi sama sekali.",
     },
     {
       name: "Rangga P.",
       role: "Lolos di Pemkab, Formasi Guru",
       quote:
-        "30 Days Challenge bener-bener bantu saya konsisten. Biasanya males belajar, sekarang jadi ada targetnya tiap hari.",
+        "30 Days Challenge KlinikCPNS bener-bener bantu saya konsisten. Biasanya males belajar, sekarang jadi ada targetnya tiap hari.",
     },
     {
       name: "Sri W.",
       role: "Lolos di Kemenkes",
       quote:
-        "Pembahasan soalnya detail banget, jadi saya ngerti pola soal CAT bukan cuma nebak jawaban. Worth it banget.",
+        "Pembahasan soal di KlinikCPNS detail banget, jadi saya ngerti pola soal CAT bukan cuma nebak jawaban. Worth it banget.",
     },
   ];
   return (
@@ -843,10 +843,10 @@ function Testimonials() {
       <div className="max-w-6xl mx-auto px-5 md:px-8">
         <div className="max-w-2xl mb-14">
           <p className="text-xs font-bold text-blue-600 uppercase tracking-wider mb-3">
-            Testimoni
+            Testimoni Peserta KlinikCPNS
           </p>
           <h2 className="text-3xl md:text-4xl font-extrabold text-slate-900 leading-tight tracking-tight">
-            Mereka lolos karena rajin latihan, bukan kebetulan
+            Peserta KlinikCPNS Lolos Karena Rajin Latihan, Bukan Kebetulan
           </h2>
         </div>
         <div className="grid md:grid-cols-3 gap-6">
@@ -898,20 +898,20 @@ function FAQ() {
   const [openIndex, setOpenIndex] = useState(0);
   const faqs = [
     {
-      q: "Apa itu Klinik CPNS?",
-      a: "Klinik CPNS adalah platform latihan try out dan simulasi CAT untuk membantu kamu bersiap menghadapi seleksi CPNS 2026, lengkap dengan pembahasan dan materi sesuai kisi-kisi terbaru.",
+      q: "Apa itu platform KlinikCPNS?",
+      a: "KlinikCPNS adalah platform latihan try out dan simulasi CAT BKN terdepan untuk membantu kamu bersiap menghadapi seleksi CPNS 2026, lengkap dengan pembahasan dan materi sesuai kisi-kisi terbaru.",
     },
     {
-      q: "Gimana cara kerja garansi uang kembali?",
-      a: "Kamu perlu menyelesaikan 30 Days CPNS Challenge dan mencapai target nilai yang ditentukan. Kalau syarat itu terpenuhi tapi kamu tetap belum lolos tes CPNS 2026, uangmu akan dikembalikan sesuai ketentuan yang berlaku.",
+      q: "Gimana cara kerja garansi uang kembali di KlinikCPNS?",
+      a: "Kamu perlu menyelesaikan 30 Days CPNS Challenge di KlinikCPNS dan mencapai target nilai yang ditentukan. Kalau syarat itu terpenuhi tapi kamu tetap belum lolos tes CPNS 2026, uangmu akan dikembalikan 100% oleh KlinikCPNS.",
     },
     {
-      q: "Saya pemula banget, cocok nggak ikut Klinik CPNS?",
-      a: "Sangat cocok! Pembahasan kami dirancang mudah dipahami dari dasar, lengkap dengan statistik perkembangan nilai biar kamu tahu bagian mana yang harus ditingkatkan.",
+      q: "Saya pemula banget, cocok nggak ikut KlinikCPNS?",
+      a: "Sangat cocok! Pembahasan di KlinikCPNS dirancang mudah dipahami dari dasar, lengkap dengan statistik perkembangan nilai biar kamu tahu bagian mana yang harus ditingkatkan.",
     },
     {
-      q: "Apakah soal-soalnya selalu di-update?",
-      a: "Ya! Tim kami selalu memperbarui bank soal sesuai kisi-kisi resmi KemenPAN-RB & BKN terbaru.",
+      q: "Apakah soal-soal try out di KlinikCPNS selalu di-update?",
+      a: "Ya! Tim KlinikCPNS selalu memperbarui bank soal sesuai kisi-kisi resmi KemenPAN-RB & BKN terbaru.",
     },
   ];
 
@@ -920,10 +920,10 @@ function FAQ() {
       <div className="max-w-4xl mx-auto px-5 md:px-8">
         <div className="text-center mb-14">
           <p className="text-xs font-bold text-blue-600 uppercase tracking-wider mb-3">
-            FAQ
+            FAQ KlinikCPNS
           </p>
           <h2 className="text-3xl md:text-4xl font-extrabold text-slate-900 leading-tight tracking-tight">
-            Pertanyaan yang sering ditanyakan
+            Pertanyaan yang Sering Ditanyakan Tentang KlinikCPNS
           </h2>
         </div>
 
@@ -951,11 +951,11 @@ function FinalCTA() {
     <section className="bg-blue-600 text-white py-20 md:py-24 relative overflow-hidden">
       <div className="max-w-4xl mx-auto px-5 md:px-8 text-center relative z-10">
         <h2 className="text-3xl md:text-5xl font-extrabold leading-tight tracking-tight">
-          Siap lolos CPNS 2026 bersama Klinik CPNS?
+          Siap lolos CPNS 2026 bersama KlinikCPNS?
         </h2>
         <p className="mt-5 text-blue-100 text-base md:text-lg leading-relaxed max-w-2xl mx-auto">
-          Mulai latihan sekarang sebelum pendaftaran dibuka. Makin awal kamu
-          mulai, makin besar peluangmu lolos.
+          Mulai latihan bersama KlinikCPNS sekarang sebelum pendaftaran dibuka. Makin awal kamu
+          mulai di KlinikCPNS, makin besar peluangmu lolos.
         </p>
         <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-4">
           <a
@@ -963,7 +963,7 @@ function FinalCTA() {
             className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-white text-blue-600 hover:bg-blue-50 font-extrabold text-base px-8 py-4 rounded-full transition-colors shadow-xl"
           >
             <Coffee className="w-5 h-5" />
-            Ambil Resep Try Out Sekarang
+            Ambil Resep Try Out KlinikCPNS Sekarang
           </a>
         </div>
       </div>
@@ -981,7 +981,7 @@ function Footer() {
         <a href="#top" className="flex items-center gap-2.5 shrink-0">
           <img
             src="https://ik.imagekit.io/e2yna5qg8/Logo%20Klinik%20CPNS.png"
-            alt="Klinik CPNS Logo"
+            alt="KlinikCPNS Logo"
             className="h-8 md:h-9 w-auto object-contain brightness-0 invert"
           />
         </a>
@@ -1000,7 +1000,7 @@ function Footer() {
           </a>
         </nav>
         <p className="text-xs text-slate-500">
-          © 2026 Klinik CPNS. Semua hak dilindungi.
+          © 2026 KlinikCPNS. Semua hak dilindungi.
         </p>
       </div>
     </footer>
@@ -1018,7 +1018,7 @@ function StickyCTA() {
         className="w-full inline-flex items-center justify-center gap-2 bg-blue-600 text-white font-semibold px-5 py-3 rounded-full"
       >
         <Coffee className="w-4 h-4" />
-        Mulai Try Out, Cuma Seharga Kopi
+        Mulai Try Out KlinikCPNS, Cuma Seharga Kopi
       </a>
     </div>
   );
