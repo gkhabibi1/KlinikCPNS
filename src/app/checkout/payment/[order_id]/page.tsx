@@ -476,32 +476,6 @@ export default function PaymentQRISPage() {
               </div>
             </div>
 
-            {/* CALL TO ACTION UTAMA: SUDAH BAYAR? KEMBALI KE HALAMAN UTAMA */}
-            <div className="bg-gradient-to-br from-blue-600 via-blue-600 to-indigo-700 rounded-2xl p-6 shadow-2xl shadow-blue-600/30 border-2 border-blue-400 text-white">
-              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-5">
-                <div>
-                  <div className="inline-flex items-center gap-2 px-2.5 py-0.5 rounded-full bg-white/20 text-xs font-bold mb-1.5 backdrop-blur-sm">
-                    <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-                    <span>Sudah Melakukan Pembayaran?</span>
-                  </div>
-                  <h3 className="text-xl sm:text-2xl font-black text-white leading-tight">
-                    Kembali ke Halaman Utama
-                  </h3>
-                  <p className="text-xs sm:text-sm text-blue-100 mt-1.5 leading-relaxed">
-                    Setelah scan QRIS dan transfer sukses, Anda dapat langsung kembali ke halaman utama dashboard. Admin kami akan memverifikasi transaksi Anda dalam kurun waktu <strong>1x24 jam</strong>.
-                  </p>
-                </div>
-                <Link
-                  href="/dashboard"
-                  className="w-full sm:w-auto px-7 py-4 bg-white hover:bg-slate-100 active:scale-95 text-blue-700 font-black rounded-xl text-sm sm:text-base transition-all shadow-xl flex items-center justify-center gap-2.5 shrink-0 border border-white"
-                >
-                  <span>🏠 Masuk ke Halaman Utama</span>
-                  <svg className="w-5 h-5 text-blue-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M14 5l7 7m0 0l-7 7m7-7H3" />
-                  </svg>
-                </Link>
-              </div>
-            </div>
 
             {/* Box Upload Bukti Transfer (Opsional) */}
             <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl">
