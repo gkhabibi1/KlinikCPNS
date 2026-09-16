@@ -985,7 +985,7 @@ function Footer() {
             className="h-8 md:h-9 w-auto object-contain brightness-0 invert"
           />
         </a>
-        <nav className="flex flex-wrap gap-x-6 gap-y-2 text-sm text-slate-400">
+        <nav className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-slate-400">
           <a href="#peluang" className="hover:text-white transition-colors">
             Kenapa Sekarang
           </a>
@@ -997,6 +997,14 @@ function Footer() {
           </a>
           <a href="#faq" className="hover:text-white transition-colors">
             FAQ
+          </a>
+          <a
+            href="https://wa.me/6285199655534?text=Halo%20Admin%20KlinikCPNS,%20saya%20ingin%20bertanya"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-emerald-400 hover:text-emerald-300 font-medium inline-flex items-center gap-1 transition-colors"
+          >
+            <span>💬 WA Admin: +62 851-9965-5534</span>
           </a>
         </nav>
         <p className="text-xs text-slate-500">

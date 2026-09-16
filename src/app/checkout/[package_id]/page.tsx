@@ -667,6 +667,18 @@ export default function CheckoutPage() {
                 <p className="text-[11px] text-slate-400 text-center mt-1">
                   Mendukung semua m-Banking & E-Wallet (BCA, Mandiri, BRI, BNI, GoPay, OVO, Dana, ShopeePay)
                 </p>
+
+                <div className="mt-3 pt-3 border-t border-dashed border-slate-200 text-center">
+                  <span className="text-xs text-slate-500 block mb-1">Butuh bantuan pembelian atau info paket?</span>
+                  <a
+                    href="https://wa.me/6285199655534?text=Halo%20Admin%20KlinikCPNS,%20saya%20ingin%20bertanya%20seputar%20pembelian%20paket"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-600 hover:text-emerald-700 bg-emerald-50 px-3 py-1.5 rounded-lg border border-emerald-200 transition-colors"
+                  >
+                    <span>💬 WhatsApp CS: +62 851-9965-5534</span>
+                  </a>
+                </div>
               </div>
             </div>
           </div>

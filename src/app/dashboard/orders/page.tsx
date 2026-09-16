@@ -178,11 +178,22 @@ export default function MemberOrdersPage() {
         </div>
 
         {/* Info Banner */}
-        <div className="bg-blue-50 border border-blue-200 rounded-2xl p-4 mb-6 flex items-start gap-3">
-          <span className="text-xl">ℹ️</span>
-          <div className="text-xs sm:text-sm text-blue-900 leading-relaxed">
-            <strong>Catatan Verifikasi Admin (1x24 Jam):</strong> Setiap transaksi QRIS akan dicek dan diverifikasi oleh admin secara berkala dalam kurun waktu <strong>1x24 jam</strong> berdasarkan kecocokan kode unik nominal transaksi. Unggah bukti bayar bersifat <strong>opsional</strong> (tidak wajib), akun Anda akan tetap diproses dan diverifikasi admin.
+        <div className="bg-blue-50 border border-blue-200 rounded-2xl p-4 mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="flex items-start gap-3">
+            <span className="text-xl">ℹ️</span>
+            <div className="text-xs sm:text-sm text-blue-900 leading-relaxed">
+              <strong>Catatan Verifikasi Admin (1x24 Jam):</strong> Setiap transaksi QRIS akan dicek dan diverifikasi oleh admin secara berkala dalam kurun waktu <strong>1x24 jam</strong> berdasarkan kecocokan kode unik nominal transaksi. Unggah bukti bayar bersifat <strong>opsional</strong> (tidak wajib).
+            </div>
           </div>
+          <a
+            href="https://wa.me/6285199655534?text=Halo%20Admin%20KlinikCPNS,%20saya%20ingin%20menanyakan%20status%20transaksi%20pembelian%20paket%20saya"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="shrink-0 inline-flex items-center gap-2 px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition-all shadow-sm"
+          >
+            <span>WhatsApp Admin</span>
+            <span className="font-mono text-[11px] opacity-90">+62 851-9965-5534</span>
+          </a>
         </div>
 
         {/* Orders Table / List */}
@@ -419,6 +430,20 @@ export default function MemberOrdersPage() {
                 >
                   Batal
                 </button>
+              </div>
+
+              <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
+                <span>Butuh konfirmasi cepat?</span>
+                <a
+                  href={`https://wa.me/6285199655534?text=${encodeURIComponent(
+                    `Halo Admin KlinikCPNS, saya ingin konfirmasi pesanan ID: ${selectedOrder.unique_id || selectedOrder.id}`
+                  )}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-emerald-600 hover:text-emerald-700 font-bold inline-flex items-center gap-1"
+                >
+                  <span>WA: +62 851-9965-5534</span> ↗
+                </a>
               </div>
             </div>
           </div>

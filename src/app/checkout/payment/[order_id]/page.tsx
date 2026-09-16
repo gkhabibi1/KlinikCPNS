@@ -553,6 +553,34 @@ export default function PaymentQRISPage() {
                 </Link>
               </div>
             </div>
+
+            {/* Box Bantuan Admin WhatsApp */}
+            <div className="bg-emerald-950/20 border border-emerald-800/40 rounded-2xl p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+              <div className="flex items-center gap-3.5">
+                <div className="w-10 h-10 rounded-xl bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-400 shrink-0 text-xl">
+                  💬
+                </div>
+                <div>
+                  <h4 className="text-sm font-bold text-white">Butuh Bantuan atau Konfirmasi Cepat?</h4>
+                  <p className="text-xs text-slate-400 mt-0.5">
+                    Hubungi WhatsApp Admin resmi KlinikCPNS di <strong className="text-emerald-400 font-mono">+62 851-9965-5534</strong>
+                  </p>
+                </div>
+              </div>
+              <a
+                href={`https://wa.me/6285199655534?text=${encodeURIComponent(
+                  `Halo Admin KlinikCPNS, saya ingin konfirmasi pembayaran QRIS:\n- Order ID: ${orderId}\n- Paket: ${packageData?.name || 'Paket Try Out'}\n- Nominal: Rp ${totalAmount.toLocaleString('id-ID')}`
+                )}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-full sm:w-auto px-4 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold transition-all shadow-lg shadow-emerald-900/30 flex items-center justify-center gap-2 shrink-0"
+              >
+                <span>Chat WhatsApp Admin</span>
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                </svg>
+              </a>
+            </div>
           </div>
         </div>
 
