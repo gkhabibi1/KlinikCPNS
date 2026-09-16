@@ -18,11 +18,15 @@ export async function POST(request: Request) {
     }
 
     // 1. Verifikasi transaksi ada
-    const { data: tx, error: txError } = await supabase
-      .from('transactions')
-      .select('id, user_id, status')
-      .or(`unique_id.eq.${orderId},id.eq.${orderId}`)
-      .single();
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(orderId);
+    let query = supabase.from('transactions').select('id, user_id, status');
+    if (isUuid) {
+      query = query.or(`unique_id.eq.${orderId},id.eq.${orderId}`);
+    } else {
+      query = query.eq('unique_id', orderId);
+    }
+
+    const { data: tx, error: txError } = await query.maybeSingle();
 
     if (txError || !tx) {
       return NextResponse.json({ error: 'Transaksi tidak ditemukan.' }, { status: 404 });

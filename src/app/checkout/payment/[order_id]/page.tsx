@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase-client';
+import { generateDynamicQRIS } from '@/lib/qrisHelper';
 import QRCode from 'qrcode';
 import Link from 'next/link';
 
@@ -36,14 +37,18 @@ export default function PaymentQRISPage() {
     const fetchTransaction = async () => {
       try {
         setIsLoading(true);
-        const { data: transaction, error } = await supabase
-          .from('transactions')
-          .select(`
-            *,
-            subscription_packages (*)
-          `)
-          .or(`unique_id.eq.${orderId},id.eq.${orderId}`)
-          .single();
+
+        // Periksa apakah orderId berbentuk UUID atau String TRX/QRIS
+        const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(orderId);
+
+        let query = supabase.from('transactions').select('*');
+        if (isUuid) {
+          query = query.or(`unique_id.eq.${orderId},id.eq.${orderId}`);
+        } else {
+          query = query.eq('unique_id', orderId);
+        }
+
+        const { data: transaction, error } = await query.maybeSingle();
 
         if (error || !transaction) {
           console.error('Fetch transaction error:', error);
@@ -53,16 +58,32 @@ export default function PaymentQRISPage() {
         }
 
         setTx(transaction);
-        setPackageData(transaction.subscription_packages);
+
+        // Ambil data paket langganan secara terpisah agar aman dari error foreign key
+        if (transaction.package_id) {
+          const { data: pkg } = await supabase
+            .from('subscription_packages')
+            .select('*')
+            .eq('id', transaction.package_id)
+            .maybeSingle();
+
+          if (pkg) setPackageData(pkg);
+        }
 
         if (transaction.payment_proof_url) {
           setPreviewUrl(transaction.payment_proof_url);
           setUploadSuccess(true);
         }
 
-        // Generate QR Code dari qris_payload
-        if (transaction.qris_payload) {
-          const url = await QRCode.toDataURL(transaction.qris_payload, {
+        // Generate QR Code dari qris_payload (atau fallback generate on the fly)
+        let payload = transaction.qris_payload;
+        if (!payload) {
+          const totalAmount = Number(transaction.total_amount || transaction.amount || 0);
+          payload = generateDynamicQRIS(totalAmount);
+        }
+
+        if (payload) {
+          const url = await QRCode.toDataURL(payload, {
             width: 340,
             margin: 2,
             color: {

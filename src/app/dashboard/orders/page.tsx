@@ -31,7 +31,7 @@ export default function MemberOrdersPage() {
         return;
       }
 
-      const { data, error } = await supabase
+      let { data, error } = await supabase
         .from('transactions')
         .select(`
           *,
@@ -40,7 +40,27 @@ export default function MemberOrdersPage() {
         .eq('user_id', user.id)
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        // Fallback jika foreign key join belum aktif di database
+        const { data: rawData, error: rawError } = await supabase
+          .from('transactions')
+          .select('*')
+          .eq('user_id', user.id)
+          .order('created_at', { ascending: false });
+
+        if (rawError) throw rawError;
+
+        const { data: pkgs } = await supabase
+          .from('subscription_packages')
+          .select('id, name, duration_months');
+
+        const pkgMap = new Map((pkgs || []).map((p: any) => [p.id, p]));
+        data = (rawData || []).map((t: any) => ({
+          ...t,
+          subscription_packages: pkgMap.get(t.package_id) || null
+        }));
+      }
+
       setOrders(data || []);
     } catch (err) {
       console.error('Error fetching member orders:', err);
