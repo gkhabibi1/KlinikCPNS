@@ -17,6 +17,15 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'File bukti pembayaran wajib diunggah.' }, { status: 400 });
     }
 
+    // Validasi ukuran file maksimal 500 KB
+    const MAX_FILE_SIZE = 500 * 1024; // 500 KB
+    if (file.size > MAX_FILE_SIZE) {
+      const fileSizeKb = (file.size / 1024).toFixed(0);
+      return NextResponse.json({
+        error: `Ukuran file bukti transfer terlalu besar (${fileSizeKb} KB). Batas maksimal adalah 500 KB. Anda dapat mengompres gambar atau langsung mengirimkan bukti bayar ke WhatsApp Admin di +62 851-9965-5534.`
+      }, { status: 400 });
+    }
+
     // 1. Verifikasi transaksi ada
     const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(orderId);
     let query = supabase.from('transactions').select('id, user_id, status');

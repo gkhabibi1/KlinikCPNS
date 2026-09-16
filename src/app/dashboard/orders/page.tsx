@@ -19,6 +19,7 @@ export default function MemberOrdersPage() {
   const [uploadingOrderId, setUploadingOrderId] = useState<string | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string>('');
+  const [fileError, setFileError] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -78,16 +79,23 @@ export default function MemberOrdersPage() {
     setUploadingOrderId(order.unique_id || order.id);
     setPreviewUrl(order.payment_proof_url || '');
     setSelectedFile(null);
+    setFileError(null);
     setShowModal(true);
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      if (file.size > 5 * 1024 * 1024) {
-        alert('Ukuran file maksimal 5MB');
+      const MAX_SIZE = 500 * 1024; // 500 KB
+      if (file.size > MAX_SIZE) {
+        const sizeKb = (file.size / 1024).toFixed(0);
+        setFileError(`Ukuran file bukti pembayaran (${sizeKb} KB) melebihi batas maksimal 500 KB. Jika Anda tidak bisa memperkecil/mengompres foto, silakan kirimkan bukti bayar langsung ke WhatsApp Admin di +62 851-9965-5534.`);
+        setSelectedFile(null);
+        setPreviewUrl('');
+        if (fileInputRef.current) fileInputRef.current.value = '';
         return;
       }
+      setFileError(null);
       setSelectedFile(file);
       setPreviewUrl(URL.createObjectURL(file));
     }
@@ -99,8 +107,14 @@ export default function MemberOrdersPage() {
       return;
     }
 
+    if (selectedFile.size > 500 * 1024) {
+      alert('Ukuran file bukti pembayaran maksimal 500 KB. Anda dapat langsung mengirimkan bukti bayar ke WhatsApp Admin di +62 851-9965-5534.');
+      return;
+    }
+
     try {
       setIsUploading(true);
+      setFileError(null);
       const formData = new FormData();
       formData.append('order_id', uploadingOrderId);
       formData.append('file', selectedFile);
@@ -112,6 +126,9 @@ export default function MemberOrdersPage() {
 
       const data = await res.json();
       if (!res.ok || !data.success) {
+        if (data.error && data.error.includes('500 KB')) {
+          setFileError(data.error);
+        }
         throw new Error(data.error || 'Gagal mengunggah bukti');
       }
 
@@ -367,6 +384,29 @@ export default function MemberOrdersPage() {
                   </div>
                 </div>
 
+                {fileError && (
+                  <div className="mb-4 p-3.5 bg-rose-50 border border-rose-200 rounded-xl text-xs text-rose-800 shadow-sm">
+                    <div className="flex items-start gap-2.5">
+                      <span className="text-base shrink-0">⚠️</span>
+                      <div className="flex-1">
+                        <p className="font-semibold text-rose-700 leading-relaxed mb-2">
+                          {fileError}
+                        </p>
+                        <a
+                          href={`https://wa.me/6285199655534?text=${encodeURIComponent(
+                            `Halo Admin KlinikCPNS, saya ingin mengirimkan bukti transfer pesanan:\n- Order ID: ${selectedOrder?.unique_id || selectedOrder?.id}\n(Karena ukuran file struk saya melebihi 500 KB)`
+                          )}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-lg text-xs shadow-sm transition-all"
+                        >
+                          <span>💬 Kirim Bukti ke WhatsApp Admin</span>
+                        </a>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
                 {previewUrl ? (
                   <div className="border border-slate-200 rounded-xl p-3 bg-slate-50 flex items-center gap-3">
                     <img
@@ -394,7 +434,8 @@ export default function MemberOrdersPage() {
                   >
                     <div className="text-2xl mb-1">📁</div>
                     <p className="text-xs font-semibold text-slate-700">Klik untuk upload foto bukti transfer</p>
-                    <p className="text-[11px] text-slate-400 mt-0.5">JPG, PNG, WEBP (Maks. 5MB)</p>
+                    <p className="text-[11px] text-slate-500 mt-0.5">JPG, PNG, WEBP (Maks. 500 KB)</p>
+                    <p className="text-[10px] text-emerald-600 mt-1 font-medium">Lebih dari 500 KB? Bisa kirim via WhatsApp Admin</p>
                   </div>
                 )}
 

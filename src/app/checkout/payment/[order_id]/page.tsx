@@ -26,6 +26,7 @@ export default function PaymentQRISPage() {
   const [previewUrl, setPreviewUrl] = useState<string>('');
   const [isUploading, setIsUploading] = useState(false);
   const [uploadSuccess, setUploadSuccess] = useState(false);
+  const [fileError, setFileError] = useState<string | null>(null);
   const [copiedNominal, setCopiedNominal] = useState(false);
   const [copiedOrderId, setCopiedOrderId] = useState(false);
 
@@ -164,10 +165,16 @@ export default function PaymentQRISPage() {
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      if (file.size > 5 * 1024 * 1024) {
-        alert('Ukuran file maksimal 5MB');
+      const MAX_SIZE = 500 * 1024; // 500 KB
+      if (file.size > MAX_SIZE) {
+        const sizeKb = (file.size / 1024).toFixed(0);
+        setFileError(`Ukuran foto bukti pembayaran (${sizeKb} KB) melebihi batas maksimal 500 KB. Jika tidak bisa memperkecil/mengompres foto, Anda dapat langsung mengirimkannya ke WhatsApp Admin (+62 851-9965-5534).`);
+        setSelectedFile(null);
+        setPreviewUrl('');
+        if (fileInputRef.current) fileInputRef.current.value = '';
         return;
       }
+      setFileError(null);
       setSelectedFile(file);
       setPreviewUrl(URL.createObjectURL(file));
       setUploadSuccess(false);
@@ -180,8 +187,14 @@ export default function PaymentQRISPage() {
       return;
     }
 
+    if (selectedFile.size > 500 * 1024) {
+      alert('Ukuran file bukti pembayaran maksimal 500 KB. Anda dapat langsung mengirimkan bukti bayar ke WhatsApp Admin di +62 851-9965-5534.');
+      return;
+    }
+
     try {
       setIsUploading(true);
+      setFileError(null);
       const formData = new FormData();
       formData.append('order_id', orderId);
       formData.append('file', selectedFile);
@@ -193,6 +206,9 @@ export default function PaymentQRISPage() {
 
       const data = await res.json();
       if (!res.ok || !data.success) {
+        if (data.error && data.error.includes('500 KB')) {
+          setFileError(data.error);
+        }
         throw new Error(data.error || 'Gagal mengunggah bukti pembayaran');
       }
 
@@ -494,6 +510,33 @@ export default function PaymentQRISPage() {
                 ℹ️ <strong className="text-amber-300">Tidak Wajib Upload:</strong> Anda tidak wajib mengunggah bukti transfer. Pembayaran Anda akan tetap dicek dan diverifikasi oleh admin secara berkala dalam kurun waktu <strong>1x24 jam</strong> berdasarkan kecocokan kode unik nominal transaksi. Unggah bukti hanya jika Anda ingin melampirkan foto struk pembayaran.
               </div>
 
+              {/* Alert jika file melebihi 500 KB */}
+              {fileError && (
+                <div className="mb-4 p-4 bg-rose-950/40 border border-rose-800/60 rounded-xl text-xs text-rose-200 shadow-sm">
+                  <div className="flex items-start gap-3">
+                    <span className="text-xl shrink-0">⚠️</span>
+                    <div className="flex-1">
+                      <p className="font-semibold text-rose-300 leading-relaxed mb-2">
+                        {fileError}
+                      </p>
+                      <a
+                        href={`https://wa.me/6285199655534?text=${encodeURIComponent(
+                          `Halo Admin KlinikCPNS, saya ingin mengirimkan bukti transfer pesanan QRIS:\n- Order ID: ${orderId}\n- Paket: ${packageData?.name || 'Paket Try Out'}\n- Nominal: Rp ${totalAmount.toLocaleString('id-ID')}\n(Karena ukuran file struk saya melebihi 500 KB)`
+                        )}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-2 px-3.5 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-lg text-xs shadow-md transition-all active:scale-95"
+                      >
+                        <span>💬 Kirim Bukti ke WhatsApp Admin</span>
+                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                        </svg>
+                      </a>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               {/* Area Preview File */}
               {previewUrl ? (
                 <div className="relative mb-4 bg-slate-950 p-3 rounded-xl border border-slate-800 flex items-center gap-4">
@@ -541,8 +584,11 @@ export default function PaymentQRISPage() {
                   <span className="text-xs font-semibold text-slate-300 block">
                     Klik untuk memilih foto bukti transfer
                   </span>
-                  <span className="text-[11px] text-slate-500 block mt-1">
-                    Format: JPG, PNG, WEBP (Maksimal 5MB)
+                  <span className="text-[11px] text-slate-400 block mt-1">
+                    Format: JPG, PNG, WEBP (Maksimal 500 KB)
+                  </span>
+                  <span className="text-[10px] text-emerald-400 block mt-1 font-medium">
+                    Ukuran lebih dari 500 KB? Bisa langsung kirim ke WhatsApp Admin
                   </span>
                 </div>
               )}
