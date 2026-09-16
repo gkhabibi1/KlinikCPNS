@@ -199,7 +199,7 @@ export default function PaymentQRISPage() {
       setUploadSuccess(true);
       setTx((prev: any) => ({
         ...prev,
-        status: 'waiting_verification',
+        status: data.status || 'waiting_verification',
         payment_proof_url: data.proof_url
       }));
 

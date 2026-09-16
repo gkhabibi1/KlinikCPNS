@@ -13,6 +13,11 @@ ALTER TABLE transactions ADD COLUMN IF NOT EXISTS payment_proof_uploaded_at TIME
 ALTER TABLE transactions ADD COLUMN IF NOT EXISTS expired_at TIMESTAMP WITH TIME ZONE;
 ALTER TABLE transactions ADD COLUMN IF NOT EXISTS admin_notes TEXT;
 
+-- 1b. Perbarui Check Constraint Status Transaksi agar mengizinkan 'waiting_verification'
+ALTER TABLE transactions DROP CONSTRAINT IF EXISTS transactions_status_check;
+ALTER TABLE transactions ADD CONSTRAINT transactions_status_check 
+CHECK (status IN ('pending', 'waiting_verification', 'paid', 'success', 'settlement', 'failed', 'expired', 'cancel'));
+
 -- 2. Index untuk mempercepat pengecekan kode unik pending
 CREATE INDEX IF NOT EXISTS idx_transactions_unique_code_status 
 ON transactions(unique_code, status, expired_at);

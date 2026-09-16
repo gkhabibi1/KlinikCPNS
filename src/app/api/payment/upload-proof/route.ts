@@ -73,9 +73,10 @@ export async function POST(request: Request) {
       }
     }
 
-    // 3. Update status transaksi menjadi waiting_verification
+    // 3. Update status transaksi menjadi waiting_verification (atau fallback tetap status lama jika check constraint DB belum diupdate)
     const nowIso = new Date().toISOString();
-    const { error: updateErr } = await supabase
+    let updatedStatus = 'waiting_verification';
+    let { error: updateErr } = await supabase
       .from('transactions')
       .update({
         payment_proof_url: finalProofUrl,
@@ -83,6 +84,20 @@ export async function POST(request: Request) {
         status: 'waiting_verification'
       })
       .eq('id', tx.id);
+
+    // Fallback jika database memiliki check constraint lama (transactions_status_check) yang belum mengizinkan 'waiting_verification'
+    if (updateErr && (updateErr.message?.includes('transactions_status_check') || updateErr.message?.includes('check constraint'))) {
+      console.warn('transactions_status_check constraint encountered, saving proof with current status fallback...');
+      updatedStatus = tx.status || 'pending';
+      const fallbackResult = await supabase
+        .from('transactions')
+        .update({
+          payment_proof_url: finalProofUrl,
+          payment_proof_uploaded_at: nowIso
+        })
+        .eq('id', tx.id);
+      updateErr = fallbackResult.error;
+    }
 
     if (updateErr) {
       return NextResponse.json({ error: 'Gagal memperbarui status transaksi: ' + updateErr.message }, { status: 500 });
@@ -107,7 +122,7 @@ export async function POST(request: Request) {
       success: true,
       message: 'Bukti pembayaran berhasil diunggah! Admin akan memverifikasi dalam 1x24 jam.',
       proof_url: finalProofUrl,
-      status: 'waiting_verification'
+      status: updatedStatus
     });
 
   } catch (error: any) {
