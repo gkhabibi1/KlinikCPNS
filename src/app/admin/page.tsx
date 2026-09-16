@@ -458,6 +458,7 @@ export default function AdminCommandCenter() {
   const [transactionFilter, setTransactionFilter] = useState<string>('all');
   const [selectedTransaction, setSelectedTransaction] = useState<any>(null);
   const [showTransactionModal, setShowTransactionModal] = useState(false);
+  const [unverifiedTxCount, setUnverifiedTxCount] = useState<number>(0);
 
   // State untuk Order History Member
   const [selectedMemberOrders, setSelectedMemberOrders] = useState<any[]>([]);
@@ -1118,8 +1119,23 @@ export default function AdminCommandCenter() {
     }
   };
 
+  const fetchUnverifiedTxCount = async () => {
+    try {
+      const { count, error } = await supabase
+        .from('transactions')
+        .select('*', { count: 'exact', head: true })
+        .or('status.eq.waiting_verification,status.eq.pending');
+      if (!error && count !== null) {
+        setUnverifiedTxCount(count);
+      }
+    } catch (err) {
+      console.error('Error fetching unverified count:', err);
+    }
+  };
+
   const fetchTransactions = async () => {
     setIsLoadingTransactions(true);
+    fetchUnverifiedTxCount();
     
     let query = supabase
       .from('transactions')
@@ -1282,6 +1298,7 @@ export default function AdminCommandCenter() {
   /* eslint-disable react-hooks/set-state-in-effect */
   // Pemicu Fetch Data
   useEffect(() => {
+    fetchUnverifiedTxCount();
     if (activeTab === 'members') fetchMembers();
     if (activeTab === 'packages') fetchPackages();
     if (activeTab === 'banners') fetchBanners();
@@ -1785,6 +1802,25 @@ export default function AdminCommandCenter() {
             <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2 px-2">Menu Utama</div>
             <button onClick={() => setActiveTab('analytics')} className={`w-full flex items-center px-4 py-3 rounded-lg text-sm font-medium transition-colors ${activeTab === 'analytics' ? 'bg-blue-600 text-white' : 'text-slate-400 hover:bg-slate-800 hover:text-white'}`}>📊 Analitik & Omset</button>
             <button onClick={() => setActiveTab('members')} className={`w-full flex items-center px-4 py-3 rounded-lg text-sm font-medium transition-colors ${activeTab === 'members' ? 'bg-blue-600 text-white' : 'text-slate-400 hover:bg-slate-800 hover:text-white'}`}>👥 Data Member</button>
+            <button 
+              onClick={() => { setActiveTab('transactions'); fetchTransactions(); }} 
+              className={`w-full flex items-center justify-between px-4 py-3 rounded-lg text-sm font-medium transition-colors ${
+                activeTab === 'transactions' ? 'bg-blue-600 text-white' : 'text-slate-400 hover:bg-slate-800 hover:text-white'
+              }`}
+            >
+              <div className="flex items-center">
+                <svg className="w-5 h-5 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+                </svg>
+                <span>Detail Transaksi</span>
+              </div>
+              {unverifiedTxCount > 0 && (
+                <span className="flex items-center gap-1.5 bg-rose-600 text-white text-[11px] font-extrabold px-2 py-0.5 rounded-full shadow-sm animate-pulse" title={`${unverifiedTxCount} transaksi perlu dicek`}>
+                  <span className="w-1.5 h-1.5 rounded-full bg-white"></span>
+                  {unverifiedTxCount}
+                </span>
+              )}
+            </button>
             <button onClick={() => setActiveTab('packages')} className={`w-full flex items-center px-4 py-3 rounded-lg text-sm font-medium transition-colors ${activeTab === 'packages' ? 'bg-blue-600 text-white' : 'text-slate-400 hover:bg-slate-800 hover:text-white'}`}>📝 Paket Try Out</button>
             <button 
               onClick={() => { setActiveTab('challenge'); fetchChallengeData(); }} 
@@ -1818,20 +1854,9 @@ export default function AdminCommandCenter() {
               }`}
             >
               <svg className="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
               </svg>
               Paket Subscribe
-            </button>
-            <button 
-              onClick={() => { setActiveTab('transactions'); fetchTransactions(); }} 
-              className={`w-full flex items-center px-4 py-3 rounded-lg text-sm font-medium transition-colors ${
-                activeTab === 'transactions' ? 'bg-blue-600 text-white' : 'text-slate-400 hover:bg-slate-800'
-              }`}
-            >
-              <svg className="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
-              </svg>
-              Detail Transaksi
             </button>
             <button 
               onClick={() => { setActiveTab('vouchers'); fetchVoucherBatches(); }} 
@@ -3725,6 +3750,54 @@ export default function AdminCommandCenter() {
                         </div>
                       </div>
 
+                      {/* Alert Notifikasi Transaksi Yang Perlu Dicek */}
+                      {transactions.filter(t => ['waiting_verification', 'pending'].includes((t.status || '').toLowerCase())).length > 0 && (
+                        <div className="bg-gradient-to-r from-rose-50 via-red-50 to-amber-50 border border-rose-200 border-l-4 border-l-rose-600 p-4 rounded-xl shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+                          <div className="flex items-start sm:items-center gap-3">
+                            <div className="relative flex items-center justify-center w-10 h-10 rounded-xl bg-rose-500 text-white shadow-md shadow-rose-200 flex-shrink-0">
+                              <span className="text-lg">🔔</span>
+                              <span className="absolute -top-1 -right-1 flex h-3 w-3">
+                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
+                                <span className="relative inline-flex rounded-full h-3 w-3 bg-red-600"></span>
+                              </span>
+                            </div>
+                            <div>
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <h3 className="text-sm font-bold text-slate-900">
+                                  Notifikasi Transaksi Perlu Dicek Admin
+                                </h3>
+                                <span className="bg-rose-600 text-white text-[11px] font-extrabold px-2.5 py-0.5 rounded-full shadow-sm animate-pulse">
+                                  {transactions.filter(t => ['waiting_verification', 'pending'].includes((t.status || '').toLowerCase())).length} Transaksi Menunggu
+                                </span>
+                              </div>
+                              <p className="text-xs text-slate-600 mt-1">
+                                Transaksi yang belum diverifikasi atau belum dicek ditandai dengan <strong>logo titik merah berdenyut (🔴)</strong> pada daftar transaksi di bawah.
+                              </p>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2 self-end md:self-center flex-shrink-0">
+                            <button
+                              onClick={() => setTransactionFilter('waiting_verification')}
+                              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all shadow-sm flex items-center gap-1.5 ${
+                                transactionFilter === 'waiting_verification' 
+                                  ? 'bg-rose-700 text-white ring-2 ring-rose-300' 
+                                  : 'bg-rose-600 hover:bg-rose-700 text-white'
+                              }`}
+                            >
+                              <span>⏳</span> Filter Perlu Verifikasi
+                            </button>
+                            {transactionFilter !== 'all' && (
+                              <button
+                                onClick={() => setTransactionFilter('all')}
+                                className="px-3 py-1.5 bg-white hover:bg-slate-100 text-slate-700 text-xs font-semibold rounded-lg border border-slate-300 shadow-sm transition-all"
+                              >
+                                Tampilkan Semua
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      )}
+
                       {/* Summary Cards */}
                       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
                         <div className="bg-white rounded-xl border border-slate-200 p-4 shadow-sm">
@@ -3785,11 +3858,44 @@ export default function AdminCommandCenter() {
                                 const total = Number(tx.total_amount || tx.amount || 0);
                                 const uniqueCode = Number(tx.unique_code || 0);
                                 const status = (tx.status || '').toLowerCase();
+                                const isWaiting = status === 'waiting_verification';
+                                const isPending = status === 'pending';
+                                const isUnchecked = isWaiting || isPending;
 
                                 return (
-                                  <tr key={tx.id} className={`hover:bg-slate-50 ${status === 'waiting_verification' ? 'bg-amber-50/40' : ''}`}>
+                                  <tr 
+                                    key={tx.id} 
+                                    className={`transition-colors ${
+                                      isWaiting 
+                                        ? 'bg-rose-50/50 hover:bg-rose-50/80 border-l-4 border-l-rose-500' 
+                                        : isPending 
+                                        ? 'bg-amber-50/30 hover:bg-amber-50/60 border-l-4 border-l-amber-400' 
+                                        : 'hover:bg-slate-50'
+                                    }`}
+                                  >
                                     <td className="p-4">
-                                      <div className="font-mono text-xs font-semibold text-blue-600">{tx.unique_id}</div>
+                                      <div className="flex items-center gap-2">
+                                        {/* Logo kecil berwarna merah untuk transaksi yang belum dicek */}
+                                        {isUnchecked && (
+                                          <span className="relative flex h-2.5 w-2.5 flex-shrink-0" title="Transaksi ini belum dicek oleh admin">
+                                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
+                                            <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-rose-600 shadow-sm"></span>
+                                          </span>
+                                        )}
+                                        <span className="font-mono text-xs font-semibold text-blue-600">{tx.unique_id}</span>
+                                      </div>
+                                      {isUnchecked && (
+                                        <div className="mt-1">
+                                          <span className={`inline-flex items-center gap-1 text-[10px] font-bold px-1.5 py-0.5 rounded-full ${
+                                            isWaiting
+                                              ? 'bg-rose-100 text-rose-700 border border-rose-200'
+                                              : 'bg-amber-100 text-amber-800 border border-amber-200'
+                                          }`}>
+                                            <span className="w-1.5 h-1.5 rounded-full bg-rose-600"></span>
+                                            {isWaiting ? 'Perlu Cek Bukti' : 'Belum Dicek'}
+                                          </span>
+                                        </div>
+                                      )}
                                     </td>
                                     <td className="p-4 text-sm text-slate-600">
                                       {new Date(tx.created_at).toLocaleDateString('id-ID', {
@@ -3834,17 +3940,21 @@ export default function AdminCommandCenter() {
                                       )}
                                     </td>
                                     <td className="p-4">
-                                      <span className={`px-2.5 py-1 rounded-full text-xs font-bold inline-flex items-center gap-1 ${
+                                      <span className={`px-2.5 py-1 rounded-full text-xs font-bold inline-flex items-center gap-1.5 ${
                                         ['paid', 'success', 'settlement'].includes(status)
                                           ? 'bg-green-100 text-green-700'
-                                          : status === 'waiting_verification'
-                                          ? 'bg-amber-100 text-amber-800 border border-amber-300 animate-pulse'
-                                          : status === 'pending'
-                                          ? 'bg-blue-100 text-blue-700'
+                                          : isWaiting
+                                          ? 'bg-rose-100 text-rose-700 border border-rose-300 animate-pulse'
+                                          : isPending
+                                          ? 'bg-amber-100 text-amber-800 border border-amber-200'
                                           : 'bg-red-100 text-red-700'
                                       }`}>
-                                        {status === 'waiting_verification'
-                                          ? '⏳ PERLU VERIFIKASI'
+                                        {isWaiting && <span className="w-1.5 h-1.5 rounded-full bg-rose-600 animate-ping"></span>}
+                                        {isPending && <span className="w-1.5 h-1.5 rounded-full bg-amber-500"></span>}
+                                        {isWaiting
+                                          ? '🔴 PERLU VERIFIKASI'
+                                          : isPending
+                                          ? '🟠 PENDING (BELUM DICEK)'
                                           : (tx.status || '').toUpperCase()}
                                       </span>
                                     </td>
@@ -3854,9 +3964,15 @@ export default function AdminCommandCenter() {
                                           setSelectedTransaction(tx);
                                           setShowTransactionModal(true);
                                         }}
-                                        className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-semibold shadow-sm transition-all"
+                                        className={`px-3 py-1.5 rounded-lg text-xs font-bold shadow-sm transition-all inline-flex items-center gap-1.5 ${
+                                          isWaiting
+                                            ? 'bg-rose-600 hover:bg-rose-700 text-white shadow-rose-200 animate-pulse'
+                                            : isPending
+                                            ? 'bg-amber-500 hover:bg-amber-600 text-white'
+                                            : 'bg-blue-600 hover:bg-blue-700 text-white'
+                                        }`}
                                       >
-                                        Periksa
+                                        {isWaiting ? '🔍 Cek Sekarang' : isPending ? 'Cek Transaksi' : 'Periksa'}
                                       </button>
                                     </td>
                                   </tr>
@@ -3864,7 +3980,7 @@ export default function AdminCommandCenter() {
                               })}
                               {filteredTransactions.length === 0 && (
                                 <tr>
-                                  <td colSpan={8} className="p-8 text-center text-slate-500">
+                                  <td colSpan={9} className="p-8 text-center text-slate-500">
                                     {transactionSearchQuery ? (
                                       <div>
                                         <div className="text-3xl mb-2">🔍</div>

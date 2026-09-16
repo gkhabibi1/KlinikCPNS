@@ -265,6 +265,16 @@ export default function PaymentQRISPage() {
         {/* Top Header */}
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pb-6 border-b border-slate-800">
           <div className="flex items-center gap-3">
+            <Link
+              href="/dashboard"
+              className="p-2 bg-slate-800/80 hover:bg-slate-700 text-slate-300 hover:text-white rounded-xl border border-slate-700 transition-all flex items-center gap-1.5 text-xs font-semibold"
+              title="Kembali ke Halaman Utama"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+              </svg>
+              <span className="hidden sm:inline">Halaman Utama</span>
+            </Link>
             <img
               src="https://ik.imagekit.io/e2yna5qg8/Logo%20Klinik%20CPNS.png"
               alt="Klinik CPNS"
@@ -384,6 +394,17 @@ export default function PaymentQRISPage() {
               Unduh Gambar QRIS
             </button>
 
+            {/* Tombol Utama: Sudah Bayar? Ke Halaman Utama */}
+            <Link
+              href="/dashboard"
+              className="mt-2.5 w-full flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-500 text-white text-xs font-extrabold py-3 px-4 rounded-xl transition-all shadow-lg shadow-blue-600/30 border border-blue-400/40 active:scale-95"
+            >
+              <span>🏠 Sudah Bayar? Ke Halaman Utama</span>
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+              </svg>
+            </Link>
+
             <p className="text-[11px] text-slate-500 mt-3 leading-tight">
               Dapat di-scan melalui BCA Mobile, Livin Mandiri, BRImo, BNI Mobile, GoPay, OVO, Dana, ShopeePay, LinkAja, dsb.
             </p>
@@ -452,6 +473,33 @@ export default function PaymentQRISPage() {
                     <strong className="text-white">Cukup scan QRIS di samping.</strong> Nominal pembayaran sudah terkunci otomatis ke <strong>Rp {totalAmount.toLocaleString('id-ID')}</strong>. Anda tidak perlu menyalin atau mengetik nominal secara manual di aplikasi m-Banking atau E-Wallet Anda.
                   </p>
                 </div>
+              </div>
+            </div>
+
+            {/* CALL TO ACTION UTAMA: SUDAH BAYAR? KEMBALI KE HALAMAN UTAMA */}
+            <div className="bg-gradient-to-br from-blue-600 via-blue-600 to-indigo-700 rounded-2xl p-6 shadow-2xl shadow-blue-600/30 border-2 border-blue-400 text-white">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-5">
+                <div>
+                  <div className="inline-flex items-center gap-2 px-2.5 py-0.5 rounded-full bg-white/20 text-xs font-bold mb-1.5 backdrop-blur-sm">
+                    <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                    <span>Sudah Melakukan Pembayaran?</span>
+                  </div>
+                  <h3 className="text-xl sm:text-2xl font-black text-white leading-tight">
+                    Kembali ke Halaman Utama
+                  </h3>
+                  <p className="text-xs sm:text-sm text-blue-100 mt-1.5 leading-relaxed">
+                    Setelah scan QRIS dan transfer sukses, Anda dapat langsung kembali ke halaman utama dashboard. Admin kami akan memverifikasi transaksi Anda dalam kurun waktu <strong>1x24 jam</strong>.
+                  </p>
+                </div>
+                <Link
+                  href="/dashboard"
+                  className="w-full sm:w-auto px-7 py-4 bg-white hover:bg-slate-100 active:scale-95 text-blue-700 font-black rounded-xl text-sm sm:text-base transition-all shadow-xl flex items-center justify-center gap-2.5 shrink-0 border border-white"
+                >
+                  <span>🏠 Masuk ke Halaman Utama</span>
+                  <svg className="w-5 h-5 text-blue-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                  </svg>
+                </Link>
               </div>
             </div>
 
