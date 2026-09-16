@@ -331,130 +331,49 @@ export default function CheckoutPage() {
 
       console.log('✅ Profile verified:', verifyProfile.id);
 
-      // 3. BUAT TRANSAKSI
+      // 3. BUAT TRANSAKSI QRIS DINAMIS
       const duration = getDurationInMonths();
-      const orderId = `TRX-${Date.now()}-${Math.random().toString(36).substr(2, 6).toUpperCase()}`;
-
-      console.log('Creating transaction:', {
-        unique_id: orderId,
+      console.log('Creating QRIS transaction:', {
         user_id: user.id,
         package_id: params.package_id,
         duration: duration,
-        amount: finalPrice,
-        status: finalPrice === 0 ? 'paid' : 'pending',
+        base_amount: finalPrice,
         customer_name: formData.full_name,
         customer_email: formData.email || user.email,
         customer_phone: formData.phone_number,
         voucher_code_id: appliedVoucher?.id || null
       });
 
-      const { data: txData, error: txError } = await supabase
-        .from('transactions')
-        .insert([{
-          unique_id: orderId,
+      const response = await fetch('/api/payment/create-qris', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
           user_id: user.id,
           package_id: params.package_id,
           duration: duration,
-          amount: finalPrice,
-          status: finalPrice === 0 ? 'paid' : 'pending',
+          base_amount: finalPrice,
           customer_name: formData.full_name,
           customer_email: formData.email || user.email,
           customer_phone: formData.phone_number,
           voucher_code_id: appliedVoucher?.id || null
-        }])
-        .select()
-        .single();
+        })
+      });
 
-      if (txError) {
-        console.error('❌ Transaction error:', txError);
-        console.error('Error details:', {
-          code: txError.code,
-          message: txError.message,
-          details: txError.details,
-          hint: txError.hint
-        });
-        throw txError;
+      const data = await response.json();
+
+      if (!response.ok || !data.success) {
+        throw new Error(data.error || 'Gagal membuat pesanan QRIS Dinamis');
       }
 
-      console.log('✅ Transaction created:', txData);
-
-      // 4. JIKA VOUCHER TERPAKAI, UPDATE QUOTA VOUCHER
-      if (appliedVoucher) {
-        await supabase
-          .from('voucher_codes')
-          .update({ current_uses: (appliedVoucher.current_uses || 0) + 1 })
-          .eq('id', appliedVoucher.id);
-      }
-
-      // 5. PANGGIL API MIDTRANS (Jika finalPrice > 0)
-      if (finalPrice > 0) {
-        const response = await fetch('/api/midtrans/create-transaction', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            order_id: orderId,
-            user_id: user.id,
-            package_id: params.package_id,
-            duration: duration,
-            total_amount: finalPrice,
-            customer_details: {
-              first_name: formData.full_name,
-              email: formData.email || user.email,
-              phone: formData.phone_number
-            }
-          })
-        });
-
-        const data = await response.json();
-
-        if (data.redirect_url) {
-          if (txData?.id) {
-            await supabase
-              .from('transactions')
-              .update({
-                midtrans_response: data
-              })
-              .eq('id', txData.id);
-          }
-          
-          console.log('✅ Redirecting to Midtrans...');
-          window.location.href = data.redirect_url;
-        } else {
-          throw new Error(data.message || 'Gagal membuat transaksi Midtrans');
-        }
-      } else {
-        // Jika GRATIS (Voucher 100% / Free), update subscription user dan langsung redirect ke dashboard
-        let baseDate = new Date();
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('subscription_valid_until')
-          .eq('id', user.id)
-          .single();
-
-        if (profile?.subscription_valid_until) {
-          const currentValidUntil = new Date(profile.subscription_valid_until);
-          if (currentValidUntil > new Date()) {
-            baseDate = currentValidUntil;
-          }
-        }
-
-        if (duration === 999) {
-          baseDate.setFullYear(2099);
-        } else {
-          baseDate.setMonth(baseDate.getMonth() + (duration || 1));
-        }
-
-        await supabase
-          .from('profiles')
-          .update({
-            subscription_valid_until: baseDate.toISOString(),
-            subscription_package_id: params.package_id
-          })
-          .eq('id', user.id);
-
+      if (data.isFree) {
         alert('🎉 Voucher berhasil ditukar! Akses Anda telah diaktifkan.');
         window.location.href = '/dashboard';
+        return;
       }
+
+      // Redirect ke Halaman Pembayaran QRIS Dinamis
+      console.log('✅ Redirecting to QRIS Payment Page...');
+      window.location.href = data.redirect_url;
 
     } catch (err: any) {
       console.error('❌ Checkout error:', err);
@@ -715,9 +634,23 @@ export default function CheckoutPage() {
               <button
                 onClick={handleCheckout}
                 disabled={isProcessing || !agreedToTerms || !user}
-                className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-slate-300 disabled:cursor-not-allowed text-white font-bold py-3 rounded-lg transition-colors"
+                className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-slate-300 disabled:cursor-not-allowed text-white font-bold py-3.5 rounded-xl transition-all shadow-md shadow-blue-600/20 text-sm flex items-center justify-center gap-2"
               >
-                {isProcessing ? 'Memproses...' : finalPrice === 0 ? 'Klaim Sekarang' : 'Bayar Sekarang'}
+                {isProcessing ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    <span>Membuat Pesanan...</span>
+                  </>
+                ) : finalPrice === 0 ? (
+                  'Klaim Sekarang'
+                ) : (
+                  <>
+                    <span>Lanjut ke Pembayaran QRIS</span>
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                    </svg>
+                  </>
+                )}
               </button>
 
               {!user && (
@@ -727,12 +660,13 @@ export default function CheckoutPage() {
               )}
 
               <div className="mt-4 pt-4 border-t border-slate-100">
-                <div className="flex items-center justify-center gap-2 text-xs text-slate-500">
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                  </svg>
-                  <span>Pembayaran aman & terenkripsi</span>
+                <div className="flex items-center justify-center gap-2 text-xs text-slate-600 font-medium">
+                  <span>📱 Metode Pembayaran:</span>
+                  <span className="font-bold text-slate-800">QRIS Dinamis Otomatis</span>
                 </div>
+                <p className="text-[11px] text-slate-400 text-center mt-1">
+                  Mendukung semua m-Banking & E-Wallet (BCA, Mandiri, BRI, BNI, GoPay, OVO, Dana, ShopeePay)
+                </p>
               </div>
             </div>
           </div>

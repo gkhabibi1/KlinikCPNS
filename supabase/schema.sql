@@ -155,6 +155,15 @@ CREATE TABLE IF NOT EXISTS transactions (
   created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
+ALTER TABLE transactions ADD COLUMN IF NOT EXISTS base_amount NUMERIC DEFAULT 0;
+ALTER TABLE transactions ADD COLUMN IF NOT EXISTS unique_code INTEGER DEFAULT 0;
+ALTER TABLE transactions ADD COLUMN IF NOT EXISTS total_amount NUMERIC DEFAULT 0;
+ALTER TABLE transactions ADD COLUMN IF NOT EXISTS qris_payload TEXT;
+ALTER TABLE transactions ADD COLUMN IF NOT EXISTS payment_proof_url TEXT;
+ALTER TABLE transactions ADD COLUMN IF NOT EXISTS payment_proof_uploaded_at TIMESTAMP WITH TIME ZONE;
+ALTER TABLE transactions ADD COLUMN IF NOT EXISTS expired_at TIMESTAMP WITH TIME ZONE;
+ALTER TABLE transactions ADD COLUMN IF NOT EXISTS admin_notes TEXT;
+
 ALTER TABLE transactions ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "Public All Access Transactions" ON transactions;
 CREATE POLICY "Public All Access Transactions" ON transactions FOR ALL USING (true);

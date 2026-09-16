@@ -3700,13 +3700,13 @@ export default function AdminCommandCenter() {
                           <select
                             value={transactionFilter}
                             onChange={(e) => setTransactionFilter(e.target.value)}
-                            className="border border-slate-300 rounded-lg px-3 py-2 text-sm bg-white shadow-sm"
+                            className="border border-slate-300 rounded-lg px-3 py-2 text-sm bg-white shadow-sm font-medium"
                           >
-                            <option value="all">Semua Status</option>
-                            <option value="pending">Pending</option>
-                            <option value="paid">Paid</option>
-                            <option value="failed">Failed</option>
-                            <option value="expired">Expired</option>
+                            <option value="all">Semua Status Transaksi</option>
+                            <option value="waiting_verification">⏳ Menunggu Verifikasi (Ada Bukti)</option>
+                            <option value="pending">🟡 Pending (Belum Bayar)</option>
+                            <option value="paid">✅ Paid (Lunas)</option>
+                            <option value="failed">❌ Failed (Gagal/Batal)</option>
                           </select>
 
                           <button
@@ -3726,14 +3726,23 @@ export default function AdminCommandCenter() {
                       </div>
 
                       {/* Summary Cards */}
-                      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
                         <div className="bg-white rounded-xl border border-slate-200 p-4 shadow-sm">
                           <div className="text-sm text-slate-500 mb-1">Total Transaksi</div>
                           <div className="text-2xl font-bold text-slate-800">{transactions.length}</div>
                         </div>
+                        <div className="bg-amber-50/80 rounded-xl border border-amber-300 p-4 shadow-sm">
+                          <div className="text-sm text-amber-800 font-semibold mb-1 flex items-center gap-1">
+                            <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
+                            Perlu Verifikasi
+                          </div>
+                          <div className="text-2xl font-bold text-amber-700">
+                            {transactions.filter(t => (t.status || '').toLowerCase() === 'waiting_verification').length}
+                          </div>
+                        </div>
                         <div className="bg-white rounded-xl border border-slate-200 p-4 shadow-sm">
                           <div className="text-sm text-slate-500 mb-1">Pending</div>
-                          <div className="text-2xl font-bold text-amber-600">
+                          <div className="text-2xl font-bold text-blue-600">
                             {transactions.filter(t => (t.status || '').toLowerCase() === 'pending').length}
                           </div>
                         </div>
@@ -3748,7 +3757,7 @@ export default function AdminCommandCenter() {
                           <div className="text-2xl font-bold text-blue-600">
                             Rp {transactions
                               .filter(t => ['paid', 'success', 'settlement'].includes((t.status || '').toLowerCase()))
-                              .reduce((sum, t) => sum + (t.amount || 0), 0)
+                              .reduce((sum, t) => sum + (Number(t.total_amount || t.amount) || 0), 0)
                               .toLocaleString('id-ID')}
                           </div>
                         </div>
@@ -3765,68 +3774,94 @@ export default function AdminCommandCenter() {
                                 <th className="p-4 text-left text-xs font-semibold text-slate-600">Customer</th>
                                 <th className="p-4 text-left text-xs font-semibold text-slate-600">Paket</th>
                                 <th className="p-4 text-left text-xs font-semibold text-slate-600">Durasi</th>
-                                <th className="p-4 text-left text-xs font-semibold text-slate-600">Harga</th>
+                                <th className="p-4 text-left text-xs font-semibold text-slate-600">Total Tagihan</th>
+                                <th className="p-4 text-center text-xs font-semibold text-slate-600">Bukti Transfer</th>
                                 <th className="p-4 text-left text-xs font-semibold text-slate-600">Status</th>
-                                <th className="p-4 text-left text-xs font-semibold text-slate-600">Aksi</th>
+                                <th className="p-4 text-right text-xs font-semibold text-slate-600">Aksi</th>
                               </tr>
                             </thead>
                             <tbody className="divide-y divide-slate-100">
-                              {filteredTransactions.map((tx) => (
-                                <tr key={tx.id} className="hover:bg-slate-50">
-                                  <td className="p-4">
-                                    <div className="font-mono text-xs font-semibold text-blue-600">{tx.unique_id}</div>
-                                  </td>
-                                  <td className="p-4 text-sm text-slate-600">
-                                    {new Date(tx.created_at).toLocaleDateString('id-ID', {
-                                      day: 'numeric',
-                                      month: 'short',
-                                      year: 'numeric',
-                                      hour: '2-digit',
-                                      minute: '2-digit'
-                                    })}
-                                  </td>
-                                  <td className="p-4">
-                                    <div className="text-sm font-medium text-slate-800">
-                                      {tx.profiles?.full_name || tx.customer_name || '-'}
-                                    </div>
-                                    <div className="text-xs text-slate-500">
-                                      {tx.profiles?.email || tx.customer_email || '-'}
-                                    </div>
-                                  </td>
-                                  <td className="p-4 text-sm text-slate-800">
-                                    {tx.subscription_packages?.name || '-'}
-                                  </td>
-                                  <td className="p-4 text-sm text-slate-600">
-                                    {tx.duration === 999 ? 'Lifetime' : `${tx.duration} Bulan`}
-                                  </td>
-                                  <td className="p-4">
-                                    <div className="font-semibold text-slate-800">
-                                      Rp {(tx.amount || 0).toLocaleString('id-ID')}
-                                    </div>
-                                  </td>
-                                  <td className="p-4">
-                                    <span className={`px-2 py-1 rounded-full text-xs font-bold ${
-                                      ['paid', 'success', 'settlement'].includes((tx.status || '').toLowerCase()) ? 'bg-green-100 text-green-700' :
-                                      (tx.status || '').toLowerCase() === 'pending' ? 'bg-amber-100 text-amber-700' :
-                                      ['failed', 'expired', 'cancel'].includes((tx.status || '').toLowerCase()) ? 'bg-red-100 text-red-700' :
-                                      'bg-slate-100 text-slate-700'
-                                    }`}>
-                                      {tx.status?.toUpperCase()}
-                                    </span>
-                                  </td>
-                                  <td className="p-4">
-                                    <button
-                                      onClick={() => {
-                                        setSelectedTransaction(tx);
-                                        setShowTransactionModal(true);
-                                      }}
-                                      className="text-blue-600 hover:text-blue-800 text-sm font-medium"
-                                    >
-                                      Detail
-                                    </button>
-                                  </td>
-                                </tr>
-                              ))}
+                              {filteredTransactions.map((tx) => {
+                                const total = Number(tx.total_amount || tx.amount || 0);
+                                const uniqueCode = Number(tx.unique_code || 0);
+                                const status = (tx.status || '').toLowerCase();
+
+                                return (
+                                  <tr key={tx.id} className={`hover:bg-slate-50 ${status === 'waiting_verification' ? 'bg-amber-50/40' : ''}`}>
+                                    <td className="p-4">
+                                      <div className="font-mono text-xs font-semibold text-blue-600">{tx.unique_id}</div>
+                                    </td>
+                                    <td className="p-4 text-sm text-slate-600">
+                                      {new Date(tx.created_at).toLocaleDateString('id-ID', {
+                                        day: 'numeric',
+                                        month: 'short',
+                                        year: 'numeric',
+                                        hour: '2-digit',
+                                        minute: '2-digit'
+                                      })}
+                                    </td>
+                                    <td className="p-4">
+                                      <div className="text-sm font-medium text-slate-800">
+                                        {tx.profiles?.full_name || tx.customer_name || '-'}
+                                      </div>
+                                      <div className="text-xs text-slate-500">
+                                        {tx.profiles?.email || tx.customer_email || '-'}
+                                      </div>
+                                    </td>
+                                    <td className="p-4 text-sm text-slate-800">
+                                      {tx.subscription_packages?.name || '-'}
+                                    </td>
+                                    <td className="p-4 text-sm text-slate-600">
+                                      {tx.duration === 999 ? 'Lifetime' : `${tx.duration} Bulan`}
+                                    </td>
+                                    <td className="p-4">
+                                      <div className="font-bold text-slate-800 font-mono">
+                                        Rp {total.toLocaleString('id-ID')}
+                                      </div>
+                                      {uniqueCode > 0 && (
+                                        <div className="text-[11px] text-amber-600 font-semibold">
+                                          Kode Unik: +{uniqueCode}
+                                        </div>
+                                      )}
+                                    </td>
+                                    <td className="p-4 text-center">
+                                      {tx.payment_proof_url ? (
+                                        <span className="inline-flex items-center gap-1 text-xs font-bold text-emerald-700 bg-emerald-50 px-2 py-1 rounded-md border border-emerald-200">
+                                          <span>🖼️</span> Ada Bukti
+                                        </span>
+                                      ) : (
+                                        <span className="text-xs text-slate-400 italic">Belum Ada</span>
+                                      )}
+                                    </td>
+                                    <td className="p-4">
+                                      <span className={`px-2.5 py-1 rounded-full text-xs font-bold inline-flex items-center gap-1 ${
+                                        ['paid', 'success', 'settlement'].includes(status)
+                                          ? 'bg-green-100 text-green-700'
+                                          : status === 'waiting_verification'
+                                          ? 'bg-amber-100 text-amber-800 border border-amber-300 animate-pulse'
+                                          : status === 'pending'
+                                          ? 'bg-blue-100 text-blue-700'
+                                          : 'bg-red-100 text-red-700'
+                                      }`}>
+                                        {status === 'waiting_verification'
+                                          ? '⏳ PERLU VERIFIKASI'
+                                          : (tx.status || '').toUpperCase()}
+                                      </span>
+                                    </td>
+                                    <td className="p-4 text-right">
+                                      <button
+                                        onClick={() => {
+                                          setSelectedTransaction(tx);
+                                          setShowTransactionModal(true);
+                                        }}
+                                        className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-semibold shadow-sm transition-all"
+                                      >
+                                        Periksa
+                                      </button>
+                                    </td>
+                                  </tr>
+                                );
+                              })}
                               {filteredTransactions.length === 0 && (
                                 <tr>
                                   <td colSpan={8} className="p-8 text-center text-slate-500">
@@ -3888,12 +3923,15 @@ export default function AdminCommandCenter() {
                           </div>
                           <div className="bg-slate-50 rounded-lg p-4">
                             <div className="text-xs text-slate-500 mb-1">Status</div>
-                            <span className={`inline-block px-3 py-1 rounded-full text-sm font-bold ${
+                            <span className={`inline-block px-3 py-1 rounded-full text-xs font-bold ${
                               ['paid', 'success', 'settlement'].includes((selectedTransaction.status || '').toLowerCase()) ? 'bg-green-100 text-green-700' :
-                              (selectedTransaction.status || '').toLowerCase() === 'pending' ? 'bg-amber-100 text-amber-700' :
+                              (selectedTransaction.status || '').toLowerCase() === 'waiting_verification' ? 'bg-amber-100 text-amber-800 border border-amber-300 animate-pulse' :
+                              (selectedTransaction.status || '').toLowerCase() === 'pending' ? 'bg-blue-100 text-blue-700' :
                               'bg-red-100 text-red-700'
                             }`}>
-                              {selectedTransaction.status?.toUpperCase()}
+                              {(selectedTransaction.status || '').toLowerCase() === 'waiting_verification'
+                                ? '⏳ PERLU VERIFIKASI'
+                                : selectedTransaction.status?.toUpperCase()}
                             </span>
                           </div>
                         </div>
@@ -3904,11 +3942,11 @@ export default function AdminCommandCenter() {
                           <div className="space-y-2 text-sm">
                             <div className="flex justify-between">
                               <span className="text-slate-600">Nama:</span>
-                              <span className="font-medium">{selectedTransaction.customer_name || '-'}</span>
+                              <span className="font-medium">{selectedTransaction.customer_name || selectedTransaction.profiles?.full_name || '-'}</span>
                             </div>
                             <div className="flex justify-between">
                               <span className="text-slate-600">Email:</span>
-                              <span className="font-medium">{selectedTransaction.customer_email || '-'}</span>
+                              <span className="font-medium">{selectedTransaction.customer_email || selectedTransaction.profiles?.email || '-'}</span>
                             </div>
                             <div className="flex justify-between">
                               <span className="text-slate-600">No. HP:</span>
@@ -3917,9 +3955,9 @@ export default function AdminCommandCenter() {
                           </div>
                         </div>
 
-                        {/* Info Paket */}
+                        {/* Info Paket & Rincian Nominal QRIS */}
                         <div className="border-t border-slate-200 pt-4">
-                          <h4 className="font-bold text-slate-800 mb-3"> Detail Paket</h4>
+                          <h4 className="font-bold text-slate-800 mb-3">💳 Rincian Paket & Tagihan QRIS</h4>
                           <div className="space-y-2 text-sm">
                             <div className="flex justify-between">
                               <span className="text-slate-600">Paket:</span>
@@ -3928,23 +3966,84 @@ export default function AdminCommandCenter() {
                             <div className="flex justify-between">
                               <span className="text-slate-600">Durasi:</span>
                               <span className="font-medium">
-                                {selectedTransaction.duration === 999 ? 'Lifetime' : `${selectedTransaction.duration} Bulan`}
+                                {selectedTransaction.duration === 999 ? 'Lifetime' : `${selectedTransaction.duration || 1} Bulan`}
                               </span>
                             </div>
                             <div className="flex justify-between">
-                              <span className="text-slate-600">Harga:</span>
-                              <span className="font-bold text-blue-600">
-                                Rp {(selectedTransaction.amount || 0).toLocaleString('id-ID')}
+                              <span className="text-slate-600">Harga Paket Dasar:</span>
+                              <span className="font-medium text-slate-800">
+                                Rp {(Number(selectedTransaction.base_amount) || Number(selectedTransaction.amount) || 0).toLocaleString('id-ID')}
+                              </span>
+                            </div>
+                            {Number(selectedTransaction.unique_code) > 0 && (
+                              <div className="flex justify-between text-amber-600 font-medium">
+                                <span>Kode Unik 3 Digit:</span>
+                                <span>+{selectedTransaction.unique_code}</span>
+                              </div>
+                            )}
+                            <div className="flex justify-between pt-2 border-t border-slate-200 text-base">
+                              <span className="font-bold text-slate-900">Total Nominal Wajib Transfer:</span>
+                              <span className="font-extrabold text-blue-600 font-mono">
+                                Rp {(Number(selectedTransaction.total_amount) || Number(selectedTransaction.amount) || 0).toLocaleString('id-ID')}
                               </span>
                             </div>
                           </div>
                         </div>
 
-                        {/* Midtrans Response */}
+                        {/* Foto Bukti Pembayaran */}
+                        <div className="border-t border-slate-200 pt-4">
+                          <h4 className="font-bold text-slate-800 mb-2 flex items-center gap-2">
+                            <span>📸</span> Bukti Pembayaran Pelanggan
+                          </h4>
+                          {selectedTransaction.payment_proof_url ? (
+                            <div className="bg-slate-50 border border-slate-200 rounded-xl p-4">
+                              <div className="flex flex-col sm:flex-row items-center gap-4">
+                                <a
+                                  href={selectedTransaction.payment_proof_url}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  className="block group relative cursor-pointer"
+                                  title="Klik untuk membuka ukuran penuh"
+                                >
+                                  <img
+                                    src={selectedTransaction.payment_proof_url}
+                                    alt="Bukti Transfer"
+                                    className="w-36 h-36 object-cover rounded-lg border border-slate-300 shadow-sm group-hover:opacity-90 transition-opacity"
+                                  />
+                                  <span className="absolute inset-0 bg-black/40 text-white text-[11px] font-semibold opacity-0 group-hover:opacity-100 flex items-center justify-center rounded-lg transition-opacity">
+                                    Perbesar ↗
+                                  </span>
+                                </a>
+                                <div className="space-y-2 text-xs text-slate-600">
+                                  <div>
+                                    <span className="font-semibold text-slate-700 block">Waktu Unggah:</span>
+                                    {selectedTransaction.payment_proof_uploaded_at
+                                      ? new Date(selectedTransaction.payment_proof_uploaded_at).toLocaleString('id-ID')
+                                      : 'Tidak tercatat'}
+                                  </div>
+                                  <a
+                                    href={selectedTransaction.payment_proof_url}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    className="inline-flex items-center gap-1 text-blue-600 hover:text-blue-800 font-semibold text-xs mt-2"
+                                  >
+                                    Buka Foto di Tab Baru ↗
+                                  </a>
+                                </div>
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="bg-slate-50 border border-dashed border-slate-200 rounded-xl p-6 text-center text-xs text-slate-400">
+                              Pelanggan belum mengunggah foto bukti pembayaran.
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Midtrans Response (jika ada transaksi lama) */}
                         {selectedTransaction.midtrans_response && (
                           <div className="border-t border-slate-200 pt-4">
-                            <h4 className="font-bold text-slate-800 mb-3">💳 Response Midtrans</h4>
-                            <pre className="bg-slate-900 text-green-400 p-3 rounded-lg text-xs overflow-auto max-h-40">
+                            <h4 className="font-bold text-slate-800 mb-2">💳 Log Midtrans Lama</h4>
+                            <pre className="bg-slate-900 text-green-400 p-3 rounded-lg text-xs overflow-auto max-h-32">
                               {JSON.stringify(selectedTransaction.midtrans_response, null, 2)}
                             </pre>
                           </div>
@@ -3952,26 +4051,26 @@ export default function AdminCommandCenter() {
                       </div>
 
                       {/* Footer - Update Status */}
-                      <div className="border-t border-slate-200 px-6 py-4 bg-slate-50 flex gap-2">
+                      <div className="border-t border-slate-200 px-6 py-4 bg-slate-50 flex flex-wrap gap-2">
                         {!['paid', 'success', 'settlement'].includes((selectedTransaction.status || '').toLowerCase()) && (
                           <button
                             onClick={() => updateTransactionStatus(selectedTransaction.id, 'paid')}
-                            className="flex-1 bg-green-600 text-white py-2 rounded-lg font-medium hover:bg-green-700"
+                            className="flex-1 bg-green-600 text-white py-2.5 px-4 rounded-xl font-bold hover:bg-green-700 transition-all shadow-sm flex items-center justify-center gap-1.5"
                           >
-                            ✓ Tandai Paid
+                            <span>✓</span> Verifikasi & Aktifkan Paket
                           </button>
                         )}
                         {!['failed', 'expired', 'cancel'].includes((selectedTransaction.status || '').toLowerCase()) && (
                           <button
                             onClick={() => updateTransactionStatus(selectedTransaction.id, 'failed')}
-                            className="flex-1 bg-red-600 text-white py-2 rounded-lg font-medium hover:bg-red-700"
+                            className="flex-1 bg-red-600 text-white py-2.5 px-4 rounded-xl font-bold hover:bg-red-700 transition-all shadow-sm"
                           >
-                            ✗ Tandai Failed
+                            ✗ Tolak Transaksi
                           </button>
                         )}
                         <button
                           onClick={() => setShowTransactionModal(false)}
-                          className="flex-1 border border-slate-300 py-2 rounded-lg font-medium hover:bg-slate-100"
+                          className="px-5 border border-slate-300 py-2.5 rounded-xl font-medium hover:bg-slate-100 transition-all text-slate-700"
                         >
                           Tutup
                         </button>
