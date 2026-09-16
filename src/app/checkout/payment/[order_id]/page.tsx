@@ -103,13 +103,18 @@ export default function PaymentQRISPage() {
     fetchTransaction();
   }, [orderId, router]);
 
-  // Realtime countdown timer
+  // Realtime countdown timer (Maksimal 30 Menit)
   useEffect(() => {
-    if (!tx?.expired_at) return;
+    const exp = tx?.expired_at
+      ? new Date(tx.expired_at).getTime()
+      : tx?.created_at
+      ? new Date(tx.created_at).getTime() + 30 * 60 * 1000
+      : null;
+
+    if (!exp) return;
 
     const interval = setInterval(() => {
       const now = new Date().getTime();
-      const exp = new Date(tx.expired_at).getTime();
       const diff = exp - now;
 
       if (diff <= 0) {
@@ -120,14 +125,20 @@ export default function PaymentQRISPage() {
         const hours = Math.floor(diff / (1000 * 60 * 60));
         const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
         const seconds = Math.floor((diff % (1000 * 60)) / 1000);
-        setTimeLeft(
-          `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`
-        );
+        if (hours > 0) {
+          setTimeLeft(
+            `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`
+          );
+        } else {
+          setTimeLeft(
+            `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`
+          );
+        }
       }
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [tx?.expired_at]);
+  }, [tx?.expired_at, tx?.created_at]);
 
   const handleCopy = (text: string, type: 'nominal' | 'orderId') => {
     navigator.clipboard.writeText(text);
@@ -335,9 +346,9 @@ export default function PaymentQRISPage() {
                 Sisa Waktu Pembayaran
               </span>
               <div className="text-xl sm:text-2xl font-mono font-bold text-amber-400">
-                {timeLeft || '23:59:59'}
+                {timeLeft || '30:00'}
               </div>
-              <span className="text-[11px] text-slate-500 block mt-0.5">Batas bayar 1x24 jam</span>
+              <span className="text-[11px] text-slate-500 block mt-0.5">Batas bayar maksimal 30 menit</span>
             </div>
 
             {/* QR Box */}

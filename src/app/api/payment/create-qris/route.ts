@@ -111,8 +111,8 @@ export async function POST(request: Request) {
     const totalAmount = price + uniqueCode;
     const qrisPayload = generateDynamicQRIS(totalAmount);
 
-    // Batas waktu pembayaran 24 jam
-    const expiredAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
+    // Batas waktu pembayaran maksimal 30 menit
+    const expiredAt = new Date(Date.now() + 30 * 60 * 1000).toISOString();
     const orderId = `QRIS-${Date.now()}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
 
     // 4. Simpan transaksi ke database
