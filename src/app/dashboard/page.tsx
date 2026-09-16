@@ -256,54 +256,58 @@ function DashboardContent() {
 
   return (
     <MemberLayout>
-      <div className="min-h-screen bg-gray-50 pb-20 md:pb-6 md:p-6">
+      <div className="min-h-screen bg-white pb-20 md:pb-8 p-4 md:p-6 max-w-6xl mx-auto space-y-6">
         
-        {/* MOBILE HEADER - Welcome Section */}
-        <div className="bg-gradient-to-br from-blue-600 to-indigo-700 px-4 pt-8 pb-16 md:rounded-2xl md:mx-6 md:mt-6 md:p-8 md:mb-6">
-          <div className="flex items-center justify-between mb-4">
+        {/* HEADER - Welcome Section (Minimalist White & Brand Blue) */}
+        <div className="bg-white border border-slate-200 rounded-2xl p-6 md:p-8 shadow-sm">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
             <div>
-              <p className="text-blue-100 text-sm mb-1">Selamat Datang!</p>
-              <h1 className="text-2xl md:text-3xl font-bold text-white">
+              <p className="text-xs uppercase tracking-wider font-semibold text-slate-500 mb-1">
+                Selamat Datang di Klinik CPNS
+              </p>
+              <h1 className="text-2xl md:text-3xl font-extrabold text-slate-900">
                 {userProfile?.full_name?.split(' ')[0] || 'Member'} 👋
               </h1>
             </div>
-            <div className="bg-white/20 backdrop-blur px-3 py-1.5 rounded-full">
-              <span className={`text-xs font-bold px-2 py-1 rounded-full ${
-                isExpired ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'
+            <div>
+              <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-bold border ${
+                isExpired 
+                  ? 'bg-slate-100 text-slate-700 border-slate-200' 
+                  : 'bg-blue-50 text-blue-700 border-blue-200'
               }`}>
-                {isExpired ? (hasSubscription ? 'EXPIRED' : 'BELUM AKTIF') : 'AKTIF'}
+                {isExpired ? (hasSubscription ? '• Paket Kedaluwarsa' : '• Belum Berlangganan') : '✓ Paket Aktif'}
               </span>
             </div>
           </div>
           
           {/* Progress Card */}
-          <div className="bg-white/10 backdrop-blur rounded-xl p-4 mt-4">
+          <div className="bg-slate-50 border border-slate-100 rounded-xl p-4 mt-4">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-white/90 text-sm">Progress Belajar</span>
-              <span className="text-white font-bold">
-                {examHistory.length} Ujian
+              <span className="text-slate-600 text-sm font-medium">Progress Simulasi Belajar</span>
+              <span className="text-blue-600 font-bold text-sm">
+                {examHistory.length} Ujian Selesai
               </span>
             </div>
-            <div className="w-full bg-white/20 rounded-full h-2">
+            <div className="w-full bg-slate-200 rounded-full h-2">
               <div 
-                className="bg-white rounded-full h-2 transition-all"
+                className="bg-blue-600 rounded-full h-2 transition-all"
                 style={{ width: `${Math.min(examHistory.length * 10, 100)}%` }}
               ></div>
             </div>
           </div>
         </div>
 
-        {/* MOBILE NAVIGATION - Tab Menu */}
-        <div className="flex gap-2 px-4 -mt-10 mb-6 md:mx-6 md:mt-0">
+        {/* NAVIGATION - Tab Menu */}
+        <div className="flex gap-2 bg-slate-100 p-1.5 rounded-xl border border-slate-200">
           <button
             onClick={() => {
               setActiveTab('overview');
               router.replace('/dashboard');
             }}
-            className={`flex-1 py-3 px-4 rounded-xl font-semibold text-sm shadow-lg transition-all ${
+            className={`flex-1 py-2.5 px-4 rounded-lg font-bold text-sm transition-all ${
               activeTab === 'overview' 
-                ? 'bg-white text-blue-600' 
-                : 'bg-white/80 text-slate-600'
+                ? 'bg-white text-blue-600 shadow-sm' 
+                : 'text-slate-600 hover:text-slate-900'
             }`}
           >
             📊 Overview
@@ -313,10 +317,10 @@ function DashboardContent() {
               setActiveTab('subscription');
               router.replace('/dashboard?tab=subscription');
             }}
-            className={`flex-1 py-3 px-4 rounded-xl font-semibold text-sm shadow-lg transition-all ${
+            className={`flex-1 py-2.5 px-4 rounded-lg font-bold text-sm transition-all ${
               activeTab === 'subscription' 
-                ? 'bg-white text-blue-600' 
-                : 'bg-white/80 text-slate-600'
+                ? 'bg-white text-blue-600 shadow-sm' 
+                : 'text-slate-600 hover:text-slate-900'
             }`}
           >
             💎 Paket
@@ -326,10 +330,10 @@ function DashboardContent() {
               setActiveTab('notifications');
               router.replace('/dashboard?tab=notifications');
             }}
-            className={`flex-1 py-3 px-4 rounded-xl font-semibold text-sm shadow-lg transition-all ${
+            className={`flex-1 py-2.5 px-4 rounded-lg font-bold text-sm transition-all ${
               activeTab === 'notifications' 
-                ? 'bg-white text-blue-600' 
-                : 'bg-white/80 text-slate-600'
+                ? 'bg-white text-blue-600 shadow-sm' 
+                : 'text-slate-600 hover:text-slate-900'
             }`}
           >
             🔔 Notif
@@ -337,66 +341,72 @@ function DashboardContent() {
         </div>
 
         {/* CONTENT AREA */}
-        <div className="px-4 md:px-6">
+        <div>
           
           {/* TAB: OVERVIEW */}
           {activeTab === 'overview' && (
             <div className="space-y-6">
               
               {/* KLAIM VOUCHER MASA AKTIF */}
-              <div className="bg-gradient-to-r from-purple-50 to-indigo-50 rounded-xl border border-purple-200 p-6">
-                <h2 className="text-lg font-bold text-slate-800 mb-2">🎟️ Klaim Voucher Masa Aktif</h2>
+              <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
+                <h2 className="text-lg font-bold text-slate-900 mb-2 flex items-center gap-2">
+                  <span>🎟️</span> Klaim Voucher Masa Aktif
+                </h2>
                 <p className="text-sm text-slate-600 mb-4">
                   Punya kode voucher masa aktif dari reseller atau promo? Masukkan di sini untuk mengaktifkan langganan Anda.
                 </p>
                 
-                <div className="flex gap-2">
+                <div className="flex flex-col sm:flex-row gap-2.5">
                   <input
                     type="text"
                     value={activationVoucherCode}
                     onChange={(e) => setActivationVoucherCode(e.target.value)}
                     placeholder="Contoh: ABC12-XYZ78"
-                    className="flex-1 border border-slate-300 rounded-lg px-4 py-2.5 text-sm uppercase focus:ring-2 focus:ring-purple-500 focus:outline-none"
+                    className="flex-1 border border-slate-300 rounded-xl px-4 py-2.5 text-sm uppercase focus:ring-2 focus:ring-blue-600 focus:border-blue-600 focus:outline-none"
                   />
                   <button
                     onClick={handleClaimActivationVoucher}
                     disabled={isClaiming}
-                    className="bg-purple-600 hover:bg-purple-700 disabled:bg-purple-300 text-white px-6 py-2.5 rounded-lg font-medium text-sm"
+                    className="bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white px-6 py-2.5 rounded-xl font-bold text-sm transition-all shadow-sm shadow-blue-600/10"
                   >
-                    {isClaiming ? 'Memproses...' : 'Klaim'}
+                    {isClaiming ? 'Memproses...' : 'Klaim Voucher'}
                   </button>
                 </div>
 
                 {activationVoucherResult && (
-                  <div className={`mt-3 p-3 rounded-lg ${
+                  <div className={`mt-3.5 p-3 rounded-xl border text-sm font-medium ${
                     activationVoucherResult.success 
-                      ? 'bg-green-100 text-green-800' 
-                      : 'bg-red-100 text-red-800'
+                      ? 'bg-blue-50 border-blue-200 text-blue-800' 
+                      : 'bg-red-50 border-red-200 text-red-700'
                   }`}>
-                    <p className="text-sm font-medium">{activationVoucherResult.message}</p>
+                    {activationVoucherResult.message}
                   </div>
                 )}
               </div>
               
-              {/* Quick Actions - Horizontal Scroll */}
+              {/* Quick Actions - Minimalist Cards */}
               <div>
-                <h2 className="text-lg font-bold text-slate-800 mb-3">Aksi Cepat</h2>
-                <div className="flex gap-3 overflow-x-auto pb-2 -mx-4 px-4 md:mx-0 md:px-0">
-                  <Link href="/tryout-list" className="flex-shrink-0 bg-gradient-to-br from-blue-500 to-blue-600 text-white p-4 rounded-xl shadow-lg w-32">
-                    <div className="text-2xl mb-2">📝</div>
-                    <div className="text-sm font-bold">Try Out</div>
+                <h2 className="text-lg font-bold text-slate-900 mb-3">Aksi Cepat</h2>
+                <div className="flex gap-3 overflow-x-auto pb-2 -mx-4 px-4 md:mx-0 md:px-0 md:grid md:grid-cols-4">
+                  <Link href="/tryout-list" className="flex-shrink-0 w-32 md:w-auto bg-white border border-slate-200 hover:border-blue-600 hover:bg-blue-50/20 text-slate-900 p-4 rounded-2xl shadow-sm transition-all text-center group">
+                    <div className="text-3xl mb-2 group-hover:scale-110 transition-transform">📝</div>
+                    <div className="text-sm font-bold text-slate-900 group-hover:text-blue-600 transition-colors">Try Out</div>
+                    <div className="text-[11px] text-slate-500 mt-0.5">Simulasi CAT</div>
                   </Link>
-                  <Link href="/dashboard/challenge" className="flex-shrink-0 bg-gradient-to-br from-orange-500 to-orange-600 text-white p-4 rounded-xl shadow-lg w-32">
-                    <div className="text-2xl mb-2">🔥</div>
-                    <div className="text-sm font-bold">Challenge</div>
+                  <Link href="/dashboard/challenge" className="flex-shrink-0 w-32 md:w-auto bg-white border border-slate-200 hover:border-blue-600 hover:bg-blue-50/20 text-slate-900 p-4 rounded-2xl shadow-sm transition-all text-center group">
+                    <div className="text-3xl mb-2 group-hover:scale-110 transition-transform">🔥</div>
+                    <div className="text-sm font-bold text-slate-900 group-hover:text-blue-600 transition-colors">Challenge</div>
+                    <div className="text-[11px] text-slate-500 mt-0.5">30 Hari Rutin</div>
                   </Link>
-                  <Link href="/dashboard/materi" className="flex-shrink-0 bg-gradient-to-br from-green-500 to-green-600 text-white p-4 rounded-xl shadow-lg w-32">
-                    <div className="text-2xl mb-2">📚</div>
-                    <div className="text-sm font-bold">Materi</div>
+                  <Link href="/dashboard/materi" className="flex-shrink-0 w-32 md:w-auto bg-white border border-slate-200 hover:border-blue-600 hover:bg-blue-50/20 text-slate-900 p-4 rounded-2xl shadow-sm transition-all text-center group">
+                    <div className="text-3xl mb-2 group-hover:scale-110 transition-transform">📚</div>
+                    <div className="text-sm font-bold text-slate-900 group-hover:text-blue-600 transition-colors">Materi</div>
+                    <div className="text-[11px] text-slate-500 mt-0.5">Modul & Tips</div>
                   </Link>
-                  <Link href="/dashboard/redeem" className="flex-shrink-0 bg-gradient-to-br from-purple-500 to-purple-600 text-white p-4 rounded-xl shadow-lg w-32">
-                    <div className="text-2xl mb-2">🎁</div>
-                    <div className="text-sm font-bold">Voucher</div>
+                  <Link href="/dashboard/orders" className="flex-shrink-0 w-32 md:w-auto bg-white border border-slate-200 hover:border-blue-600 hover:bg-blue-50/20 text-slate-900 p-4 rounded-2xl shadow-sm transition-all text-center group">
+                    <div className="text-3xl mb-2 group-hover:scale-110 transition-transform">🧾</div>
+                    <div className="text-sm font-bold text-slate-900 group-hover:text-blue-600 transition-colors">Riwayat</div>
+                    <div className="text-[11px] text-slate-500 mt-0.5">Cek Pembelian</div>
                   </Link>
                 </div>
               </div>
@@ -404,13 +414,13 @@ function DashboardContent() {
               {/* Banners - Horizontal Scroll */}
               {banners.length > 0 && (
                 <div>
-                  <h2 className="text-lg font-bold text-slate-800 mb-3">Promosi</h2>
+                  <h2 className="text-lg font-bold text-slate-900 mb-3">Promosi</h2>
                   <div className="flex gap-3 overflow-x-auto pb-2 -mx-4 px-4 md:mx-0 md:px-0 md:grid md:grid-cols-2">
                     {banners.map(banner => (
                       <Link 
                         key={banner.id} 
                         href={banner.link_url || '#'} 
-                        className="flex-shrink-0 w-64 md:w-full overflow-hidden rounded-xl shadow-md"
+                        className="flex-shrink-0 w-64 md:w-full overflow-hidden rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow"
                       >
                         <img 
                           src={banner.image_url} 
@@ -425,34 +435,30 @@ function DashboardContent() {
 
               {/* Latest Updates - Card List */}
               <div>
-                <h2 className="text-lg font-bold text-slate-800 mb-3">Info Terbaru</h2>
+                <h2 className="text-lg font-bold text-slate-900 mb-3">Info Terbaru</h2>
                 <div className="space-y-3">
                   {updates.map(update => (
                     <div 
                       key={update.id} 
-                      className={`p-4 rounded-xl border ${
-                        update.is_important 
-                          ? 'bg-red-50 border-red-200' 
-                          : 'bg-white border-slate-200'
-                      }`}
+                      className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm"
                     >
                       <div className="flex items-center gap-2 mb-2">
-                        <span className={`text-xs font-bold px-2 py-1 rounded-full ${
-                          update.category === 'CPNS' ? 'bg-blue-100 text-blue-700' : 
-                          update.category === 'P3K' ? 'bg-green-100 text-green-700' : 
-                          'bg-slate-100 text-slate-700'
+                        <span className={`text-xs font-bold px-2.5 py-0.5 rounded-full border ${
+                          update.category === 'CPNS' ? 'bg-blue-50 text-blue-700 border-blue-200' : 
+                          update.category === 'P3K' ? 'bg-slate-100 text-slate-700 border-slate-200' : 
+                          'bg-slate-50 text-slate-600 border-slate-200'
                         }`}>
                           {update.category}
                         </span>
                         {update.is_important && (
-                          <span className="text-[10px] font-bold px-2 py-1 rounded-full bg-red-100 text-red-700">
+                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-red-50 text-red-600 border border-red-200">
                             PENTING
                           </span>
                         )}
                       </div>
-                      <h3 className="font-bold text-slate-800 mb-1">{update.title}</h3>
-                      <p className="text-sm text-slate-600 line-clamp-2">{update.content}</p>
-                      <p className="text-xs text-slate-400 mt-2">
+                      <h3 className="font-bold text-slate-900 mb-1 text-base">{update.title}</h3>
+                      <p className="text-sm text-slate-600 line-clamp-2 leading-relaxed">{update.content}</p>
+                      <p className="text-xs text-slate-400 mt-2 font-medium">
                         {new Date(update.published_date).toLocaleDateString('id-ID', { 
                           day: 'numeric', 
                           month: 'short', 
@@ -466,53 +472,56 @@ function DashboardContent() {
 
               {/* Recent Exam History */}
               <div>
-                <h2 className="text-lg font-bold text-slate-800 mb-3">Riwayat Ujian</h2>
+                <h2 className="text-lg font-bold text-slate-900 mb-3">Riwayat Ujian</h2>
                 {examHistory.length === 0 ? (
-                  <div className="bg-white p-6 rounded-xl border border-slate-200 text-center">
+                  <div className="bg-white p-8 rounded-2xl border border-slate-200 text-center shadow-sm">
                     <div className="text-4xl mb-2">📝</div>
-                    <p className="text-slate-500 text-sm">Belum ada riwayat ujian</p>
+                    <p className="text-slate-600 text-sm font-medium">Belum ada riwayat ujian</p>
                     <Link 
                       href="/tryout-list" 
-                      className="inline-block mt-3 bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium"
+                      className="inline-block mt-3 bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-xl text-sm font-bold transition-all shadow-sm"
                     >
-                      Mulai Try Out
+                      Mulai Try Out Sekarang
                     </Link>
                   </div>
                 ) : (
                   <div className="space-y-3">
                     {examHistory.slice(0, 3).map(result => (
-                      <div key={result.id} className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+                      <div key={result.id} className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
                         <div className="flex items-center justify-between mb-3">
-                          <h3 className="font-bold text-slate-800 text-sm">{result.tryout_packages?.name}</h3>
-                          <span className={`px-2 py-1 rounded-full text-xs font-bold ${
-                            result.is_passed ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
+                          <h3 className="font-bold text-slate-900 text-sm">{result.tryout_packages?.name}</h3>
+                          <span className={`px-2.5 py-0.5 rounded-full text-xs font-bold border ${
+                            result.is_passed 
+                              ? 'bg-blue-50 text-blue-700 border-blue-200' 
+                              : 'bg-slate-100 text-slate-600 border-slate-200'
                           }`}>
                             {result.is_passed ? 'LULUS' : 'BELUM LULUS'}
                           </span>
                         </div>
-                        <div className="grid grid-cols-3 gap-2 text-center">
-                          <div className="bg-blue-50 rounded-lg p-2">
-                            <div className="text-xs text-slate-500">TWK</div>
-                            <div className="font-bold text-blue-600">{result.skor_twk}</div>
+                        <div className="grid grid-cols-3 gap-2.5 text-center">
+                          <div className="bg-slate-50 border border-slate-100 rounded-xl p-3">
+                            <div className="text-xs text-slate-500 font-medium">TWK</div>
+                            <div className="font-extrabold text-slate-900 text-base">{result.skor_twk}</div>
                           </div>
-                          <div className="bg-green-50 rounded-lg p-2">
-                            <div className="text-xs text-slate-500">TIU</div>
-                            <div className="font-bold text-green-600">{result.skor_tiu}</div>
+                          <div className="bg-slate-50 border border-slate-100 rounded-xl p-3">
+                            <div className="text-xs text-slate-500 font-medium">TIU</div>
+                            <div className="font-extrabold text-slate-900 text-base">{result.skor_tiu}</div>
                           </div>
-                          <div className="bg-orange-50 rounded-lg p-2">
-                            <div className="text-xs text-slate-500">TKP</div>
-                            <div className="font-bold text-orange-600">{result.skor_tkp}</div>
+                          <div className="bg-slate-50 border border-slate-100 rounded-xl p-3">
+                            <div className="text-xs text-slate-500 font-medium">TKP</div>
+                            <div className="font-extrabold text-slate-900 text-base">{result.skor_tkp}</div>
                           </div>
                         </div>
-                        <div className="mt-3 pt-3 border-t border-slate-100 flex items-center justify-between">
+                        <div className="mt-3.5 pt-3 border-t border-slate-100 flex items-center justify-between">
                           <div className="text-sm">
-                            <span className="text-slate-500">Total: </span>
+                            <span className="text-slate-500 font-medium">Total Skor: </span>
                             <span className="font-bold text-blue-600">{result.skor_total}</span>
                           </div>
-                          <div className="text-xs text-slate-400">
+                          <div className="text-xs text-slate-400 font-medium">
                             {new Date(result.created_at).toLocaleDateString('id-ID', { 
                               day: 'numeric', 
-                              month: 'short' 
+                              month: 'short', 
+                              year: 'numeric' 
                             })}
                           </div>
                         </div>
@@ -528,87 +537,89 @@ function DashboardContent() {
           {activeTab === 'subscription' && (
             <div className="space-y-6">
               {/* Status Card */}
-              <div className={`p-4 rounded-xl border ${
-                isExpired ? 'bg-red-50 border-red-200' : 'bg-green-50 border-green-200'
-              }`}>
-                <div className="flex items-center justify-between">
+              <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                   <div>
-                    <h3 className="font-bold text-slate-800 mb-1">Status Langganan</h3>
+                    <h3 className="font-bold text-slate-900 mb-1 text-base">Status Langganan Anda</h3>
                     <p className="text-sm text-slate-600">
                       {isExpired 
-                        ? (hasSubscription ? 'Langganan telah berakhir' : 'Belum ada langganan aktif')
-                        : `Aktif hingga ${new Date(userProfile?.subscription_valid_until).toLocaleDateString('id-ID')}`
+                        ? (hasSubscription ? 'Masa aktif langganan telah berakhir' : 'Anda belum memiliki paket langganan aktif')
+                        : `Aktif hingga ${new Date(userProfile?.subscription_valid_until).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}`
                       }
                     </p>
                   </div>
-                  <div className={`px-3 py-1.5 rounded-full text-xs font-bold ${
-                    isExpired ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'
-                  }`}>
-                    {isExpired ? (hasSubscription ? 'EXPIRED' : 'BELUM AKTIF') : 'AKTIF'}
+                  <div>
+                    <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-bold border ${
+                      isExpired 
+                        ? 'bg-slate-100 text-slate-600 border-slate-200' 
+                        : 'bg-blue-50 text-blue-700 border-blue-200'
+                    }`}>
+                      {isExpired ? (hasSubscription ? 'Kedaluwarsa' : 'Belum Aktif') : '✓ Langganan Aktif'}
+                    </span>
                   </div>
                 </div>
               </div>
 
-              {/* Package Cards dengan Harga, Durasi Bulan, dan Benefit Admin */}
+              {/* Package Cards */}
               <div className="space-y-4">
-                <h2 className="text-lg font-bold text-slate-800">Pilih Paket Langganan</h2>
+                <h2 className="text-lg font-bold text-slate-900">Pilihan Paket Langganan</h2>
                 {packages.length === 0 ? (
-                  <div className="bg-white p-6 rounded-xl border border-slate-200 text-center text-slate-500 text-sm">
+                  <div className="bg-white p-8 rounded-2xl border border-slate-200 text-center text-slate-500 text-sm">
                     Belum ada paket langganan yang tersedia.
                   </div>
                 ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                     {packages.map(pkg => {
                       const packageBenefits = benefits[pkg.id] || [];
                       const isLifetime = pkg.duration_months === 999;
                       
                       return (
-                        <div key={pkg.id} className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm flex flex-col justify-between hover:shadow-md transition-shadow">
+                        <div key={pkg.id} className="bg-white rounded-2xl border border-slate-200 hover:border-blue-600 overflow-hidden shadow-sm flex flex-col justify-between transition-all">
                           <div>
                             {/* Header Card */}
-                            <div className="bg-gradient-to-r from-blue-600 to-indigo-700 px-4 py-3 text-white">
-                              <div className="flex items-center justify-between">
+                            <div className="p-6 border-b border-slate-100">
+                              <div className="flex items-start justify-between gap-3">
                                 <div>
-                                  <h3 className="font-bold text-lg">{pkg.name}</h3>
-                                  <p className="text-blue-100 text-xs mt-0.5">{pkg.description}</p>
+                                  <h3 className="font-extrabold text-slate-900 text-xl">{pkg.name}</h3>
+                                  <p className="text-slate-500 text-xs mt-1">{pkg.description}</p>
                                 </div>
-                                <div className="text-right">
-                                  <div className="font-bold text-lg">
+                                <div className="text-right shrink-0">
+                                  <div className="font-extrabold text-2xl text-blue-600">
                                     Rp {(pkg.price || 0).toLocaleString('id-ID')}
                                   </div>
-                                  <div className="text-xs text-blue-100">
-                                    {isLifetime ? 'Lifetime' : `${pkg.duration_months || 1} Bulan`}
+                                  <div className="text-xs font-medium text-slate-400 mt-0.5">
+                                    {isLifetime ? 'Akses Lifetime' : `Durasi ${pkg.duration_months || 1} Bulan`}
                                   </div>
                                 </div>
                               </div>
                               {pkg.discount_label && (
-                                <span className="inline-block mt-2 bg-white/20 backdrop-blur text-white text-[10px] font-bold px-2 py-0.5 rounded-full">
+                                <span className="inline-block mt-3 bg-blue-50 border border-blue-200 text-blue-700 text-[11px] font-bold px-2.5 py-0.5 rounded-full">
                                   {pkg.discount_label}
                                 </span>
                               )}
                             </div>
 
                             {/* List Benefit Dari Panel Admin */}
-                            <div className="p-4">
-                              <div className="text-[10px] font-semibold text-slate-500 uppercase tracking-wide mb-2">
-                                Benefit Paket:
+                            <div className="p-6">
+                              <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-3">
+                                Benefit Unggulan:
                               </div>
-                              <ul className="space-y-2">
+                              <ul className="space-y-2.5">
                                 {packageBenefits.length > 0 ? (
                                   packageBenefits.map((benefit: any) => (
-                                    <li key={benefit.id} className="flex items-start gap-2 text-xs text-slate-700">
-                                      <svg className="w-4 h-4 text-green-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <li key={benefit.id} className="flex items-start gap-2.5 text-xs text-slate-700">
+                                      <svg className="w-4 h-4 text-blue-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M5 13l4 4L19 7" />
                                       </svg>
-                                      <span className="leading-tight">{benefit.benefit_text}</span>
+                                      <span className="leading-relaxed">{benefit.benefit_text}</span>
                                     </li>
                                   ))
                                 ) : (
-                                  <li className="flex items-start gap-2 text-xs text-slate-700">
-                                    <svg className="w-4 h-4 text-green-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <li className="flex items-start gap-2.5 text-xs text-slate-700">
+                                    <svg className="w-4 h-4 text-blue-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M5 13l4 4L19 7" />
                                     </svg>
-                                    <span className="leading-tight">Akses penuh ke semua try out & materi CPNS</span>
+                                    <span className="leading-relaxed">Akses penuh ke semua try out & materi CPNS</span>
                                   </li>
                                 )}
                               </ul>
@@ -616,12 +627,12 @@ function DashboardContent() {
                           </div>
 
                           {/* Tombol Akses / Checkout */}
-                          <div className="p-4 pt-0">
+                          <div className="p-6 pt-0">
                             <Link
                               href={`/checkout/${pkg.id}`}
-                              className="block w-full bg-blue-600 hover:bg-blue-700 text-white text-center py-2.5 rounded-lg font-semibold text-sm transition-colors shadow-sm"
+                              className="block w-full bg-blue-600 hover:bg-blue-700 text-white text-center py-3 rounded-xl font-bold text-sm transition-all shadow-sm"
                             >
-                              Pilih Paket
+                              Pilih Paket Ini →
                             </Link>
                           </div>
                         </div>

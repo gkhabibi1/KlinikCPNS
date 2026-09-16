@@ -133,27 +133,27 @@ export default function SubscriptionPage() {
 
       {/* Status Langganan Saat Ini */}
       {currentSubscription && (
-        <div className="bg-gradient-to-r from-green-500 to-emerald-600 rounded-xl p-6 text-white">
+        <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
           <div className="flex items-start justify-between flex-wrap gap-4">
             <div>
-              <div className="flex items-center gap-2 mb-2">
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="flex items-center gap-2 mb-1.5">
+                <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
                 </svg>
-                <h2 className="text-xl font-bold">Langganan Aktif</h2>
+                <h2 className="text-lg font-bold text-slate-900">Langganan Aktif Anda</h2>
               </div>
-              <p className="text-green-50 text-lg font-semibold mb-1">
+              <p className="text-blue-600 text-xl font-extrabold mb-1">
                 {currentSubscription.package_name}
               </p>
-              <p className="text-green-100 text-sm">
+              <p className="text-slate-500 text-xs font-medium">
                 {currentSubscription.is_lifetime 
-                  ? 'Akses seumur hidup' 
+                  ? 'Akses seumur hidup (Lifetime)' 
                   : `Berlaku hingga ${new Date(currentSubscription.valid_until).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })} (${getDaysRemaining()} hari lagi)`}
               </p>
             </div>
-            <div className="bg-white/20 backdrop-blur rounded-lg px-4 py-2">
-              <div className="text-xs text-green-100">Status</div>
-              <div className="font-bold text-lg">✓ Aktif</div>
+            <div className="bg-blue-50 border border-blue-200 rounded-xl px-4 py-2 text-right">
+              <div className="text-[11px] font-semibold text-blue-600 uppercase tracking-wider">Status Akun</div>
+              <div className="font-extrabold text-blue-700 text-sm">✓ Terverifikasi Aktif</div>
             </div>
           </div>
         </div>
@@ -161,23 +161,23 @@ export default function SubscriptionPage() {
 
       {/* Info Banner */}
       {!currentSubscription && (
-        <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 flex items-start gap-3">
+        <div className="bg-blue-50 border border-blue-200 rounded-2xl p-5 flex items-start gap-3">
           <svg className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
-          <div className="text-sm text-blue-800">
-            <p className="font-medium mb-1">Anda belum memiliki langganan aktif</p>
-            <p className="text-blue-700">Pilih salah satu paket di bawah ini untuk mulai mengakses semua fitur premium.</p>
+          <div className="text-sm text-blue-900 leading-relaxed">
+            <p className="font-bold mb-0.5">Anda belum memiliki langganan aktif</p>
+            <p className="text-blue-700 text-xs">Pilih salah satu paket di bawah ini untuk mulai mengakses semua fitur simulasi CAT CPNS & modul pembelajaran.</p>
           </div>
         </div>
       )}
 
       {/* List Paket Subscribe */}
       {packages.length === 0 ? (
-        <div className="text-center py-12 text-slate-500">
-          <div className="text-6xl mb-4"></div>
-          <p className="text-lg font-medium">Belum ada paket yang tersedia</p>
-          <p className="text-sm mt-2">Silakan hubungi admin untuk informasi lebih lanjut</p>
+        <div className="text-center py-12 text-slate-500 bg-white border border-slate-200 rounded-2xl">
+          <div className="text-5xl mb-3">📦</div>
+          <p className="text-base font-bold text-slate-800">Belum ada paket yang tersedia</p>
+          <p className="text-xs text-slate-500 mt-1">Silakan hubungi admin untuk informasi lebih lanjut</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -189,47 +189,39 @@ export default function SubscriptionPage() {
             return (
               <div 
                 key={pkg.id} 
-                className={`relative bg-white rounded-xl border-2 overflow-hidden transition-all hover:shadow-lg ${
-                  isPopular ? 'border-blue-500' : 'border-slate-200'
-                }`}
+                className="relative bg-white rounded-2xl border border-slate-200 hover:border-blue-600 overflow-hidden transition-all shadow-sm flex flex-col justify-between"
               >
                 {/* Badge Popular */}
                 {isPopular && (
-                  <div className="absolute top-0 right-0 bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-xs font-bold px-3 py-1 rounded-bl-lg">
-                     POPULAR
+                  <div className="absolute top-4 right-4 bg-blue-50 text-blue-700 border border-blue-200 text-[11px] font-bold px-2.5 py-0.5 rounded-full">
+                    POPULER
                   </div>
                 )}
 
                 {/* Header Card */}
-                <div className={`px-6 py-5 text-white ${
-                  isLifetime 
-                    ? 'bg-gradient-to-r from-amber-500 to-orange-600' 
-                    : isPopular
-                    ? 'bg-gradient-to-r from-blue-600 to-indigo-700'
-                    : 'bg-gradient-to-r from-slate-600 to-slate-700'
-                }`}>
-                  <h3 className="font-bold text-xl mb-1">{pkg.name}</h3>
-                  <p className="text-white/80 text-sm">{pkg.description}</p>
+                <div className="p-6 border-b border-slate-100">
+                  <h3 className="font-extrabold text-xl text-slate-900 mb-1">{pkg.name}</h3>
+                  <p className="text-slate-500 text-xs leading-relaxed">{pkg.description}</p>
                 </div>
 
                 {/* Body Card */}
-                <div className="p-6 space-y-4">
+                <div className="p-6 space-y-4 flex-1">
                   {/* Durasi & Harga */}
-                  <div className="bg-slate-50 rounded-lg p-4">
+                  <div className="bg-slate-50 border border-slate-100 rounded-xl p-4">
                     <div className="flex items-center justify-between mb-2">
-                      <span className="text-sm text-slate-600">Durasi:</span>
-                      <span className="font-bold text-slate-800">
+                      <span className="text-xs text-slate-500 font-medium">Durasi Akses:</span>
+                      <span className="font-bold text-slate-900 text-sm">
                         {formatDuration(pkg.duration_months)}
                       </span>
                     </div>
                     <div className="flex items-center justify-between mb-2">
-                      <span className="text-sm text-slate-600">Harga:</span>
+                      <span className="text-xs text-slate-500 font-medium">Total Harga:</span>
                       <div className="text-right">
-                        <div className="font-bold text-blue-600 text-xl">
+                        <div className="font-black text-blue-600 text-2xl">
                           Rp {(pkg.price || 0).toLocaleString('id-ID')}
                         </div>
                         {!isLifetime && pkg.duration_months > 1 && (
-                          <div className="text-xs text-slate-500">
+                          <div className="text-[11px] text-slate-400 font-medium">
                             Rp {Math.round((pkg.price || 0) / pkg.duration_months).toLocaleString('id-ID')}/bulan
                           </div>
                         )}
@@ -338,35 +330,29 @@ export default function SubscriptionPage() {
       {/* Modal Detail Benefit */}
       {showBenefitModal && selectedPackage && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl max-w-md w-full max-h-[80vh] overflow-hidden shadow-2xl">
-            <div className={`px-6 py-4 text-white ${
-              selectedPackage.duration_months === 999 
-                ? 'bg-gradient-to-r from-amber-500 to-orange-600' 
-                : 'bg-gradient-to-r from-blue-600 to-indigo-700'
-            }`}>
-              <div className="flex justify-between items-start">
-                <div>
-                  <h3 className="text-xl font-bold">{selectedPackage.name}</h3>
-                  <p className="text-white/80 text-sm mt-1">
-                    {formatDuration(selectedPackage.duration_months)} • Rp {(selectedPackage.price || 0).toLocaleString('id-ID')}
-                  </p>
-                </div>
-                <button
-                  onClick={() => setShowBenefitModal(false)}
-                  className="text-white/80 hover:text-white text-2xl w-8 h-8 flex items-center justify-center rounded-lg hover:bg-white/10"
-                >
-                  ×
-                </button>
+          <div className="bg-white rounded-2xl max-w-md w-full max-h-[80vh] overflow-hidden shadow-2xl border border-slate-200">
+            <div className="px-6 py-5 border-b border-slate-100 bg-white flex justify-between items-start">
+              <div>
+                <h3 className="text-xl font-extrabold text-slate-900">{selectedPackage.name}</h3>
+                <p className="text-blue-600 font-bold text-sm mt-0.5">
+                  {formatDuration(selectedPackage.duration_months)} • Rp {(selectedPackage.price || 0).toLocaleString('id-ID')}
+                </p>
               </div>
+              <button
+                onClick={() => setShowBenefitModal(false)}
+                className="text-slate-400 hover:text-slate-700 text-2xl w-8 h-8 flex items-center justify-center rounded-lg hover:bg-slate-100 transition-colors"
+              >
+                ×
+              </button>
             </div>
 
             <div className="p-6 overflow-y-auto max-h-[calc(80vh-140px)]">
-              <h4 className="font-semibold text-slate-800 mb-3">Daftar Lengkap Manfaat:</h4>
+              <h4 className="font-bold text-slate-900 mb-3 text-sm">Daftar Lengkap Manfaat:</h4>
               <ul className="space-y-3">
                 {(benefits[selectedPackage.id] || []).map((benefit, index) => (
                   <li key={benefit.id} className="flex items-start gap-3">
-                    <div className="w-6 h-6 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0">
-                      <span className="text-green-600 text-xs font-bold">{index + 1}</span>
+                    <div className="w-6 h-6 rounded-full bg-blue-50 border border-blue-200 flex items-center justify-center flex-shrink-0">
+                      <span className="text-blue-600 text-xs font-bold">{index + 1}</span>
                     </div>
                     <span className="text-sm text-slate-700 pt-0.5">{benefit.benefit_text}</span>
                   </li>
@@ -377,13 +363,13 @@ export default function SubscriptionPage() {
             <div className="border-t border-slate-200 px-6 py-4 bg-slate-50 flex gap-2">
               <button
                 onClick={() => setShowBenefitModal(false)}
-                className="flex-1 py-2.5 border border-slate-300 rounded-lg font-medium hover:bg-slate-100"
+                className="flex-1 py-2.5 border border-slate-300 rounded-xl text-sm font-semibold hover:bg-slate-100 transition-colors text-slate-700"
               >
                 Tutup
               </button>
               <Link
                 href={`/checkout/${selectedPackage.id}`}
-                className="flex-1 py-2.5 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 text-center"
+                className="flex-1 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-sm font-bold text-center transition-all shadow-sm"
               >
                 Pilih Paket
               </Link>
@@ -394,32 +380,30 @@ export default function SubscriptionPage() {
       {/* Modal Semua Manfaat */}
       {showAllBenefitsModal && selectedPackageForBenefits && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl max-w-md w-full max-h-[80vh] overflow-hidden shadow-2xl">
-            <div className="bg-gradient-to-r from-blue-600 to-indigo-700 px-6 py-4 text-white">
-              <div className="flex justify-between items-start">
-                <div>
-                  <h3 className="text-xl font-bold">{selectedPackageForBenefits.name}</h3>
-                  <p className="text-blue-100 text-sm mt-1">
-                    {selectedPackageForBenefits.description}
-                  </p>
-                </div>
-                <button
-                  onClick={() => setShowAllBenefitsModal(false)}
-                  className="text-white/80 hover:text-white text-2xl w-8 h-8 flex items-center justify-center rounded-lg hover:bg-white/10"
-                >
-                  ×
-                </button>
+          <div className="bg-white rounded-2xl max-w-md w-full max-h-[80vh] overflow-hidden shadow-2xl border border-slate-200">
+            <div className="px-6 py-5 border-b border-slate-100 bg-white flex justify-between items-start">
+              <div>
+                <h3 className="text-xl font-extrabold text-slate-900">{selectedPackageForBenefits.name}</h3>
+                <p className="text-slate-500 text-xs mt-0.5">
+                  {selectedPackageForBenefits.description}
+                </p>
               </div>
+              <button
+                onClick={() => setShowAllBenefitsModal(false)}
+                className="text-slate-400 hover:text-slate-700 text-2xl w-8 h-8 flex items-center justify-center rounded-lg hover:bg-slate-100 transition-colors"
+              >
+                ×
+              </button>
             </div>
 
             <div className="p-6 overflow-y-auto max-h-[calc(80vh-140px)]">
-              <h4 className="font-semibold text-slate-800 mb-4">Semua Manfaat yang Didapatkan:</h4>
+              <h4 className="font-bold text-slate-900 mb-4 text-sm">Semua Manfaat yang Didapatkan:</h4>
               <ul className="space-y-3">
                 {(benefits[selectedPackageForBenefits.id] || []).map((benefit, index) => (
                   <li key={benefit.id} className="flex items-start gap-3">
-                    <div className="w-6 h-6 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0">
-                      <svg className="w-3 h-3 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7" />
+                    <div className="w-6 h-6 rounded-full bg-blue-50 border border-blue-200 flex items-center justify-center flex-shrink-0">
+                      <svg className="w-3.5 h-3.5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M5 13l4 4L19 7" />
                       </svg>
                     </div>
                     <span className="text-sm text-slate-700 pt-0.5">
