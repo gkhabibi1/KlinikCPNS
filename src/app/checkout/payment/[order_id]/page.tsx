@@ -162,23 +162,31 @@ export default function PaymentQRISPage() {
     document.body.removeChild(link);
   };
 
+  const MAX_FILE_SIZE = 500 * 1024; // 500 KB (512.000 bytes)
+
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      const MAX_SIZE = 500 * 1024; // 500 KB
-      if (file.size > MAX_SIZE) {
-        const sizeKb = (file.size / 1024).toFixed(0);
-        setFileError(`Ukuran foto bukti pembayaran (${sizeKb} KB) melebihi batas maksimal 500 KB. Jika tidak bisa memperkecil/mengompres foto, Anda dapat langsung mengirimkannya ke WhatsApp Admin (+62 851-9965-5534).`);
-        setSelectedFile(null);
-        setPreviewUrl('');
-        if (fileInputRef.current) fileInputRef.current.value = '';
-        return;
-      }
-      setFileError(null);
+    if (!file) return;
+
+    const sizeKb = Math.round(file.size / 1024);
+    const sizeMb = (file.size / (1024 * 1024)).toFixed(2);
+    const displaySize = file.size >= 1024 * 1024 ? `${sizeMb} MB` : `${sizeKb} KB`;
+
+    if (file.size > MAX_FILE_SIZE) {
+      setFileError(`Ukuran foto bukti transfer (${displaySize}) melebihi batas maksimal 500 KB. Anda tidak dapat mengunggah file ini. Silakan kompres foto atau langsung kirimkan bukti ke WhatsApp Admin kami (+62 851-9965-5534).`);
       setSelectedFile(file);
       setPreviewUrl(URL.createObjectURL(file));
       setUploadSuccess(false);
+
+      // Berikan notifikasi seketika kepada user agar tidak bingung
+      alert(`⚠️ FILE TIDAK DAPAT DIUNGGAH!\n\nUkuran file Anda: ${displaySize}\nBatas maksimal: 500 KB\n\nSistem tidak akan memproses file yang lebih dari 500 KB. Silakan kompres foto atau kirimkan struk bukti pembayaran langsung ke WhatsApp Admin (+62 851-9965-5534).`);
+      return;
     }
+
+    setFileError(null);
+    setSelectedFile(file);
+    setPreviewUrl(URL.createObjectURL(file));
+    setUploadSuccess(false);
   };
 
   const handleUploadProof = async () => {
@@ -187,8 +195,13 @@ export default function PaymentQRISPage() {
       return;
     }
 
-    if (selectedFile.size > 500 * 1024) {
-      alert('Ukuran file bukti pembayaran maksimal 500 KB. Anda dapat langsung mengirimkan bukti bayar ke WhatsApp Admin di +62 851-9965-5534.');
+    // Cegat seketika sebelum proses upload dimulai
+    if (selectedFile.size > MAX_FILE_SIZE || Boolean(fileError)) {
+      const sizeKb = Math.round(selectedFile.size / 1024);
+      const sizeMb = (selectedFile.size / (1024 * 1024)).toFixed(2);
+      const displaySize = selectedFile.size >= 1024 * 1024 ? `${sizeMb} MB` : `${sizeKb} KB`;
+
+      alert(`⚠️ Tidak dapat diproses! Ukuran file (${displaySize}) melebihi batas 500 KB.\n\nSilakan kirimkan bukti pembayaran langsung ke WhatsApp Admin di +62 851-9965-5534.`);
       return;
     }
 
@@ -206,7 +219,7 @@ export default function PaymentQRISPage() {
 
       const data = await res.json();
       if (!res.ok || !data.success) {
-        if (data.error && data.error.includes('500 KB')) {
+        if (data.error && (data.error.includes('500 KB') || data.code === 'FILE_TOO_LARGE')) {
           setFileError(data.error);
         }
         throw new Error(data.error || 'Gagal mengunggah bukti pembayaran');
@@ -539,7 +552,9 @@ export default function PaymentQRISPage() {
 
               {/* Area Preview File */}
               {previewUrl ? (
-                <div className="relative mb-4 bg-slate-950 p-3 rounded-xl border border-slate-800 flex items-center gap-4">
+                <div className={`relative mb-4 p-3 rounded-xl border flex items-center gap-4 transition-all ${
+                  fileError ? 'border-rose-500/80 bg-rose-950/30' : 'bg-slate-950 border-slate-800'
+                }`}>
                   <img
                     src={previewUrl}
                     alt="Bukti Transfer"
@@ -550,8 +565,12 @@ export default function PaymentQRISPage() {
                     <p className="text-xs font-semibold text-slate-200 truncate">
                       {selectedFile ? selectedFile.name : 'Bukti_Transfer.jpg'}
                     </p>
-                    <p className="text-[11px] text-slate-400 mt-0.5">
-                      {selectedFile ? `${(selectedFile.size / 1024).toFixed(1)} KB` : 'Tersimpan di sistem'}
+                    <p className={`text-[11px] mt-0.5 ${
+                      fileError ? 'text-rose-400 font-bold' : 'text-slate-400'
+                    }`}>
+                      {selectedFile 
+                        ? `${(selectedFile.size / 1024).toFixed(1)} KB ${fileError ? '— ❌ Melebihi batas 500 KB' : ''}` 
+                        : 'Tersimpan di sistem'}
                     </p>
                     <div className="mt-2 flex items-center gap-3">
                       <button
@@ -606,14 +625,20 @@ export default function PaymentQRISPage() {
                 <button
                   type="button"
                   onClick={handleUploadProof}
-                  disabled={!selectedFile || isUploading}
-                  className="w-full sm:flex-1 py-3 px-5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 disabled:opacity-50 disabled:cursor-not-allowed text-slate-950 font-bold rounded-xl text-sm transition-all shadow-lg shadow-amber-500/10 flex items-center justify-center gap-2"
+                  disabled={!selectedFile || Boolean(fileError) || isUploading}
+                  className={`w-full sm:flex-1 py-3 px-5 font-bold rounded-xl text-sm transition-all flex items-center justify-center gap-2 ${
+                    fileError
+                      ? 'bg-rose-950/60 border border-rose-700/60 text-rose-300 cursor-not-allowed opacity-90'
+                      : 'bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 disabled:opacity-50 disabled:cursor-not-allowed text-slate-950 shadow-lg shadow-amber-500/10'
+                  }`}
                 >
                   {isUploading ? (
                     <>
                       <div className="w-4 h-4 border-2 border-slate-950 border-t-transparent rounded-full animate-spin"></div>
                       <span>Mengunggah Bukti...</span>
                     </>
+                  ) : fileError ? (
+                    <span>🚫 File Melebihi 500 KB (Tidak Dapat Dikirim)</span>
                   ) : (
                     <>
                       <span>Kirim Bukti Pembayaran</span>

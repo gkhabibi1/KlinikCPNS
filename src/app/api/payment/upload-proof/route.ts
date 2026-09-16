@@ -17,12 +17,19 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'File bukti pembayaran wajib diunggah.' }, { status: 400 });
     }
 
-    // Validasi ukuran file maksimal 500 KB
-    const MAX_FILE_SIZE = 500 * 1024; // 500 KB
-    if (file.size > MAX_FILE_SIZE) {
-      const fileSizeKb = (file.size / 1024).toFixed(0);
+    // Validasi ketat ukuran file maksimal 500 KB (512.000 bytes)
+    const MAX_FILE_SIZE = 500 * 1024;
+    const fileBuffer = Buffer.from(await file.arrayBuffer());
+    const actualBytes = Math.max(file.size || 0, fileBuffer.length);
+
+    if (actualBytes > MAX_FILE_SIZE) {
+      const sizeKb = Math.round(actualBytes / 1024);
+      const sizeMb = (actualBytes / (1024 * 1024)).toFixed(2);
+      const displaySize = actualBytes >= 1024 * 1024 ? `${sizeMb} MB` : `${sizeKb} KB`;
+
       return NextResponse.json({
-        error: `Ukuran file bukti transfer terlalu besar (${fileSizeKb} KB). Batas maksimal adalah 500 KB. Anda dapat mengompres gambar atau langsung mengirimkan bukti bayar ke WhatsApp Admin di +62 851-9965-5534.`
+        error: `Ukuran file bukti transfer (${displaySize}) melebihi batas maksimal 500 KB. Anda tidak dapat mengunggah file ini. Silakan kompres gambar atau kirimkan bukti bayar langsung ke WhatsApp Admin kami di +62 851-9965-5534.`,
+        code: 'FILE_TOO_LARGE'
       }, { status: 400 });
     }
 
@@ -43,7 +50,6 @@ export async function POST(request: Request) {
 
     const fileExt = file.name.split('.').pop() || 'jpg';
     const fileName = `proof_${orderId}_${Date.now()}.${fileExt}`;
-    const fileBuffer = Buffer.from(await file.arrayBuffer());
 
     let finalProofUrl = '';
 

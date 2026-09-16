@@ -83,22 +83,28 @@ export default function MemberOrdersPage() {
     setShowModal(true);
   };
 
+  const MAX_FILE_SIZE = 500 * 1024; // 500 KB (512.000 bytes)
+
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      const MAX_SIZE = 500 * 1024; // 500 KB
-      if (file.size > MAX_SIZE) {
-        const sizeKb = (file.size / 1024).toFixed(0);
-        setFileError(`Ukuran file bukti pembayaran (${sizeKb} KB) melebihi batas maksimal 500 KB. Jika Anda tidak bisa memperkecil/mengompres foto, silakan kirimkan bukti bayar langsung ke WhatsApp Admin di +62 851-9965-5534.`);
-        setSelectedFile(null);
-        setPreviewUrl('');
-        if (fileInputRef.current) fileInputRef.current.value = '';
-        return;
-      }
-      setFileError(null);
+    if (!file) return;
+
+    const sizeKb = Math.round(file.size / 1024);
+    const sizeMb = (file.size / (1024 * 1024)).toFixed(2);
+    const displaySize = file.size >= 1024 * 1024 ? `${sizeMb} MB` : `${sizeKb} KB`;
+
+    if (file.size > MAX_FILE_SIZE) {
+      setFileError(`Ukuran file bukti pembayaran (${displaySize}) melebihi batas maksimal 500 KB. Anda tidak dapat mengunggah file ini. Silakan kompres foto atau langsung kirimkan bukti bayar ke WhatsApp Admin kami di +62 851-9965-5534.`);
       setSelectedFile(file);
       setPreviewUrl(URL.createObjectURL(file));
+
+      alert(`⚠️ FILE TIDAK DAPAT DIUNGGAH!\n\nUkuran file Anda: ${displaySize}\nBatas maksimal: 500 KB\n\nSistem tidak akan memproses file yang melebihi 500 KB. Silakan kompres foto Anda atau kirimkan struk bukti transfer langsung ke WhatsApp Admin (+62 851-9965-5534).`);
+      return;
     }
+
+    setFileError(null);
+    setSelectedFile(file);
+    setPreviewUrl(URL.createObjectURL(file));
   };
 
   const handleSubmitProof = async () => {
@@ -107,8 +113,12 @@ export default function MemberOrdersPage() {
       return;
     }
 
-    if (selectedFile.size > 500 * 1024) {
-      alert('Ukuran file bukti pembayaran maksimal 500 KB. Anda dapat langsung mengirimkan bukti bayar ke WhatsApp Admin di +62 851-9965-5534.');
+    if (selectedFile.size > MAX_FILE_SIZE || Boolean(fileError)) {
+      const sizeKb = Math.round(selectedFile.size / 1024);
+      const sizeMb = (selectedFile.size / (1024 * 1024)).toFixed(2);
+      const displaySize = selectedFile.size >= 1024 * 1024 ? `${sizeMb} MB` : `${sizeKb} KB`;
+
+      alert(`⚠️ Tidak dapat diproses! Ukuran file (${displaySize}) melebihi batas 500 KB.\n\nSilakan kirimkan bukti pembayaran langsung ke WhatsApp Admin di +62 851-9965-5534.`);
       return;
     }
 
@@ -126,7 +136,7 @@ export default function MemberOrdersPage() {
 
       const data = await res.json();
       if (!res.ok || !data.success) {
-        if (data.error && data.error.includes('500 KB')) {
+        if (data.error && (data.error.includes('500 KB') || data.code === 'FILE_TOO_LARGE')) {
           setFileError(data.error);
         }
         throw new Error(data.error || 'Gagal mengunggah bukti');
@@ -408,7 +418,9 @@ export default function MemberOrdersPage() {
                 )}
 
                 {previewUrl ? (
-                  <div className="border border-slate-200 rounded-xl p-3 bg-slate-50 flex items-center gap-3">
+                  <div className={`border rounded-xl p-3 flex items-center gap-3 transition-all ${
+                    fileError ? 'border-rose-300 bg-rose-50/70' : 'border-slate-200 bg-slate-50'
+                  }`}>
                     <img
                       src={previewUrl}
                       alt="Preview"
@@ -418,6 +430,11 @@ export default function MemberOrdersPage() {
                       <p className="text-xs font-semibold text-slate-800 truncate">
                         {selectedFile ? selectedFile.name : 'Bukti saat ini'}
                       </p>
+                      {selectedFile && (
+                        <p className={`text-[11px] mt-0.5 ${fileError ? 'text-rose-600 font-bold' : 'text-slate-500'}`}>
+                          {(selectedFile.size / 1024).toFixed(1)} KB {fileError ? '— ❌ Melebihi 500 KB' : ''}
+                        </p>
+                      )}
                       <button
                         type="button"
                         onClick={() => fileInputRef.current?.click()}
@@ -452,14 +469,20 @@ export default function MemberOrdersPage() {
                 <button
                   type="button"
                   onClick={handleSubmitProof}
-                  disabled={!selectedFile || isUploading}
-                  className="flex-1 py-2.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2"
+                  disabled={!selectedFile || Boolean(fileError) || isUploading}
+                  className={`flex-1 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 ${
+                    fileError 
+                      ? 'bg-rose-100 text-rose-600 border border-rose-300 cursor-not-allowed'
+                      : 'bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white'
+                  }`}
                 >
                   {isUploading ? (
                     <>
                       <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
                       <span>Mengunggah...</span>
                     </>
+                  ) : fileError ? (
+                    '🚫 File Melebihi 500 KB'
                   ) : (
                     'Kirim Bukti Pembayaran'
                   )}
