@@ -181,7 +181,7 @@ export default function MemberOrdersPage() {
         <div className="bg-blue-50 border border-blue-200 rounded-2xl p-4 mb-6 flex items-start gap-3">
           <span className="text-xl">ℹ️</span>
           <div className="text-xs sm:text-sm text-blue-900 leading-relaxed">
-            <strong>Catatan Verifikasi Admin:</strong> Setiap transaksi QRIS yang telah diunggah bukti bayarnya akan diproses dan diverifikasi oleh admin maksimal dalam kurun waktu <strong>1x24 jam</strong>. Setelah diverifikasi, masa aktif paket try out Anda akan otomatis bertambah.
+            <strong>Catatan Verifikasi Admin (1x24 Jam):</strong> Setiap transaksi QRIS akan dicek dan diverifikasi oleh admin secara berkala dalam kurun waktu <strong>1x24 jam</strong> berdasarkan kecocokan kode unik nominal transaksi. Unggah bukti bayar bersifat <strong>opsional</strong> (tidak wajib), akun Anda akan tetap diproses dan diverifikasi admin.
           </div>
         </div>
 
@@ -306,7 +306,7 @@ export default function MemberOrdersPage() {
                                     : 'bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold shadow-sm'
                                 }`}
                               >
-                                {order.payment_proof_url ? 'Ganti Bukti' : 'Unggah Bukti'}
+                                {order.payment_proof_url ? 'Ganti Bukti' : 'Unggah Bukti (Opsional)'}
                               </button>
                             )}
 
@@ -332,7 +332,7 @@ export default function MemberOrdersPage() {
             <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-200 animate-in fade-in zoom-in-95 duration-150">
               <div className="flex items-center justify-between pb-4 border-b border-slate-100 mb-4">
                 <h3 className="font-bold text-slate-900 text-base flex items-center gap-2">
-                  <span>📸</span> Unggah Bukti Pembayaran
+                  <span>📸</span> Unggah Bukti Pembayaran <span className="text-xs font-normal text-slate-400 bg-slate-100 px-2 py-0.5 rounded-full">Opsional</span>
                 </h3>
                 <button
                   onClick={() => setShowModal(false)}

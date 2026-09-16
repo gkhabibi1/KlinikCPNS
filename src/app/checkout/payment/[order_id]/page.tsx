@@ -420,44 +420,46 @@ export default function PaymentQRISPage() {
 
               {/* Total Wajib Transfer */}
               <div className="mt-4 pt-4 border-t border-slate-800 bg-slate-950/60 -mx-6 -mb-6 p-6 rounded-b-2xl">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                   <div>
                     <span className="text-xs uppercase tracking-wider font-semibold text-slate-400 block">
-                      Total Nominal Transfer (Wajib Sama)
+                      Total Nominal Tagihan
                     </span>
                     <div className="text-2xl sm:text-3xl font-extrabold text-amber-400 font-mono">
                       Rp {totalAmount.toLocaleString('id-ID')}
                     </div>
                   </div>
-                  <button
-                    onClick={() => handleCopy(totalAmount.toString(), 'nominal')}
-                    className="self-start sm:self-center px-4 py-2 bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/40 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5"
-                  >
-                    {copiedNominal ? '✓ Nominal Tersalin' : 'Salin Nominal'}
-                  </button>
+                  <div className="self-start sm:self-center px-3.5 py-2 bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 rounded-xl text-xs font-bold flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                    <span>Terkunci Otomatis di QRIS</span>
+                  </div>
                 </div>
-                <p className="text-[11px] text-slate-400 mt-2 leading-relaxed">
-                  ⚠️ <strong className="text-slate-200">Penting:</strong> Nominal pada QRIS Dinamis sudah terkunci otomatis ke <strong>Rp {totalAmount.toLocaleString('id-ID')}</strong>. Jika Anda mentransfer manual, pastikan nominal persis hingga 3 digit terakhir untuk mempercepat verifikasi admin.
-                </p>
+
+                <div className="mt-3 p-3 bg-blue-950/40 border border-blue-800/40 rounded-xl flex items-start gap-2.5 text-xs text-blue-200">
+                  <span className="text-base leading-none">📲</span>
+                  <p className="leading-relaxed">
+                    <strong className="text-white">Cukup scan QRIS di samping.</strong> Nominal pembayaran sudah terkunci otomatis ke <strong>Rp {totalAmount.toLocaleString('id-ID')}</strong>. Anda tidak perlu menyalin atau mengetik nominal secara manual di aplikasi m-Banking atau E-Wallet Anda.
+                  </p>
+                </div>
               </div>
             </div>
 
-            {/* Box Upload Bukti Transfer */}
+            {/* Box Upload Bukti Transfer (Opsional) */}
             <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl">
-              <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center justify-between mb-3">
                 <h3 className="text-base font-bold text-white flex items-center gap-2">
-                  <span>📸</span> Unggah Bukti Transfer
+                  <span>📸</span> Unggah Bukti Transfer <span className="text-xs font-normal text-slate-400 bg-slate-800 px-2.5 py-0.5 rounded-full border border-slate-700">Opsional</span>
                 </h3>
                 {uploadSuccess && (
                   <span className="text-xs text-emerald-400 font-semibold bg-emerald-500/10 px-2.5 py-1 rounded-full border border-emerald-500/20">
-                    ✓ Bukti Sudah Terunggah
+                    ✓ Bukti Terunggah
                   </span>
                 )}
               </div>
 
-              <p className="text-xs text-slate-400 mb-4 leading-relaxed">
-                Setelah melakukan transfer/scan QRIS, silakan unggah foto tangkapan layar (screenshot) bukti pembayaran Anda di bawah ini:
-              </p>
+              <div className="bg-amber-950/20 border border-amber-800/30 rounded-xl p-3.5 mb-4 text-xs text-amber-200/90 leading-relaxed">
+                ℹ️ <strong className="text-amber-300">Tidak Wajib Upload:</strong> Anda tidak wajib mengunggah bukti transfer. Pembayaran Anda akan tetap dicek dan diverifikasi oleh admin secara berkala dalam kurun waktu <strong>1x24 jam</strong> berdasarkan kecocokan kode unik nominal transaksi. Unggah bukti hanya jika Anda ingin melampirkan foto struk pembayaran.
+              </div>
 
               {/* Area Preview File */}
               {previewUrl ? (
@@ -565,7 +567,7 @@ export default function PaymentQRISPage() {
             <li>Periksa nama penerima merchant: <strong>TOKO JUALANDIGITAL ID (Wonogiri)</strong>.</li>
             <li>Nominal tagihan sebesar <strong>Rp {totalAmount.toLocaleString('id-ID')}</strong> akan terisi secara otomatis tanpa perlu Anda ketik.</li>
             <li>Konfirmasi pembayaran dan selesaikan transaksi dengan PIN Anda.</li>
-            <li>Ambil tangkapan layar (screenshot) bukti transfer, lalu unggah pada kolom di atas agar admin memverifikasi akun Anda.</li>
+            <li>Selesai! Admin kami akan memverifikasi transaksi Anda dalam kurun waktu 1x24 jam berdasarkan kode unik nominal. Anda juga dapat mengunggah tangkapan layar bukti transfer di atas (opsional).</li>
           </ol>
         </div>
       </div>
