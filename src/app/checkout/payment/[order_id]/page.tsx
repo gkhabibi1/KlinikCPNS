@@ -211,7 +211,35 @@ export default function PaymentQRISPage() {
     );
   }
 
-  if (!tx) return null;
+  if (!tx) {
+    return (
+      <div className="min-h-screen bg-slate-950 flex items-center justify-center p-4 text-white font-sans">
+        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-8 max-w-md w-full text-center shadow-2xl">
+          <div className="w-14 h-14 bg-amber-500/10 text-amber-400 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl font-bold">
+            ⚠️
+          </div>
+          <h2 className="text-lg font-bold text-white mb-2">Pesanan Tidak Ditemukan</h2>
+          <p className="text-xs text-slate-400 mb-6 leading-relaxed">
+            Pesanan dengan ID <span className="font-mono text-amber-400 font-semibold">{orderId}</span> tidak ditemukan. Silakan periksa kembali tautan Anda atau kembali ke menu riwayat pembelian.
+          </p>
+          <div className="flex gap-3 justify-center">
+            <button
+              onClick={() => window.location.reload()}
+              className="px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-xs font-semibold border border-slate-700 transition-all"
+            >
+              🔄 Muat Ulang
+            </button>
+            <Link
+              href="/dashboard/orders"
+              className="px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-semibold shadow-sm transition-all"
+            >
+              Ke Riwayat Pembelian →
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   const totalAmount = Number(tx.total_amount || tx.amount || 0);
   const baseAmount = Number(tx.base_amount || (totalAmount - (tx.unique_code || 0)));
