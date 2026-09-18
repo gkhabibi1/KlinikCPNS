@@ -23,9 +23,14 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     };
   }
 
+  const cleanSlug = slug.replace(/^\/+|\/+$/g, '');
+
   return {
     title: `${post.title} - Klinik CPNS`,
     description: post.excerpt,
+    alternates: {
+      canonical: `https://klinikcpns.com/blog/${cleanSlug}`,
+    },
   };
 }
 

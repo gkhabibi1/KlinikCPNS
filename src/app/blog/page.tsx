@@ -5,6 +5,9 @@ import { Metadata } from 'next';
 export const metadata: Metadata = {
   title: 'Blog CPNS & P3K - Tips, Info, dan Panduan Terbaru | Klinik CPNS',
   description: 'Baca artikel terbaru tentang CPNS, P3K, tips belajar, dan informasi terkini seputar seleksi ASN.',
+  alternates: {
+    canonical: 'https://klinikcpns.com/blog',
+  },
 };
 
 export default async function BlogPage() {

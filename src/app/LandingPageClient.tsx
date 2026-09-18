@@ -998,6 +998,9 @@ function Footer() {
           <a href="#faq" className="hover:text-white transition-colors">
             FAQ
           </a>
+          <a href="/blog" className="hover:text-white transition-colors">
+            Blog
+          </a>
           <a
             href="https://wa.me/6285199655534?text=Halo%20Admin%20KlinikCPNS,%20saya%20ingin%20bertanya"
             target="_blank"

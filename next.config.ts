@@ -1,6 +1,7 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  trailingSlash: false,
   distDir: process.env.NODE_ENV === 'development' ? '.next-dev' : undefined,
   images: {
     remotePatterns: [

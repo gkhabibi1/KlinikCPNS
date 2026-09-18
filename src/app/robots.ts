@@ -5,7 +5,7 @@ export default function robots(): MetadataRoute.Robots {
     rules: {
       userAgent: '*',
       allow: '/',
-      disallow: ['/dashboard/', '/admin/', '/api/', '/checkout/'],
+      disallow: ['/dashboard', '/admin', '/api', '/checkout'],
     },
     sitemap: 'https://klinikcpns.com/sitemap.xml',
   };

@@ -18,13 +18,18 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${baseUrl}/blog`, lastModified: new Date(), changeFrequency: 'weekly', priority: 0.8 },
   ];
 
-  // Dynamic blog pages
-  const blogPages: MetadataRoute.Sitemap = posts?.map(post => ({
-    url: `${baseUrl}/blog/${post.slug}`,
-    lastModified: new Date(post.updated_at),
-    changeFrequency: 'weekly' as const,
-    priority: 0.6,
-  })) || [];
+  // Dynamic blog pages (Pastikan slug bersih tanpa slash di awal/akhir)
+  const blogPages: MetadataRoute.Sitemap = posts
+    ?.filter(post => Boolean(post.slug))
+    .map(post => {
+      const cleanSlug = post.slug.trim().replace(/^\/+|\/+$/g, '');
+      return {
+        url: `${baseUrl}/blog/${cleanSlug}`,
+        lastModified: post.updated_at ? new Date(post.updated_at) : new Date(),
+        changeFrequency: 'weekly' as const,
+        priority: 0.6,
+      };
+    }) || [];
 
   return [...staticPages, ...blogPages];
 }
