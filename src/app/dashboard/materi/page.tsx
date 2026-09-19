@@ -627,56 +627,6 @@ export default function MateriPage() {
         </div>
       </div>
 
-      {/* CONTENT: TKP PLACEHOLDER */}
-      {activeSubject === 'tkp' && (
-        <div className="max-w-[900px] mx-auto px-4 py-16 text-center">
-          <div className="bg-white rounded-3xl border border-slate-200 p-10 shadow-sm">
-            <div className="w-20 h-20 mx-auto rounded-3xl bg-blue-50 flex items-center justify-center text-4xl mb-6">
-              👥
-            </div>
-            <h2 className="text-2xl md:text-3xl font-bold text-slate-900 mb-3">
-              Materi TKP Sedang Disiapkan
-            </h2>
-            <p className="text-slate-600 max-w-xl mx-auto mb-8 text-sm md:text-base leading-relaxed">
-              Tim pengajar dan spesialis SKD Klinik CPNS sedang menyusun materi interaktif berjenjang untuk modul{' '}
-              <strong>TKP (Tes Karakteristik Pribadi)</strong> agar Anda memahami pembobotan nilai 1-5 dan pola sikap terbaik seorang ASN.
-            </p>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-left max-w-2xl mx-auto mb-8">
-              <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200/80">
-                <span className="text-xs font-bold text-blue-600">SUBMATERI 1</span>
-                <h4 className="font-bold text-slate-800 text-sm mt-1">Pelayanan Publik</h4>
-                <p className="text-xs text-slate-500 mt-1">Prinsip kepuasan masyarakat dan empati ASN.</p>
-              </div>
-              <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200/80">
-                <span className="text-xs font-bold text-blue-600">SUBMATERI 2</span>
-                <h4 className="font-bold text-slate-800 text-sm mt-1">Jejaring Kerja</h4>
-                <p className="text-xs text-slate-500 mt-1">Kolaborasi, komunikasi, dan koordinasi tim.</p>
-              </div>
-              <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200/80">
-                <span className="text-xs font-bold text-blue-600">SUBMATERI 3</span>
-                <h4 className="font-bold text-slate-800 text-sm mt-1">Anti Radikalisme</h4>
-                <p className="text-xs text-slate-500 mt-1">Integritas kebangsaan dan ketahanan ideologi.</p>
-              </div>
-            </div>
-
-            <div className="flex justify-center gap-3">
-              <button
-                onClick={() => setActiveSubject('twk')}
-                className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold text-sm transition-colors shadow cursor-pointer"
-              >
-                ← Buka Materi TWK
-              </button>
-              <button
-                onClick={() => setActiveSubject('tiu')}
-                className="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-sm transition-colors shadow cursor-pointer"
-              >
-                Buka Materi TIU →
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* CONTENT: TWK INTERACTIVE COURSE */}
       {activeSubject === 'twk' && (
