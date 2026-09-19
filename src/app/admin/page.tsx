@@ -78,7 +78,7 @@ const CATEGORY_LIMITS: { [key: string]: number } = {
 
 export default function AdminCommandCenter() {
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState<'analytics' | 'members' | 'packages' | 'challenge' | 'materials' | 'banners' | 'updates' | 'subscription-packages' | 'transactions' | 'vouchers' | 'blog' | 'resellers'>('analytics');
+  const [activeTab, setActiveTab] = useState<'analytics' | 'members' | 'packages' | 'challenge' | 'banners' | 'updates' | 'subscription-packages' | 'transactions' | 'vouchers' | 'blog' | 'resellers'>('analytics');
 
   // Protect admin route: ensure user is authenticated
   useEffect(() => {
@@ -164,22 +164,7 @@ export default function AdminCommandCenter() {
   const [updates, setUpdates] = useState<LatestUpdate[]>([]);
   const [isLoadingUpdates, setIsLoadingUpdates] = useState(true);
 
-  // State untuk Materi LMS
-  const [materialCategories, setMaterialCategories] = useState<any[]>([]);
-  const [materials, setMaterials] = useState<any[]>([]);
-  const [isEditingMaterial, setIsEditingMaterial] = useState(false);
-  const [currentMaterial, setCurrentMaterial] = useState<any>(null);
-  const [materialForm, setMaterialForm] = useState({
-    category_id: '',
-    title: '',
-    description: '',
-    content: '',
-    youtube_url: '',
-    thumbnail_url: '',
-    reading_time: 5,
-    is_premium: false,
-    is_published: false
-  });
+
 
   // Unused tryout package setting states removed
   const [guaranteeFormUrl, setGuaranteeFormUrl] = useState<string>('https://forms.google.com/your-guarantee-form-link');
@@ -1029,95 +1014,7 @@ export default function AdminCommandCenter() {
     }
   };
 
-  // Fetch materi
-  const fetchMaterials = async () => {
-    try {
-      const { data: categories, error: catError } = await supabase
-        .from('material_categories')
-        .select('*')
-        .eq('is_active', true)
-        .order('display_order');
-      
-      if (catError) console.error("Error fetching categories:", catError);
-      if (categories) setMaterialCategories(categories);
 
-      const { data: mats, error: matError } = await supabase
-        .from('materials')
-        .select('*, material_categories(name)')
-        .order('created_at', { ascending: false });
-      
-      if (matError) console.error("Error fetching materials:", matError);
-      if (mats) setMaterials(mats);
-    } catch (err) {
-      console.error("Error in fetchMaterials:", err);
-    }
-  };
-
-  // Save materi
-  const saveMaterial = async () => {
-    if (!materialForm.title || !materialForm.category_id) {
-      alert('Judul dan kategori wajib diisi!');
-      return;
-    }
-
-    // Generate slug dari title
-    const slug = materialForm.title.toLowerCase()
-      .replace(/[^a-z0-9]+/g, '-')
-      .replace(/(^-|-$)/g, '');
-
-    const materialData = {
-      ...materialForm,
-      slug,
-      updated_at: new Date().toISOString()
-    };
-
-    let error;
-    if (currentMaterial?.id) {
-      // Update
-      ({ error } = await supabase
-        .from('materials')
-        .update(materialData)
-        .eq('id', currentMaterial.id));
-    } else {
-      // Insert
-      ({ error } = await supabase
-        .from('materials')
-        .insert([materialData]));
-    }
-
-    if (error) {
-      alert('Gagal menyimpan: ' + error.message);
-    } else {
-      alert('✅ Materi berhasil disimpan!');
-      setIsEditingMaterial(false);
-      setCurrentMaterial(null);
-      setMaterialForm({
-        category_id: '',
-        title: '',
-        description: '',
-        content: '',
-        youtube_url: '',
-        thumbnail_url: '',
-        reading_time: 5,
-        is_premium: false,
-        is_published: false
-      });
-      fetchMaterials();
-    }
-  };
-
-  // Delete materi
-  const deleteMaterial = async (id: string) => {
-    if (!confirm('Hapus materi ini?')) return;
-    
-    const { error } = await supabase.from('materials').delete().eq('id', id);
-    if (error) {
-      alert('Gagal menghapus: ' + error.message);
-    } else {
-      alert('✅ Materi dihapus!');
-      fetchMaterials();
-    }
-  };
 
   const fetchUnverifiedTxCount = async () => {
     try {
@@ -1303,7 +1200,7 @@ export default function AdminCommandCenter() {
     if (activeTab === 'packages') fetchPackages();
     if (activeTab === 'banners') fetchBanners();
     if (activeTab === 'updates') fetchUpdates();
-    if (activeTab === 'materials') fetchMaterials();
+
     if (activeTab === 'subscription-packages') fetchSubscriptionPackages();
     if (activeTab === 'transactions') fetchTransactions();
     if (activeTab === 'resellers') fetchResellers();
@@ -1833,18 +1730,7 @@ export default function AdminCommandCenter() {
               </svg>
               30 Day Challenge
             </button>
-            <button 
-              type="button"
-              onClick={() => { setActiveTab('materials'); fetchMaterials(); }} 
-              className={`w-full flex items-center px-4 py-3 rounded-lg text-sm font-medium transition-colors ${
-                activeTab === 'materials' ? 'bg-blue-600 text-white' : 'text-slate-400 hover:bg-slate-800 hover:text-white'
-              }`}
-            >
-              <svg className="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
-              </svg>
-              Materi Pembelajaran
-            </button>
+
             <button onClick={() => setActiveTab('banners')} className={`w-full flex items-center px-4 py-3 rounded-lg text-sm font-medium transition-colors ${activeTab === 'banners' ? 'bg-blue-600 text-white' : 'text-slate-400 hover:bg-slate-800 hover:text-white'}`}>🎨 Banner Promosi</button>
             <button onClick={() => setActiveTab('updates')} className={`w-full flex items-center px-4 py-3 rounded-lg text-sm font-medium transition-colors ${activeTab === 'updates' ? 'bg-blue-600 text-white' : 'text-slate-400 hover:bg-slate-800 hover:text-white'}`}>📢 Info Terbaru</button>
             <button 
@@ -1909,7 +1795,7 @@ export default function AdminCommandCenter() {
             {activeTab === 'members' && 'Manajemen Customer'}
             {activeTab === 'packages' && 'Bank Soal & Paket'}
             {activeTab === 'challenge' && 'Pengaturan 30 Day Challenge'}
-            {activeTab === 'materials' && 'Materi Pembelajaran'}
+
             {activeTab === 'banners' && 'Banner Promosi'}
             {activeTab === 'updates' && 'Info Terbaru'}
             {activeTab === 'subscription-packages' && 'Paket Subscribe'}
@@ -3401,268 +3287,6 @@ export default function AdminCommandCenter() {
                   <strong>💡 Tips:</strong> Buat paket soal khusus untuk challenge ini di tab "Paket Try Out" 
                   dengan tipe akses "Premium". Pastikan soal-soal berkualitas dan sesuai dengan tingkat kesulitan 
                   yang meningkat setiap 10 hari.
-                </div>
-              </div>
-            )}
-
-            {/* TAB MATERI PEMBELAJARAN (LMS) */}
-            {activeTab === 'materials' && (
-              <div className="space-y-6">
-                {/* Header */}
-                <div className="flex justify-between items-center">
-                  <div>
-                    <h2 className="text-2xl font-bold text-slate-800">📚 Manajemen Materi Pembelajaran</h2>
-                    <p className="text-slate-500">Kelola materi CPNS & P3K untuk member</p>
-                  </div>
-                  <button
-                    onClick={() => {
-                      setIsEditingMaterial(true);
-                      setCurrentMaterial(null);
-                      setMaterialForm({
-                        category_id: '',
-                        title: '',
-                        description: '',
-                        content: '',
-                        youtube_url: '',
-                        thumbnail_url: '',
-                        reading_time: 5,
-                        is_premium: false,
-                        is_published: false
-                      });
-                    }}
-                    className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium flex items-center gap-2"
-                  >
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
-                    </svg>
-                    Tambah Materi Baru
-                  </button>
-                </div>
-
-                {/* Form Edit/Create */}
-                {isEditingMaterial && (
-                  <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6">
-                    <div className="flex justify-between items-center mb-6">
-                      <h3 className="text-lg font-bold text-slate-800">
-                        {currentMaterial ? 'Edit Materi' : 'Tambah Materi Baru'}
-                      </h3>
-                      <button
-                        onClick={() => {
-                          setIsEditingMaterial(false);
-                          setCurrentMaterial(null);
-                        }}
-                        className="text-slate-400 hover:text-slate-600 font-bold text-xl"
-                      >
-                        ✕
-                      </button>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                      <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-1">Kategori *</label>
-                        <select
-                          value={materialForm.category_id}
-                          onChange={(e) => setMaterialForm({...materialForm, category_id: e.target.value})}
-                          className="w-full border border-slate-300 rounded-lg p-2.5 focus:ring-2 focus:ring-blue-500"
-                        >
-                          <option value="">Pilih Kategori</option>
-                          {materialCategories.map(cat => (
-                            <option key={cat.id} value={cat.id}>{cat.icon} {cat.name}</option>
-                          ))}
-                        </select>
-                      </div>
-
-                      <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-1">Judul Materi *</label>
-                        <input
-                          type="text"
-                          value={materialForm.title}
-                          onChange={(e) => setMaterialForm({...materialForm, title: e.target.value})}
-                          className="w-full border border-slate-300 rounded-lg p-2.5 focus:ring-2 focus:ring-blue-500"
-                          placeholder="Contoh: Pancasila sebagai Dasar Negara"
-                        />
-                      </div>
-                    </div>
-
-                    <div className="mb-4">
-                      <label className="block text-sm font-medium text-slate-700 mb-1">Deskripsi Singkat</label>
-                      <textarea
-                        value={materialForm.description}
-                        onChange={(e) => setMaterialForm({...materialForm, description: e.target.value})}
-                        rows={2}
-                        className="w-full border border-slate-300 rounded-lg p-2.5 focus:ring-2 focus:ring-blue-500"
-                        placeholder="Deskripsi singkat materi..."
-                      />
-                    </div>
-
-                    <div className="mb-4">
-                      <label className="block text-sm font-medium text-slate-700 mb-1">
-                        Konten Materi (Support HTML & LaTeX)
-                      </label>
-                      <div className="text-xs text-slate-500 mb-2">
-                        Gunakan <code className="bg-slate-100 px-2 py-1 rounded">$...$</code> untuk LaTeX inline, 
-                        <code className="bg-slate-100 px-2 py-1 rounded">$$...$$</code> untuk LaTeX block
-                      </div>
-                      <textarea
-                        value={materialForm.content}
-                        onChange={(e) => setMaterialForm({...materialForm, content: e.target.value})}
-                        rows={10}
-                        className="w-full border border-slate-300 rounded-lg p-3 font-mono text-sm focus:ring-2 focus:ring-blue-500"
-                        placeholder="<h2>Pengertian Pancasila</h2><p>Pancasila adalah...</p>$$x^2 + y^2 = z^2$$"
-                      />
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                      <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-1">URL YouTube (Opsional)</label>
-                        <input
-                          type="url"
-                          value={materialForm.youtube_url}
-                          onChange={(e) => setMaterialForm({...materialForm, youtube_url: e.target.value})}
-                          className="w-full border border-slate-300 rounded-lg p-2.5"
-                          placeholder="https://youtube.com/watch?v=..."
-                        />
-                      </div>
-
-                      <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-1">URL Thumbnail</label>
-                        <input
-                          type="url"
-                          value={materialForm.thumbnail_url}
-                          onChange={(e) => setMaterialForm({...materialForm, thumbnail_url: e.target.value})}
-                          className="w-full border border-slate-300 rounded-lg p-2.5"
-                          placeholder="https://..."
-                        />
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                      <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-1">Estimasi Baca (menit)</label>
-                        <input
-                          type="number"
-                          value={materialForm.reading_time}
-                          onChange={(e) => setMaterialForm({...materialForm, reading_time: parseInt(e.target.value) || 5})}
-                          className="w-full border border-slate-300 rounded-lg p-2.5"
-                          min="1"
-                        />
-                      </div>
-
-                      <div className="flex items-center gap-2">
-                        <input
-                          type="checkbox"
-                          id="is_premium"
-                          checked={materialForm.is_premium}
-                          onChange={(e) => setMaterialForm({...materialForm, is_premium: e.target.checked})}
-                          className="w-4 h-4 text-blue-600 rounded"
-                        />
-                        <label htmlFor="is_premium" className="text-sm font-medium text-slate-700">
-                          Materi Premium (Berbayar)
-                        </label>
-                      </div>
-
-                      <div className="flex items-center gap-2">
-                        <input
-                          type="checkbox"
-                          id="is_published"
-                          checked={materialForm.is_published}
-                          onChange={(e) => setMaterialForm({...materialForm, is_published: e.target.checked})}
-                          className="w-4 h-4 text-blue-600 rounded"
-                        />
-                        <label htmlFor="is_published" className="text-sm font-medium text-slate-700">
-                          Publikasikan Sekarang
-                        </label>
-                      </div>
-                    </div>
-
-                    <div className="flex gap-3 justify-end">
-                      <button
-                        onClick={() => {
-                          setIsEditingMaterial(false);
-                          setCurrentMaterial(null);
-                        }}
-                        className="px-6 py-2.5 border border-slate-300 rounded-lg text-slate-700 hover:bg-slate-50"
-                      >
-                        Batal
-                      </button>
-                      <button
-                        onClick={saveMaterial}
-                        className="px-6 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-                      >
-                        💾 Simpan Materi
-                      </button>
-                    </div>
-                  </div>
-                )}
-
-                {/* List Materi */}
-                <div className="bg-white rounded-xl border border-slate-200 shadow-sm">
-                  <div className="p-6 border-b border-slate-200">
-                    <h3 className="font-bold text-slate-800">Daftar Materi ({materials.length})</h3>
-                  </div>
-                  <div className="divide-y divide-slate-100">
-                    {materials.map((material) => (
-                      <div key={material.id} className="p-4 hover:bg-slate-50 flex items-center justify-between">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-1">
-                            <span className={`px-2 py-1 rounded text-xs font-bold ${
-                              material.is_published ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-600'
-                            }`}>
-                              {material.is_published ? '✓ Published' : 'Draft'}
-                            </span>
-                            {material.is_premium && (
-                              <span className="px-2 py-1 rounded text-xs font-bold bg-amber-100 text-amber-700">
-                                👑 Premium
-                              </span>
-                            )}
-                            <span className="text-xs text-slate-500">
-                              {material.material_categories?.name}
-                            </span>
-                          </div>
-                          <h4 className="font-semibold text-slate-800">{material.title}</h4>
-                          <p className="text-sm text-slate-500 mt-1">{material.description}</p>
-                          <div className="flex items-center gap-4 mt-2 text-xs text-slate-500">
-                            <span>⏱ {material.reading_time} menit</span>
-                            <span>👁 {material.view_count || 0} views</span>
-                            <span>📅 {new Date(material.created_at).toLocaleDateString('id-ID')}</span>
-                          </div>
-                        </div>
-                        <div className="flex gap-2">
-                          <button
-                            onClick={() => {
-                              setCurrentMaterial(material);
-                              setMaterialForm({
-                                category_id: material.category_id,
-                                title: material.title,
-                                description: material.description || '',
-                                content: material.content || '',
-                                youtube_url: material.youtube_url || '',
-                                thumbnail_url: material.thumbnail_url || '',
-                                reading_time: material.reading_time || 5,
-                                is_premium: material.is_premium,
-                                is_published: material.is_published
-                              });
-                              setIsEditingMaterial(true);
-                            }}
-                            className="px-3 py-1.5 text-blue-600 hover:bg-blue-50 rounded text-sm font-medium"
-                          >
-                            ✏️ Edit
-                          </button>
-                          <button
-                            onClick={() => deleteMaterial(material.id)}
-                            className="px-3 py-1.5 text-red-600 hover:bg-red-50 rounded text-sm font-medium"
-                          >
-                            🗑 Hapus
-                          </button>
-                        </div>
-                      </div>
-                    ))}
-                    {materials.length === 0 && (
-                      <div className="p-8 text-center text-slate-500">
-                        Belum ada materi. Klik "Tambah Materi Baru" untuk memulai.
-                      </div>
-                    )}
-                  </div>
                 </div>
               </div>
             )}
