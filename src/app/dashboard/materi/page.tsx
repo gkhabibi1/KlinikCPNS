@@ -5,6 +5,97 @@ import Link from 'next/link';
 import MemberLayout from '../../../components/MemberLayout';
 import { TWK_MODULES } from '@/data/twkModules';
 import { TIU_MODULES } from '@/data/tiuModules';
+import { TKP_MODULES } from '@/data/tkpModules';
+
+function TkpIllustration({ type }: { type: string }) {
+  const common = {
+    stroke: "#1769e0",
+    strokeWidth: 3,
+    strokeLinecap: "round" as const,
+    strokeLinejoin: "round" as const,
+  };
+
+  if (type === "professional") {
+    return (
+      <svg viewBox="0 0 800 250" className="w-full h-auto max-h-[160px] md:max-h-[190px] mx-auto" role="img">
+        <rect x="60" y="45" width="300" height="160" rx="18" fill="#eef5ff" {...common} />
+        <path d="M110 105h180M110 140h120M110 175h150" {...common} />
+        <circle cx="570" cy="105" r="55" fill="#fff" {...common} />
+        <path d="M545 105l18 18 34-40" {...common} />
+        <path d="M480 190h180" {...common} />
+        <text x="410" y="55" fontSize="22" fontWeight="bold" fill="#172033">Tugas</text>
+        <text x="535" y="220" fontSize="22" fontWeight="bold" fill="#172033">Tuntas ✓</text>
+      </svg>
+    );
+  }
+  if (type === "public") {
+    return (
+      <svg viewBox="0 0 800 250" className="w-full h-auto max-h-[160px] md:max-h-[190px] mx-auto">
+        <circle cx="120" cy="120" r="50" fill="#eef5ff" {...common} />
+        <path d="M90 120h60M120 90v60" {...common} />
+        <path d="M250 75h420v110H250z" fill="#fff" {...common} />
+        <path d="M280 105h180M280 140h240" {...common} />
+        <circle cx="600" cy="120" r="25" fill="#dcfce7" stroke="#16a34a" strokeWidth={3} />
+        <path d="M587 120l9 9 18-21" stroke="#16a34a" strokeWidth={3} fill="none" />
+        <text x="75" y="215" fontSize="20" fontWeight="bold" fill="#475569">Masyarakat</text>
+        <text x="400" y="220" fontSize="20" fontWeight="bold" fill="#475569">Prosedur → Adil</text>
+      </svg>
+    );
+  }
+  if (type === "network") {
+    return (
+      <svg viewBox="0 0 800 250" className="w-full h-auto max-h-[160px] md:max-h-[190px] mx-auto">
+        <circle cx="400" cy="125" r="42" fill="#eef5ff" {...common} />
+        <circle cx="180" cy="65" r="30" fill="#fff" {...common} />
+        <circle cx="180" cy="185" r="30" fill="#fff" {...common} />
+        <circle cx="620" cy="65" r="30" fill="#fff" {...common} />
+        <circle cx="620" cy="185" r="30" fill="#fff" {...common} />
+        <path d="M210 70L360 110M210 180L360 140M440 110L590 70M440 140L590 180" {...common} />
+        <text x="375" y="132" fontSize="20" fontWeight="bold" fill="#1769e0">TIM</text>
+      </svg>
+    );
+  }
+  if (type === "culture") {
+    return (
+      <svg viewBox="0 0 800 250" className="w-full h-auto max-h-[160px] md:max-h-[190px] mx-auto">
+        <circle cx="400" cy="125" r="65" fill="#eef5ff" {...common} />
+        <path d="M400 70v110M345 125h110" {...common} />
+        <circle cx="180" cy="80" r="38" fill="#fff" {...common} />
+        <circle cx="620" cy="80" r="38" fill="#fff" {...common} />
+        <circle cx="180" cy="170" r="38" fill="#fff" {...common} />
+        <circle cx="620" cy="170" r="38" fill="#fff" {...common} />
+        <path d="M215 95l135 25M585 95l-135 25M215 155l135-25M585 155L450 130" {...common} />
+        <text x="270" y="225" fontSize="20" fontWeight="bold" fill="#475569">Berbeda, tetap saling menghargai</text>
+      </svg>
+    );
+  }
+  if (type === "tik") {
+    return (
+      <svg viewBox="0 0 800 250" className="w-full h-auto max-h-[160px] md:max-h-[190px] mx-auto">
+        <rect x="270" y="35" width="260" height="150" rx="16" fill="#eef5ff" {...common} />
+        <rect x="310" y="70" width="180" height="75" rx="8" fill="#fff" stroke="#8bb2eb" strokeWidth={3} />
+        <path d="M340 110h120M340 125h85" {...common} />
+        <path d="M220 205h360" {...common} />
+        <path d="M400 185v20" {...common} />
+        <circle cx="150" cy="125" r="34" fill="#dcfce7" stroke="#16a34a" strokeWidth={3} />
+        <path d="M132 125l12 12 25-29" stroke="#16a34a" strokeWidth={3} fill="none" />
+        <path d="M540 125h90" {...common} />
+        <text x="115" y="185" fontSize="19" fontWeight="bold" fill="#475569">Manfaat</text>
+        <text x="605" y="160" fontSize="19" fontWeight="bold" fill="#475569">Dampak</text>
+      </svg>
+    );
+  }
+  return (
+    <svg viewBox="0 0 800 250" className="w-full h-auto max-h-[160px] md:max-h-[190px] mx-auto">
+      <circle cx="400" cy="125" r="65" fill="#eef5ff" {...common} />
+      <path d="M400 82v86M357 125h86" {...common} />
+      <path d="M165 70c35 0 60 25 60 55s-25 55-60 55M635 70c-35 0-60 25-60 55s25 55 60 55" {...common} />
+      <path d="M225 125h110M465 125h110" {...common} />
+      <path d="M330 80l-35 45 35 45M470 80l35 45-35 45" {...common} />
+      <text x="255" y="225" fontSize="20" fontWeight="bold" fill="#475569">Damai • Bersatu • Berdampingan</text>
+    </svg>
+  );
+}
 
 export default function MateriPage() {
   const [activeSubject, setActiveSubject] = useState<'twk' | 'tiu' | 'tkp'>('twk');
@@ -21,9 +112,15 @@ export default function MateriPage() {
   const [tiuUserAnswers, setTiuUserAnswers] = useState<Record<string, string>>({});
   const [tiuStageResults, setTiuStageResults] = useState<Record<number, { isSubmitted: boolean; isAllCorrect: boolean; message: string }>>({});
 
+  // TKP State
+  const [tkpUnlockedStage, setTkpUnlockedStage] = useState<number>(0);
+  const [tkpCompletedStages, setTkpCompletedStages] = useState<Record<number, boolean>>({});
+  const [tkpUserAnswers, setTkpUserAnswers] = useState<Record<string, string>>({});
+  const [tkpStageResults, setTkpStageResults] = useState<Record<number, { isSubmitted: boolean; isAllCorrect: boolean; message: string }>>({});
+
   const [searchQuery, setSearchQuery] = useState('');
   const [focusMode, setFocusMode] = useState(false);
-  const [showCompletionModal, setShowCompletionModal] = useState<{ isOpen: boolean; subject: 'twk' | 'tiu' }>({
+  const [showCompletionModal, setShowCompletionModal] = useState<{ isOpen: boolean; subject: 'twk' | 'tiu' | 'tkp' }>({
     isOpen: false,
     subject: 'twk'
   });
@@ -47,6 +144,15 @@ export default function MateriPage() {
         if (typeof parsed.unlockedStage === 'number') setTiuUnlockedStage(parsed.unlockedStage);
         if (parsed.completedStages) setTiuCompletedStages(parsed.completedStages);
         if (parsed.userAnswers) setTiuUserAnswers(parsed.userAnswers);
+      }
+
+      // TKP
+      const savedTkp = localStorage.getItem('klinikcpns_tkp_learning_progress');
+      if (savedTkp) {
+        const parsed = JSON.parse(savedTkp);
+        if (typeof parsed.unlockedStage === 'number') setTkpUnlockedStage(parsed.unlockedStage);
+        if (parsed.completedStages) setTkpCompletedStages(parsed.completedStages);
+        if (parsed.userAnswers) setTkpUserAnswers(parsed.userAnswers);
       }
     } catch (e) {
       console.error('Error loading saved progress:', e);
@@ -81,13 +187,29 @@ export default function MateriPage() {
     }
   };
 
+  // Save TKP progress
+  const saveTkpProgress = (newUnlocked: number, newCompleted: Record<number, boolean>, newAnswers: Record<string, string>) => {
+    try {
+      localStorage.setItem('klinikcpns_tkp_learning_progress', JSON.stringify({
+        unlockedStage: newUnlocked,
+        completedStages: newCompleted,
+        userAnswers: newAnswers,
+        updatedAt: new Date().toISOString()
+      }));
+    } catch (e) {
+      console.error('Error saving TKP progress:', e);
+    }
+  };
+
   // Handle option select
-  const handleSelectOption = (subject: 'twk' | 'tiu', stageIndex: number, questionIndex: number, value: string) => {
+  const handleSelectOption = (subject: 'twk' | 'tiu' | 'tkp', stageIndex: number, questionIndex: number, value: string) => {
     const key = `m${stageIndex}q${questionIndex}`;
     if (subject === 'twk') {
       setTwkUserAnswers(prev => ({ ...prev, [key]: value }));
-    } else {
+    } else if (subject === 'tiu') {
       setTiuUserAnswers(prev => ({ ...prev, [key]: value }));
+    } else {
+      setTkpUserAnswers(prev => ({ ...prev, [key]: value }));
     }
   };
 
@@ -229,6 +351,75 @@ export default function MateriPage() {
     }
   };
 
+  // Check answers for TKP
+  const checkTkpAnswers = (stageIndex: number) => {
+    const currentModule = TKP_MODULES[stageIndex];
+    if (!currentModule) return;
+
+    let allAnswered = true;
+    let allCorrect = true;
+
+    currentModule.questions.forEach((q, qIdx) => {
+      const key = `m${stageIndex}q${qIdx}`;
+      const chosen = tkpUserAnswers[key];
+      if (!chosen) {
+        allAnswered = false;
+      } else if (chosen !== q.answer) {
+        allCorrect = false;
+      }
+    });
+
+    if (!allAnswered) {
+      setTkpStageResults(prev => ({
+        ...prev,
+        [stageIndex]: {
+          isSubmitted: true,
+          isAllCorrect: false,
+          message: '⚠️ Mohon jawab semua 3 soal checkpoint terlebih dahulu sebelum memeriksa jawaban.'
+        }
+      }));
+      return;
+    }
+
+    if (allCorrect) {
+      const nextUnlocked = Math.max(tkpUnlockedStage, stageIndex + 1);
+      const newCompleted = { ...tkpCompletedStages, [stageIndex]: true };
+      setTkpUnlockedStage(nextUnlocked);
+      setTkpCompletedStages(newCompleted);
+
+      setTkpStageResults(prev => ({
+        ...prev,
+        [stageIndex]: {
+          isSubmitted: true,
+          isAllCorrect: true,
+          message: stageIndex === TKP_MODULES.length - 1 
+            ? '🎉 Luar biasa! Anda telah menyelesaikan seluruh 6 Subbab Materi TKP CPNS!'
+            : '🎉 Sempurna! Semua jawaban benar (3/3). Subbab berikutnya telah terbuka!'
+        }
+      }));
+
+      saveTkpProgress(nextUnlocked, newCompleted, tkpUserAnswers);
+
+      if (stageIndex === TKP_MODULES.length - 1) {
+        setShowCompletionModal({ isOpen: true, subject: 'tkp' });
+      } else {
+        setTimeout(() => {
+          const nextEl = document.getElementById(`tkp-module-${stageIndex + 1}`);
+          if (nextEl) nextEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }, 500);
+      }
+    } else {
+      setTkpStageResults(prev => ({
+        ...prev,
+        [stageIndex]: {
+          isSubmitted: true,
+          isAllCorrect: false,
+          message: '❌ Beberapa jawaban masih belum tepat. Anda perlu mendapatkan 3/3 untuk membuka subbab berikutnya. Pelajari pembahasan lalu coba lagi.'
+        }
+      }));
+    }
+  };
+
   // Reset Progress
   const handleResetProgress = () => {
     const subjectName = activeSubject.toUpperCase();
@@ -249,12 +440,20 @@ export default function MateriPage() {
         localStorage.removeItem('klinikcpns_tiu_learning_progress');
         const firstEl = document.getElementById('tiu-module-0');
         if (firstEl) firstEl.scrollIntoView({ behavior: 'smooth' });
+      } else if (activeSubject === 'tkp') {
+        setTkpUnlockedStage(0);
+        setTkpCompletedStages({});
+        setTkpUserAnswers({});
+        setTkpStageResults({});
+        localStorage.removeItem('klinikcpns_tkp_learning_progress');
+        const firstEl = document.getElementById('tkp-module-0');
+        if (firstEl) firstEl.scrollIntoView({ behavior: 'smooth' });
       }
     }
   };
 
   // Scroll to stage
-  const scrollToStage = (prefix: 'twk' | 'tiu', stageIdx: number) => {
+  const scrollToStage = (prefix: 'twk' | 'tiu' | 'tkp', stageIdx: number) => {
     const el = document.getElementById(`${prefix}-module-${stageIdx}`);
     if (el) {
       el.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -267,6 +466,9 @@ export default function MateriPage() {
 
   const tiuCompletedCount = Object.keys(tiuCompletedStages).filter(k => tiuCompletedStages[Number(k)]).length;
   const tiuProgressPercent = Math.min(100, Math.round(8 + (tiuCompletedCount / TIU_MODULES.length) * 92));
+
+  const tkpCompletedCount = Object.keys(tkpCompletedStages).filter(k => tkpCompletedStages[Number(k)]).length;
+  const tkpProgressPercent = Math.min(100, Math.round(10 + (tkpCompletedCount / TKP_MODULES.length) * 90));
 
   // Filtered modules
   const filteredTwkModules = TWK_MODULES.filter(m => {
@@ -288,6 +490,20 @@ export default function MateriPage() {
       m.description.toLowerCase().includes(q) ||
       m.content.toLowerCase().includes(q) ||
       m.categoryTag.toLowerCase().includes(q)
+    );
+  });
+
+  const filteredTkpModules = TKP_MODULES.filter(m => {
+    if (!searchQuery.trim()) return true;
+    const q = searchQuery.toLowerCase();
+    return (
+      m.title.toLowerCase().includes(q) ||
+      m.stageNumber.toLowerCase().includes(q) ||
+      m.subtitle.toLowerCase().includes(q) ||
+      m.intro.toLowerCase().includes(q) ||
+      m.content.toLowerCase().includes(q) ||
+      m.categoryTag.toLowerCase().includes(q) ||
+      m.tags.some(t => t.toLowerCase().includes(q))
     );
   });
 
@@ -370,19 +586,19 @@ export default function MateriPage() {
               onClick={() => { setActiveSubject('tkp'); setSearchQuery(''); }}
               className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition-all cursor-pointer ${
                 activeSubject === 'tkp'
-                  ? 'bg-blue-600 text-white shadow-sm'
+                  ? 'bg-blue-600 text-white shadow-sm shadow-blue-500/20'
                   : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
               }`}
             >
               <span>👥</span>
-              <span>TKP</span>
-              <span className="text-[10px] bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full font-medium ml-1">
-                Segera Hadir
+              <span>TKP (6 Tahap)</span>
+              <span className="text-[11px] bg-emerald-500 text-white px-2 py-0.5 rounded-full font-semibold ml-1">
+                Baru
               </span>
             </button>
           </div>
 
-          {(activeSubject === 'twk' || activeSubject === 'tiu') && (
+          {(activeSubject === 'twk' || activeSubject === 'tiu' || activeSubject === 'tkp') && (
             <div className="flex items-center gap-2 ml-auto">
               <button
                 onClick={() => setFocusMode(!focusMode)}
@@ -1109,6 +1325,399 @@ export default function MateriPage() {
                           <div
                             className={`text-xs md:text-sm font-bold ${
                               result.isAllCorrect ? 'text-[#087f4e]' : 'text-[#c92a2a]'
+                            }`}
+                          >
+                            {result.message}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </section>
+                );
+              })
+            )}
+          </main>
+        </>
+      )}
+
+      {/* CONTENT: TKP INTERACTIVE COURSE */}
+      {activeSubject === 'tkp' && (
+        <>
+          {/* HERO BANNER */}
+          <header className="bg-gradient-to-br from-[#0f172a] via-[#1769e0] to-[#60a5fa] text-white pt-12 pb-20 px-5">
+            <div className="max-w-[1120px] mx-auto">
+              <div className="text-[11px] font-black tracking-[0.16em] uppercase opacity-85 mb-2">
+                TKP CPNS • INTERACTIVE LEARNING
+              </div>
+              <h1 className="text-3xl md:text-5xl lg:text-[54px] font-black leading-tight mb-3">
+                Belajar TKP dengan Sistem Unlock.
+              </h1>
+              <p className="max-w-[760px] text-base md:text-[17px] opacity-90 leading-relaxed">
+                Kuasai 6 pilar karakteristik kepribadian: Profesionalisme, Pelayanan Publik, Jejaring Kerja, Sosiokultural, TIK, dan Anti Radikalisme. Pahami esensi dilema moral/dinas, pola kunci skenario, dan tuntaskan checkpoint wajib lulus untuk membuka tahap berikutnya.
+              </p>
+
+              {/* 6 PILLAR MAP */}
+              <div className="mt-8 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+                <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-3 text-left">
+                  <div className="text-[11px] font-extrabold text-blue-200 uppercase tracking-wider">💼 Tahap 1</div>
+                  <div className="text-xs text-white font-bold mt-1">Profesionalisme</div>
+                  <div className="text-[11px] text-white/80 mt-0.5">Prioritas & Tugas</div>
+                </div>
+                <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-3 text-left">
+                  <div className="text-[11px] font-extrabold text-blue-200 uppercase tracking-wider">🏛️ Tahap 2</div>
+                  <div className="text-xs text-white font-bold mt-1">Pelayanan Publik</div>
+                  <div className="text-[11px] text-white/80 mt-0.5">Adil & SOP</div>
+                </div>
+                <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-3 text-left">
+                  <div className="text-[11px] font-extrabold text-blue-200 uppercase tracking-wider">🤝 Tahap 3</div>
+                  <div className="text-xs text-white font-bold mt-1">Jejaring Kerja</div>
+                  <div className="text-[11px] text-white/80 mt-0.5">Kolaborasi Tim</div>
+                </div>
+                <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-3 text-left">
+                  <div className="text-[11px] font-extrabold text-blue-200 uppercase tracking-wider">🌏 Tahap 4</div>
+                  <div className="text-xs text-white font-bold mt-1">Sosiokultural</div>
+                  <div className="text-[11px] text-white/80 mt-0.5">Empati & Ragam</div>
+                </div>
+                <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-3 text-left">
+                  <div className="text-[11px] font-extrabold text-blue-200 uppercase tracking-wider">💻 Tahap 5</div>
+                  <div className="text-xs text-white font-bold mt-1">TIK Digital</div>
+                  <div className="text-[11px] text-white/80 mt-0.5">Manfaat & Risiko</div>
+                </div>
+                <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-3 text-left">
+                  <div className="text-[11px] font-extrabold text-blue-200 uppercase tracking-wider">🕊️ Tahap 6</div>
+                  <div className="text-xs text-white font-bold mt-1">Anti Radikalisme</div>
+                  <div className="text-[11px] text-white/80 mt-0.5">Persatuan & Damai</div>
+                </div>
+              </div>
+
+              {/* SEARCH BAR */}
+              <div className="mt-6 max-w-md">
+                <div className="relative">
+                  <input
+                    type="text"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder="Cari materi TKP (contoh: Profesionalisme, Pelayanan, SARA, TIK)..."
+                    className="w-full bg-white/15 backdrop-blur-md text-white placeholder-white/70 border border-white/30 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-white focus:bg-white/20 transition-all"
+                  />
+                  {searchQuery && (
+                    <button
+                      onClick={() => setSearchQuery('')}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-white/80 hover:text-white text-xs cursor-pointer"
+                    >
+                      ✕
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
+          </header>
+
+          {/* STICKY / FLOATING PROGRESS DASHBOARD */}
+          <div className="max-w-[1120px] mx-auto -mt-8 mb-8 px-4">
+            <div className="bg-white border border-[#e4e7ec] rounded-2xl shadow-[0_12px_35px_rgba(16,24,40,0.07)] p-4 sm:p-5 flex flex-wrap items-center justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center font-bold text-base">
+                  👥
+                </div>
+                <div>
+                  <div className="text-xs font-bold text-slate-500 uppercase tracking-wider">Progress Belajar TKP</div>
+                  <div className="text-sm font-extrabold text-slate-900">
+                    {tkpCompletedCount} dari {TKP_MODULES.length} Subbab Selesai
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex-1 min-w-[200px] flex items-center gap-4">
+                <div className="flex-1 h-2.5 bg-[#e9eef7] rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-[#1769e0] rounded-full transition-all duration-500 ease-out"
+                    style={{ width: `${tkpProgressPercent}%` }}
+                  />
+                </div>
+                <span className="text-sm font-black text-[#1769e0] min-w-[45px] text-right">
+                  {tkpProgressPercent}%
+                </span>
+              </div>
+            </div>
+
+            {/* QUICK TAHAP NAVIGATOR CHIPS */}
+            <div className="flex gap-2 overflow-x-auto py-3 no-scrollbar">
+              {TKP_MODULES.map((m, idx) => {
+                const isLocked = idx > tkpUnlockedStage;
+                const isCompleted = !!tkpCompletedStages[idx];
+                const isCurrent = idx === tkpUnlockedStage;
+
+                return (
+                  <button
+                    key={m.id}
+                    onClick={() => !isLocked && scrollToStage('tkp', idx)}
+                    disabled={isLocked}
+                    className={`shrink-0 px-3.5 py-1.5 rounded-full text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer ${
+                      isCompleted
+                        ? 'bg-emerald-50 text-emerald-700 border border-emerald-300 hover:bg-emerald-100'
+                        : isCurrent
+                        ? 'bg-blue-600 text-white shadow-xs shadow-blue-500/20'
+                        : isLocked
+                        ? 'bg-slate-100 text-slate-400 border border-slate-200 cursor-not-allowed'
+                        : 'bg-white text-slate-700 border border-slate-300 hover:bg-slate-50'
+                    }`}
+                  >
+                    <span>{isCompleted ? '✓' : isLocked ? '🔒' : `T0${idx + 1}`}</span>
+                    <span>{m.title}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* MAIN TKP MODULES LIST */}
+          <main className="max-w-[1120px] mx-auto px-4 space-y-12">
+            {filteredTkpModules.length === 0 ? (
+              <div className="text-center py-16 bg-white border border-slate-200 rounded-2xl">
+                <p className="text-slate-500 text-sm">Tidak ada materi TKP yang cocok dengan kata kunci &quot;{searchQuery}&quot;.</p>
+                <button
+                  onClick={() => setSearchQuery('')}
+                  className="mt-3 text-blue-600 text-xs font-bold hover:underline cursor-pointer"
+                >
+                  Reset Pencarian
+                </button>
+              </div>
+            ) : (
+              filteredTkpModules.map((m) => {
+                const stageIndex = TKP_MODULES.findIndex(item => item.id === m.id);
+                const isLocked = stageIndex > tkpUnlockedStage;
+                const isCompleted = !!tkpCompletedStages[stageIndex];
+                const result = tkpStageResults[stageIndex];
+
+                if (isLocked) {
+                  return (
+                    <section
+                      key={m.id}
+                      id={`tkp-module-${stageIndex}`}
+                      className="bg-white/70 border border-dashed border-slate-300 rounded-3xl p-6 md:p-8 text-center"
+                    >
+                      <div className="w-12 h-12 rounded-2xl bg-slate-100 text-slate-400 flex items-center justify-center text-xl mx-auto mb-3">
+                        🔒
+                      </div>
+                      <div className="text-xs font-bold uppercase tracking-wider text-slate-400">
+                        {m.stageNumber} • {m.categoryTag}
+                      </div>
+                      <h2 className="text-xl md:text-2xl font-black text-slate-500 mt-1 mb-2">
+                        {m.title}
+                      </h2>
+                      <p className="text-slate-400 text-sm max-w-md mx-auto">
+                        Selesaikan checkpoint dan ujian pemahaman di tahap sebelumnya untuk membuka materi ini.
+                      </p>
+                    </section>
+                  );
+                }
+
+                return (
+                  <section
+                    key={m.id}
+                    id={`tkp-module-${stageIndex}`}
+                    className="bg-white border border-[#dbe5f2] rounded-3xl overflow-hidden shadow-[0_12px_35px_rgba(20,55,100,0.06)] transition-all"
+                  >
+                    {/* STAGE HEADER */}
+                    <div className="p-6 md:p-8 border-b border-[#eef3fb] bg-gradient-to-r from-blue-50/40 via-transparent to-transparent flex flex-col md:flex-row md:items-center justify-between gap-4">
+                      <div>
+                        <div className="flex items-center gap-2 mb-2 flex-wrap">
+                          <span className="text-[11px] font-black uppercase tracking-wider text-[#1769e0] bg-[#eef5ff] px-2.5 py-1 rounded-lg">
+                            {m.stageNumber}
+                          </span>
+                          <span className="text-[11px] font-black uppercase tracking-wider text-slate-700 bg-slate-100 px-2.5 py-1 rounded-lg">
+                            {m.categoryTag}
+                          </span>
+                          {isCompleted ? (
+                            <span className="text-[11px] font-bold text-emerald-700 bg-emerald-100 px-2.5 py-1 rounded-lg flex items-center gap-1">
+                              <span>✓</span> Lulus Checkpoint
+                            </span>
+                          ) : (
+                            <span className="text-[11px] font-bold text-blue-700 bg-blue-100 px-2.5 py-1 rounded-lg">
+                              Sedang Dipelajari
+                            </span>
+                          )}
+                        </div>
+                        <h2 className="text-2xl md:text-3xl font-black text-slate-900 leading-tight">
+                          {m.title}
+                        </h2>
+                        <p className="text-slate-500 text-xs md:text-sm font-semibold mt-1">
+                          {m.subtitle}
+                        </p>
+                        <p className="text-slate-600 text-sm md:text-base mt-2 max-w-2xl leading-relaxed text-justify">
+                          {m.intro}
+                        </p>
+                        
+                        {/* KEYWORDS TAGS */}
+                        <div className="flex flex-wrap gap-1.5 mt-3">
+                          {m.tags.map((tag) => (
+                            <span
+                              key={tag}
+                              className="text-[11px] font-bold bg-[#f1f5f9] text-[#475569] px-2.5 py-0.5 rounded-full border border-[#e2e8f0]"
+                            >
+                              #{tag}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* QUICK JUMP TO CHECKPOINT BUTTON */}
+                      <button
+                        onClick={() => {
+                          const cp = document.getElementById(`tkp-cp-${stageIndex}`);
+                          if (cp) cp.scrollIntoView({ behavior: 'smooth' });
+                        }}
+                        className="self-start md:self-center shrink-0 px-4 py-2 bg-slate-100 hover:bg-blue-50 text-slate-700 hover:text-blue-700 text-xs font-bold rounded-xl transition-all border border-slate-200 cursor-pointer flex items-center gap-1.5"
+                      >
+                        <span>📝 Langsung ke Checkpoint</span>
+                      </button>
+                    </div>
+
+                    {/* INTERACTIVE VISUAL / ILLUSTRATION */}
+                    <div className="p-5 md:p-6 bg-[#f8fbff] border-b border-[#eef3fb]">
+                      <div className="text-[11px] font-black uppercase tracking-wider text-slate-400 mb-2 text-center">
+                        ILUSTRASI & POLA SIKAP TKP
+                      </div>
+                      <div className="bg-white rounded-2xl p-4 md:p-6 border border-[#dbe5f2] shadow-xs max-w-2xl mx-auto flex items-center justify-center">
+                        <TkpIllustration type={m.illustrationType} />
+                      </div>
+                    </div>
+
+                    {/* TWO-COLUMN LAYOUT: CONTENT + KEY TAKEAWAY */}
+                    <div className="p-6 md:p-8 grid grid-cols-1 lg:grid-cols-3 gap-8">
+                      {/* COLUMN 1: MATERIAL CONTENT */}
+                      <div className="lg:col-span-2">
+                        <div
+                          className="materi-content"
+                          dangerouslySetInnerHTML={{ __html: m.content }}
+                        />
+                      </div>
+
+                      {/* COLUMN 2: KEY TAKEAWAYS ASIDE */}
+                      <div className="space-y-4">
+                        <div className="bg-gradient-to-br from-blue-50/70 to-indigo-50/40 border border-blue-200/80 rounded-2xl p-5 shadow-xs">
+                          <div className="flex items-center gap-2 text-xs font-black uppercase tracking-wider text-[#1769e0] mb-3">
+                            <span>🔑</span>
+                            <span>Poin Kunci & Pola Sikap</span>
+                          </div>
+                          <ul className="space-y-3">
+                            {m.keys.map((k, kIdx) => (
+                              <li key={kIdx} className="text-xs md:text-sm text-slate-700 flex items-start gap-2 leading-relaxed text-justify">
+                                <span className="text-blue-600 font-bold shrink-0 mt-0.5">•</span>
+                                <span>{k}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+
+                        <div className="bg-amber-50/60 border border-amber-200/70 rounded-2xl p-4 text-xs text-amber-900 leading-relaxed text-justify">
+                          <strong className="block font-bold text-amber-950 mb-1">💡 Tips Penilaian TKP CPNS</strong>
+                          Soal TKP memiliki skala skor 1 sampai 5. Sikap yang mengedepankan integritas dinas, kepatuhan prosedur, empati proporsional, dan resolusi damai konsisten meraih poin 5 (skor tertinggi).
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* CHECKPOINT QUIZ CARD */}
+                    <div
+                      id={`tkp-cp-${stageIndex}`}
+                      className="m-6 md:m-8 p-6 md:p-8 bg-[#f8fbff] border-2 border-[#e5edf8] rounded-2xl"
+                    >
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-4 border-b border-slate-200 mb-6">
+                        <div>
+                          <div className="text-[11px] font-black uppercase tracking-wider text-[#1769e0]">
+                            CHECKPOINT EVALUASI
+                          </div>
+                          <h3 className="text-lg md:text-xl font-black text-slate-900 mt-0.5">
+                            Uji Pemahaman: {m.title}
+                          </h3>
+                        </div>
+                        <div className="text-xs font-bold text-slate-500 bg-white px-3 py-1.5 rounded-lg border border-slate-200 self-start sm:self-auto">
+                          {m.questions.length} Soal • Wajib Lulus 3/3
+                        </div>
+                      </div>
+
+                      <p className="text-xs md:text-sm text-slate-600 mb-6 text-justify">
+                        Jawab semua soal di bawah ini. Untuk membuka subbab berikutnya secara otomatis, Anda harus meraih <strong>skor sempurna ({m.questions.length}/{m.questions.length})</strong>.
+                      </p>
+
+                      <div className="space-y-6">
+                        {m.questions.map((q, qIdx) => {
+                          const qKey = `m${stageIndex}q${qIdx}`;
+                          const selectedVal = tkpUserAnswers[qKey];
+                          const isSubmitted = !!result?.isSubmitted;
+
+                          return (
+                            <div
+                              key={qIdx}
+                              className="p-5 bg-white border border-[#e4e7ec] rounded-2xl shadow-xs"
+                            >
+                              <div className="flex items-center gap-2 mb-2">
+                                <span className="text-[10px] font-black tracking-wider text-[#1769e0] bg-[#eef5ff] px-2 py-0.5 rounded-md">
+                                  {q.tag}
+                                </span>
+                              </div>
+                              <div className="font-bold text-slate-800 text-sm md:text-base mb-4 leading-relaxed text-justify">
+                                {q.text}
+                              </div>
+
+                              {/* OPTIONS */}
+                              <div className="space-y-2">
+                                {q.options.map((opt) => {
+                                  const isSelected = selectedVal === opt.value;
+                                  return (
+                                    <label
+                                      key={opt.value}
+                                      onClick={() => handleSelectOption('tkp', stageIndex, qIdx, opt.value)}
+                                      className={`flex items-start gap-3 p-3 rounded-xl border text-xs md:text-sm cursor-pointer transition-all ${
+                                        isSelected
+                                          ? 'border-blue-500 bg-blue-50/80 font-semibold text-blue-900 shadow-xs'
+                                          : 'border-[#e4e7ec] hover:border-[#9dbcfb] hover:bg-[#f8fbff] text-slate-700'
+                                      }`}
+                                    >
+                                      <input
+                                        type="radio"
+                                        name={qKey}
+                                        value={opt.value}
+                                        checked={isSelected}
+                                        onChange={() => {}}
+                                        className="mt-0.5 text-blue-600 focus:ring-blue-500 cursor-pointer"
+                                      />
+                                      <span className="font-black text-[#1769e0] min-w-[14px]">
+                                        {opt.value}
+                                      </span>
+                                      <span className="leading-relaxed text-justify">{opt.text}</span>
+                                    </label>
+                                  );
+                                })}
+                              </div>
+
+                              {/* EXPLANATION */}
+                              {isSubmitted && selectedVal && (
+                                <div className="mt-4 p-3.5 bg-[#f8fafc] border border-slate-200/70 text-[#475467] rounded-xl text-xs md:text-sm leading-relaxed text-justify">
+                                  <strong className="text-slate-800">Pembahasan: </strong>
+                                  {q.explanation}
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+
+                      {/* ACTION BUTTON & RESULT FEEDBACK */}
+                      <div className="mt-6 flex flex-col sm:flex-row sm:items-center gap-4">
+                        <button
+                          type="button"
+                          onClick={() => checkTkpAnswers(stageIndex)}
+                          className="bg-[#1769e0] hover:bg-[#0f4fb8] text-white font-extrabold px-6 py-3 rounded-xl text-sm transition-all shadow-sm cursor-pointer flex items-center justify-center gap-2"
+                        >
+                          <span>🔍 Periksa Jawaban</span>
+                        </button>
+
+                        {result && (
+                          <div
+                            className={`text-xs md:text-sm font-bold ${
+                              result.isAllCorrect ? 'text-[#16a34a]' : 'text-[#dc2626]'
                             }`}
                           >
                             {result.message}
