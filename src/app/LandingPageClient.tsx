@@ -50,6 +50,26 @@ function ImageSlot({ label, ratio = "aspect-[4/3]", className = "" }: ImageSlotP
 /* ----------------------------------------------------------------------- */
 function Header() {
   const [open, setOpen] = useState(false);
+  const [currentUser, setCurrentUser] = useState<any>(null);
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }: any) => {
+      setCurrentUser(data?.user || null);
+    });
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event: any, session: any) => {
+      setCurrentUser(session?.user || null);
+    });
+    return () => subscription.unsubscribe();
+  }, []);
+
+  const handleLogout = async () => {
+    if (confirm("Apakah Anda yakin ingin keluar dari akun?")) {
+      await supabase.auth.signOut();
+      setCurrentUser(null);
+      window.location.reload();
+    }
+  };
+
   const links = [
     { label: "Kenapa Sekarang", href: "#peluang" },
     { label: "Resep Kami", href: "#resep" },
@@ -82,19 +102,40 @@ function Header() {
         </nav>
 
         <div className="flex items-center gap-2 sm:gap-3">
-          <a
-            href="/login?mode=login"
-            className="text-sm font-semibold text-slate-700 hover:text-blue-600 px-3.5 py-2 rounded-full transition-colors"
-          >
-            Masuk
-          </a>
-          <a
-            href="/login?mode=register"
-            className="inline-flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-4.5 py-2.5 rounded-full transition-colors shadow-sm shadow-blue-200"
-          >
-            Daftar
-            <ArrowRight className="w-4 h-4" />
-          </a>
+          {currentUser ? (
+            <>
+              <Link
+                href="/dashboard"
+                className="inline-flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs sm:text-sm font-semibold px-3.5 sm:px-4.5 py-2 rounded-full transition-colors shadow-sm shadow-blue-200"
+              >
+                Dashboard
+                <ArrowRight className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+              </Link>
+              <button
+                type="button"
+                onClick={handleLogout}
+                className="text-xs font-semibold text-red-600 hover:text-red-700 bg-red-50 hover:bg-red-100 border border-red-200 px-3 py-1.5 rounded-full transition-colors cursor-pointer"
+              >
+                Keluar
+              </button>
+            </>
+          ) : (
+            <>
+              <a
+                href="/login?mode=login"
+                className="text-sm font-semibold text-slate-700 hover:text-blue-600 px-3.5 py-2 rounded-full transition-colors"
+              >
+                Masuk
+              </a>
+              <a
+                href="/login?mode=register"
+                className="inline-flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-4.5 py-2.5 rounded-full transition-colors shadow-sm shadow-blue-200"
+              >
+                Daftar
+                <ArrowRight className="w-4 h-4" />
+              </a>
+            </>
+          )}
           <button
             onClick={() => setOpen(!open)}
             className="lg:hidden w-9 h-9 flex items-center justify-center rounded-lg text-slate-700"
@@ -118,20 +159,44 @@ function Header() {
             </a>
           ))}
           <div className="pt-2 border-t border-slate-100 flex flex-col gap-2">
-            <a
-              href="/login?mode=login"
-              onClick={() => setOpen(false)}
-              className="w-full text-center text-sm font-semibold text-slate-700 py-2 rounded-xl border border-slate-200"
-            >
-              Masuk
-            </a>
-            <a
-              href="/login?mode=register"
-              onClick={() => setOpen(false)}
-              className="w-full text-center text-sm font-semibold text-white bg-blue-600 py-2.5 rounded-xl shadow-sm"
-            >
-              Daftar Sekarang
-            </a>
+            {currentUser ? (
+              <>
+                <Link
+                  href="/dashboard"
+                  onClick={() => setOpen(false)}
+                  className="w-full text-center text-sm font-semibold text-white bg-blue-600 py-2.5 rounded-xl shadow-sm"
+                >
+                  Buka Dashboard
+                </Link>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setOpen(false);
+                    handleLogout();
+                  }}
+                  className="w-full text-center text-sm font-semibold text-red-600 bg-red-50 hover:bg-red-100 py-2 rounded-xl border border-red-200 transition-colors"
+                >
+                  Keluar dari Akun
+                </button>
+              </>
+            ) : (
+              <>
+                <a
+                  href="/login?mode=login"
+                  onClick={() => setOpen(false)}
+                  className="w-full text-center text-sm font-semibold text-slate-700 py-2 rounded-xl border border-slate-200"
+                >
+                  Masuk
+                </a>
+                <a
+                  href="/login?mode=register"
+                  onClick={() => setOpen(false)}
+                  className="w-full text-center text-sm font-semibold text-white bg-blue-600 py-2.5 rounded-xl shadow-sm"
+                >
+                  Daftar Sekarang
+                </a>
+              </>
+            )}
           </div>
         </div>
       )}

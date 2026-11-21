@@ -78,7 +78,17 @@ const CATEGORY_LIMITS: { [key: string]: number } = {
 
 export default function AdminCommandCenter() {
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState<'analytics' | 'members' | 'packages' | 'challenge' | 'banners' | 'updates' | 'subscription-packages' | 'transactions' | 'vouchers' | 'blog' | 'resellers'>('analytics');
+  const [activeTab, setActiveTab] = useState<'analytics' | 'members' | 'packages' | 'challenge' | 'banners' | 'updates' | 'subscription-packages' | 'transactions' | 'vouchers' | 'blog' | 'resellers' | 'support'>('analytics');
+
+  // State Tab Support & Live Chat
+  const [supportConversations, setSupportConversations] = useState<any[]>([]);
+  const [selectedSupportUser, setSelectedSupportUser] = useState<any | null>(null);
+  const [supportMessages, setSupportMessages] = useState<any[]>([]);
+  const [adminReplyText, setAdminReplyText] = useState('');
+  const [isSendingAdminReply, setIsSendingAdminReply] = useState(false);
+  const [unreadSupportCount, setUnreadSupportCount] = useState(0);
+  const [supportSearchQuery, setSupportSearchQuery] = useState('');
+  const [isLoadingSupport, setIsLoadingSupport] = useState(false);
 
   // Protect admin route: ensure user is authenticated
   useEffect(() => {
@@ -1192,10 +1202,219 @@ export default function AdminCommandCenter() {
     }
   };
 
+  // =================== FUNGSI SUPPORT LIVE CHAT ===================
+  const fetchUnreadSupportCount = async () => {
+    try {
+      const { count } = await supabase
+        .from('support_messages')
+        .select('*', { count: 'exact', head: true })
+        .eq('sender_type', 'user')
+        .eq('is_read_by_admin', false);
+      if (count !== null) setUnreadSupportCount(count);
+    } catch {
+      // ignore jika tabel belum ada
+    }
+  };
+
+  const fetchSupportConversations = async () => {
+    setIsLoadingSupport(true);
+    try {
+      const { data, error } = await supabase
+        .from('support_messages')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (!error && data) {
+        const userMap = new Map<string, any>();
+        let unreadTotal = 0;
+
+        data.forEach((msg: any) => {
+          if (!userMap.has(msg.user_id)) {
+            userMap.set(msg.user_id, {
+              user_id: msg.user_id,
+              user_name: msg.user_name || 'Member CPNS',
+              user_email: msg.user_email || msg.user_id,
+              last_message: msg.message,
+              last_time: msg.created_at,
+              sender_type: msg.sender_type,
+              unread_count: 0
+            });
+          }
+
+          if (msg.sender_type === 'user' && !msg.is_read_by_admin) {
+            unreadTotal++;
+            const item = userMap.get(msg.user_id);
+            item.unread_count = (item.unread_count || 0) + 1;
+          }
+        });
+
+        const list = Array.from(userMap.values());
+        setSupportConversations(list);
+        setUnreadSupportCount(unreadTotal);
+
+        if (list.length > 0) {
+          setSelectedSupportUser((prev: any) => {
+            if (prev) {
+              const updated = list.find(l => l.user_id === prev.user_id);
+              return updated || prev;
+            }
+            return list[0];
+          });
+        }
+      }
+    } catch (err) {
+      console.error('Error fetching support conversations:', err);
+    } finally {
+      setIsLoadingSupport(false);
+    }
+  };
+
+  const selectConversation = async (conv: any) => {
+    setSelectedSupportUser(conv);
+    try {
+      const { data } = await supabase
+        .from('support_messages')
+        .select('*')
+        .eq('user_id', conv.user_id)
+        .order('created_at', { ascending: true });
+
+      if (data) {
+        setSupportMessages(data);
+
+        await supabase
+          .from('support_messages')
+          .update({ is_read_by_admin: true })
+          .eq('user_id', conv.user_id)
+          .eq('sender_type', 'user')
+          .eq('is_read_by_admin', false);
+
+        setSupportConversations(prev => prev.map(c => 
+          c.user_id === conv.user_id ? { ...c, unread_count: 0 } : c
+        ));
+        fetchUnreadSupportCount();
+      }
+    } catch (err) {
+      console.error('Error select conversation:', err);
+    }
+  };
+
+  useEffect(() => {
+    if (selectedSupportUser?.user_id && activeTab === 'support') {
+      const loadThread = async () => {
+        const { data } = await supabase
+          .from('support_messages')
+          .select('*')
+          .eq('user_id', selectedSupportUser.user_id)
+          .order('created_at', { ascending: true });
+        if (data) setSupportMessages(data);
+      };
+      loadThread();
+    }
+  }, [selectedSupportUser?.user_id, activeTab]);
+
+  useEffect(() => {
+    fetchUnreadSupportCount();
+
+    const channel = supabase
+      .channel('admin_support_channel')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'support_messages'
+        },
+        (payload: any) => {
+          const newMsg = payload.new;
+          if (newMsg) {
+            setSelectedSupportUser((currentSelected: any) => {
+              if (currentSelected?.user_id === newMsg.user_id) {
+                setSupportMessages((prev) => {
+                  if (prev.some(m => m.id === newMsg.id)) return prev;
+                  return [...prev, newMsg];
+                });
+              }
+              return currentSelected;
+            });
+
+            fetchSupportConversations();
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
+
+  const handleSendAdminReply = async (e?: React.FormEvent, quickText?: string) => {
+    if (e) e.preventDefault();
+    const textToSend = quickText || adminReplyText.trim();
+    if (!textToSend || !selectedSupportUser || isSendingAdminReply) return;
+
+    setIsSendingAdminReply(true);
+
+    const tempMsg = {
+      id: `temp-${Date.now()}`,
+      user_id: selectedSupportUser.user_id,
+      sender_type: 'admin',
+      sender_name: 'Admin Klinik CPNS',
+      message: textToSend,
+      created_at: new Date().toISOString(),
+      is_read_by_admin: true,
+      is_read_by_user: false
+    };
+
+    setSupportMessages(prev => [...prev, tempMsg]);
+    if (!quickText) setAdminReplyText('');
+
+    try {
+      const { data, error } = await supabase
+        .from('support_messages')
+        .insert([{
+          user_id: selectedSupportUser.user_id,
+          user_email: selectedSupportUser.user_email,
+          user_name: selectedSupportUser.user_name,
+          sender_type: 'admin',
+          sender_name: 'Admin Klinik CPNS',
+          message: textToSend,
+          is_read_by_admin: true,
+          is_read_by_user: false
+        }])
+        .select()
+        .single();
+
+      if (!error && data) {
+        setSupportMessages(prev => prev.map(m => m.id === tempMsg.id ? data : m));
+      }
+
+      await supabase.from('notifications').insert([{
+        user_id: selectedSupportUser.user_id,
+        title: 'Pesan Baru dari Admin Support',
+        message: textToSend.length > 80 ? textToSend.substring(0, 80) + '...' : textToSend,
+        type: 'info',
+        link: '/dashboard',
+        is_read: false
+      }]);
+
+      setSupportConversations(prev => prev.map(c => 
+        c.user_id === selectedSupportUser.user_id 
+          ? { ...c, last_message: textToSend, last_time: new Date().toISOString(), sender_type: 'admin' }
+          : c
+      ));
+    } catch (err) {
+      console.error('Error sending admin reply:', err);
+    } finally {
+      setIsSendingAdminReply(false);
+    }
+  };
+
   /* eslint-disable react-hooks/set-state-in-effect */
   // Pemicu Fetch Data
   useEffect(() => {
     fetchUnverifiedTxCount();
+    fetchUnreadSupportCount();
     if (activeTab === 'members') fetchMembers();
     if (activeTab === 'packages') fetchPackages();
     if (activeTab === 'banners') fetchBanners();
@@ -1204,6 +1423,7 @@ export default function AdminCommandCenter() {
     if (activeTab === 'subscription-packages') fetchSubscriptionPackages();
     if (activeTab === 'transactions') fetchTransactions();
     if (activeTab === 'resellers') fetchResellers();
+    if (activeTab === 'support') fetchSupportConversations();
   }, [activeTab]);
   /* eslint-enable react-hooks/set-state-in-effect */
 
@@ -1777,6 +1997,24 @@ export default function AdminCommandCenter() {
               </svg>
               Manajemen Reseller
             </button>
+            <button 
+              onClick={() => { setActiveTab('support'); fetchSupportConversations(); }} 
+              className={`w-full flex items-center justify-between px-4 py-3 rounded-lg text-sm font-medium transition-colors ${
+                activeTab === 'support' ? 'bg-blue-600 text-white' : 'text-slate-400 hover:bg-slate-800'
+              }`}
+            >
+              <div className="flex items-center">
+                <svg className="w-5 h-5 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                </svg>
+                Pesan & Live Chat
+              </div>
+              {unreadSupportCount > 0 && (
+                <span className="bg-red-500 text-white text-[11px] font-bold px-2 py-0.5 rounded-full animate-pulse shadow-sm">
+                  {unreadSupportCount}
+                </span>
+              )}
+            </button>
             </nav>
             <button onClick={handleLogout} className="mt-2 w-full flex items-center px-4 py-3 rounded-lg text-sm font-medium text-slate-400 hover:bg-slate-800 hover:text-white">
               <svg className="w-4 h-4 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1803,6 +2041,7 @@ export default function AdminCommandCenter() {
             {activeTab === 'vouchers' && 'Manajemen Voucher'}
             {activeTab === 'blog' && 'Kelola Blog'}
             {activeTab === 'resellers' && 'Manajemen Reseller'}
+            {activeTab === 'support' && 'Pusat Pesan & Live Support Member'}
           </h1>
         </header>
 
@@ -4477,6 +4716,270 @@ export default function AdminCommandCenter() {
                     </div>
                   </div>
                 )}
+              </div>
+            )}
+
+            {/* 12. TAB LIVE CHAT & SUPPORT */}
+            {activeTab === 'support' && (
+              <div className="space-y-6">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                  <div>
+                    <h2 className="text-2xl font-bold text-slate-800 mb-1">💬 Pusat Pesan & Live Support</h2>
+                    <p className="text-slate-500 text-sm">
+                      Balas pertanyaan member dari bubble chat secara realtime. Pesan Anda akan langsung diterima di dashboard member.
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <button
+                      onClick={fetchSupportConversations}
+                      disabled={isLoadingSupport}
+                      className="px-4 py-2 bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 rounded-lg text-sm font-medium transition shadow-sm flex items-center gap-2 cursor-pointer"
+                    >
+                      <span>🔄 Refresh Chat</span>
+                    </button>
+                    {unreadSupportCount > 0 && (
+                      <span className="bg-red-100 text-red-700 text-xs font-bold px-3 py-1.5 rounded-full border border-red-300 flex items-center gap-1.5">
+                        <span className="w-2 h-2 rounded-full bg-red-600 animate-pulse"></span>
+                        {unreadSupportCount} Pesan Baru Menunggu
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                {/* DUA KOLOM MESSENGER */}
+                <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden grid grid-cols-1 md:grid-cols-12 min-h-[620px]">
+                  
+                  {/* KOLOM KIRI: DAFTAR USER / PERCAKAPAN (4 Kolom) */}
+                  <div className="md:col-span-5 lg:col-span-4 border-r border-slate-200 flex flex-col bg-slate-50/50">
+                    
+                    {/* Search Bar Member */}
+                    <div className="p-3.5 border-b border-slate-200 bg-white">
+                      <div className="relative">
+                        <input
+                          type="text"
+                          value={supportSearchQuery}
+                          onChange={(e) => setSupportSearchQuery(e.target.value)}
+                          placeholder="Cari nama atau email..."
+                          className="w-full pl-8 pr-3 py-2 bg-slate-100 border border-slate-200 rounded-lg text-xs focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none transition"
+                        />
+                        <svg className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                        </svg>
+                      </div>
+                    </div>
+
+                    {/* List Items */}
+                    <div className="flex-1 overflow-y-auto divide-y divide-slate-100 max-h-[550px]">
+                      {isLoadingSupport ? (
+                        <div className="p-8 text-center text-xs text-slate-400">
+                          <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600 mx-auto mb-2"></div>
+                          Memuat daftar percakapan...
+                        </div>
+                      ) : supportConversations.length === 0 ? (
+                        <div className="p-8 text-center text-xs text-slate-400 space-y-2">
+                          <span className="text-3xl block">📭</span>
+                          <p className="font-semibold text-slate-600">Belum ada pesan masuk</p>
+                          <p>Ketika member mengirim chat dari bubble chat, pesan akan muncul di sini secara realtime.</p>
+                        </div>
+                      ) : (
+                        supportConversations
+                          .filter(conv => {
+                            if (!supportSearchQuery.trim()) return true;
+                            const q = supportSearchQuery.toLowerCase();
+                            return (
+                              (conv.user_name || '').toLowerCase().includes(q) ||
+                              (conv.user_email || '').toLowerCase().includes(q) ||
+                              (conv.last_message || '').toLowerCase().includes(q)
+                            );
+                          })
+                          .map((conv) => {
+                            const isSelected = selectedSupportUser?.user_id === conv.user_id;
+                            const hasUnread = conv.unread_count > 0;
+
+                            return (
+                              <button
+                                key={conv.user_id}
+                                onClick={() => selectConversation(conv)}
+                                className={`w-full text-left p-3.5 transition flex items-start gap-3 relative cursor-pointer ${
+                                  isSelected 
+                                    ? 'bg-blue-50/80 border-l-4 border-l-blue-600' 
+                                    : 'hover:bg-slate-100/70 border-l-4 border-l-transparent'
+                                }`}
+                              >
+                                <div className="w-9 h-9 rounded-full bg-gradient-to-tr from-blue-600 to-indigo-600 text-white font-bold text-xs flex items-center justify-center shrink-0 shadow-sm">
+                                  {(conv.user_name || conv.user_email || 'U').charAt(0).toUpperCase()}
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <div className="flex items-center justify-between gap-1 mb-0.5">
+                                    <h4 className={`text-xs truncate ${hasUnread ? 'font-extrabold text-slate-900' : 'font-semibold text-slate-800'}`}>
+                                      {conv.user_name || 'Member CPNS'}
+                                    </h4>
+                                    <span className="text-[10px] text-slate-400 shrink-0">
+                                      {new Date(conv.last_time).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}
+                                    </span>
+                                  </div>
+                                  <p className="text-[11px] text-slate-500 truncate mb-1">
+                                    {conv.user_email}
+                                  </p>
+                                  <p className={`text-xs truncate ${hasUnread ? 'font-bold text-blue-900' : 'text-slate-600'}`}>
+                                    {conv.sender_type === 'admin' && <span className="text-slate-400">Anda: </span>}
+                                    {conv.last_message}
+                                  </p>
+                                </div>
+                                {hasUnread && (
+                                  <span className="w-2.5 h-2.5 rounded-full bg-red-500 shrink-0 mt-1 shadow animate-pulse"></span>
+                                )}
+                              </button>
+                            );
+                          })
+                      )}
+                    </div>
+                  </div>
+
+                  {/* KOLOM KANAN: THREAD CHAT AKTIF & REPLY BOX (8 Kolom) */}
+                  <div className="md:col-span-7 lg:col-span-8 flex flex-col bg-white">
+                    {selectedSupportUser ? (
+                      <>
+                        {/* Header Chat Thread */}
+                        <div className="p-4 border-b border-slate-200 flex items-center justify-between bg-slate-50/50">
+                          <div className="flex items-center gap-3 min-w-0">
+                            <div className="w-10 h-10 rounded-full bg-blue-600 text-white font-bold text-sm flex items-center justify-center shrink-0 shadow">
+                              {(selectedSupportUser.user_name || 'U').charAt(0).toUpperCase()}
+                            </div>
+                            <div className="min-w-0">
+                              <h3 className="font-bold text-sm text-slate-800 truncate">
+                                {selectedSupportUser.user_name || 'Member CPNS'}
+                              </h3>
+                              <p className="text-xs text-slate-500 truncate">
+                                {selectedSupportUser.user_email}
+                              </p>
+                            </div>
+                          </div>
+
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={async () => {
+                                setSelectedUser({
+                                  id: selectedSupportUser.user_id,
+                                  full_name: selectedSupportUser.user_name,
+                                  email: selectedSupportUser.user_email
+                                });
+                                await fetchUserExamResults(selectedSupportUser.user_id);
+                                setShowScoreModal(true);
+                              }}
+                              className="px-3 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 text-xs font-semibold rounded-lg border border-blue-200 transition cursor-pointer"
+                            >
+                              📊 Cek Nilai Ujian
+                            </button>
+                          </div>
+                        </div>
+
+                        {/* Thread Message History */}
+                        <div className="flex-1 p-5 overflow-y-auto space-y-3 bg-slate-50/30 max-h-[420px]">
+                          {supportMessages.length === 0 ? (
+                            <div className="text-center py-12 text-slate-400 text-xs">
+                              Belum ada percakapan dengan user ini.
+                            </div>
+                          ) : (
+                            supportMessages.map((msg) => {
+                              const isAdmin = msg.sender_type === 'admin';
+                              const isBot = msg.sender_type === 'bot';
+
+                              return (
+                                <div
+                                  key={msg.id}
+                                  className={`flex flex-col ${isAdmin ? 'items-end' : 'items-start'}`}
+                                >
+                                  <div className={`max-w-[80%] rounded-2xl p-3.5 text-xs shadow-sm leading-relaxed ${
+                                    isAdmin
+                                      ? 'bg-blue-600 text-white rounded-br-sm'
+                                      : isBot
+                                      ? 'bg-amber-50 border border-amber-200 text-amber-950 rounded-tl-sm'
+                                      : 'bg-white border border-slate-200 text-slate-800 rounded-tl-sm'
+                                  }`}>
+                                    <div className="flex items-center justify-between gap-3 mb-1">
+                                      <span className={`text-[10px] font-bold ${isAdmin ? 'text-blue-100' : 'text-slate-500'}`}>
+                                        {isAdmin ? 'Admin (Anda)' : isBot ? '🤖 Asisten AI' : selectedSupportUser.user_name || 'Member'}
+                                      </span>
+                                      <span className={`text-[9px] ${isAdmin ? 'text-blue-200' : 'text-slate-400'}`}>
+                                        {new Date(msg.created_at).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}
+                                      </span>
+                                    </div>
+                                    <p className="whitespace-pre-wrap">{msg.message}</p>
+                                  </div>
+                                </div>
+                              );
+                            })
+                          )}
+                        </div>
+
+                        {/* Quick Response Bar */}
+                        <div className="px-4 py-2 bg-slate-100/70 border-t border-slate-200 flex flex-wrap gap-1.5 text-xs">
+                          <span className="text-[10px] font-semibold text-slate-500 self-center">Template:</span>
+                          <button
+                            type="button"
+                            onClick={() => handleSendAdminReply(undefined, 'Halo! Ada yang bisa kami bantu seputar pengerjaan try out atau aktivasi paket?')}
+                            className="text-[10px] bg-white border border-slate-200 hover:border-blue-400 hover:text-blue-600 px-2 py-0.5 rounded transition cursor-pointer"
+                          >
+                            👋 Sapaan Awal
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleSendAdminReply(undefined, 'Pembayaran dan akun Anda sudah berhasil kami verifikasi. Silakan coba akses kembali.')}
+                            className="text-[10px] bg-white border border-slate-200 hover:border-blue-400 hover:text-blue-600 px-2 py-0.5 rounded transition cursor-pointer"
+                          >
+                            ✅ Pembayaran Terverifikasi
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleSendAdminReply(undefined, 'Silakan coba refresh browser atau login ulang pada dashboard Anda untuk memuat pembaruan data.')}
+                            className="text-[10px] bg-white border border-slate-200 hover:border-blue-400 hover:text-blue-600 px-2 py-0.5 rounded transition cursor-pointer"
+                          >
+                            🔄 Saran Refresh/Relogin
+                          </button>
+                        </div>
+
+                        {/* Input Box Balasan Admin */}
+                        <form onSubmit={handleSendAdminReply} className="p-3.5 bg-white border-t border-slate-200 flex items-end gap-3">
+                          <textarea
+                            rows={2}
+                            value={adminReplyText}
+                            onChange={(e) => setAdminReplyText(e.target.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter' && !e.shiftKey) {
+                                e.preventDefault();
+                                handleSendAdminReply();
+                              }
+                            }}
+                            placeholder={`Ketik balasan untuk ${selectedSupportUser.user_name || 'member'}... (Tekan Enter untuk kirim)`}
+                            className="flex-1 border border-slate-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 rounded-xl p-2.5 text-xs outline-none resize-none"
+                            disabled={isSendingAdminReply}
+                          />
+                          <button
+                            type="submit"
+                            disabled={!adminReplyText.trim() || isSendingAdminReply}
+                            className="px-5 py-3 bg-blue-600 hover:bg-blue-700 disabled:opacity-40 text-white font-bold rounded-xl text-xs flex items-center gap-1.5 shadow transition cursor-pointer shrink-0"
+                          >
+                            <span>Kirim</span>
+                            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                            </svg>
+                          </button>
+                        </form>
+                      </>
+                    ) : (
+                      <div className="flex-1 flex flex-col items-center justify-center p-12 text-center text-slate-400">
+                        <div className="w-16 h-16 rounded-full bg-slate-100 flex items-center justify-center text-3xl mb-3">
+                          💬
+                        </div>
+                        <h3 className="font-bold text-slate-700 text-base mb-1">Pilih Percakapan</h3>
+                        <p className="text-xs text-slate-500 max-w-sm">
+                          Pilih salah satu customer dari daftar di sebelah kiri untuk melihat pesan dan mengirimkan balasan.
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                </div>
               </div>
             )}
 

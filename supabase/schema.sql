@@ -430,3 +430,27 @@ CREATE TABLE IF NOT EXISTS vouchers (
 ALTER TABLE vouchers ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "Public All Access Vouchers" ON vouchers;
 CREATE POLICY "Public All Access Vouchers" ON vouchers FOR ALL USING (true);
+
+-- 19. Tabel Support Messages (support_messages)
+CREATE TABLE IF NOT EXISTS support_messages (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
+  user_email TEXT,
+  user_name TEXT,
+  sender_type TEXT NOT NULL CHECK (sender_type IN ('user', 'admin', 'bot')),
+  sender_name TEXT,
+  message TEXT NOT NULL,
+  is_read_by_admin BOOLEAN DEFAULT false NOT NULL,
+  is_read_by_user BOOLEAN DEFAULT false NOT NULL,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+ALTER TABLE support_messages ADD COLUMN IF NOT EXISTS sender_name TEXT;
+
+CREATE INDEX IF NOT EXISTS idx_support_messages_user_id ON support_messages(user_id);
+CREATE INDEX IF NOT EXISTS idx_support_messages_created_at ON support_messages(created_at);
+CREATE INDEX IF NOT EXISTS idx_support_messages_is_read_admin ON support_messages(is_read_by_admin);
+
+ALTER TABLE support_messages ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Public All Access Support Messages" ON support_messages;
+CREATE POLICY "Public All Access Support Messages" ON support_messages FOR ALL USING (true);

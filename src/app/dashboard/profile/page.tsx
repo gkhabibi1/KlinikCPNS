@@ -37,6 +37,22 @@ export default function ProfilePage() {
   const [isChangingPassword, setIsChangingPassword] = useState(false);
   const [passwordMessage, setPasswordMessage] = useState<{type: 'success' | 'error', text: string} | null>(null);
 
+  // State untuk logout
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+
+  const handleLogout = async () => {
+    if (confirm('Apakah Anda yakin ingin keluar dari akun?')) {
+      setIsLoggingOut(true);
+      try {
+        await supabase.auth.signOut();
+        router.push('/');
+      } catch (err) {
+        console.error('Logout error:', err);
+        setIsLoggingOut(false);
+      }
+    }
+  };
+
   // 1. Ambil data user & profil saat komponen dimuat
   useEffect(() => {
     const fetchProfile = async () => {
@@ -528,6 +544,34 @@ export default function ProfilePage() {
             </button>
           </div>
         </form>
+
+        {/* Zona Keluar Akun */}
+        <div className="mt-8 bg-red-50/60 rounded-2xl border border-red-200/80 p-5 sm:p-6 shadow-sm">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
+                <svg className="w-5 h-5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                </svg>
+                Keluar dari Akun
+              </h3>
+              <p className="text-sm text-slate-600 mt-1">
+                Selesaikan sesi belajar Anda di perangkat ini. Anda dapat masuk kembali kapan saja dengan email dan password Anda.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={handleLogout}
+              disabled={isLoggingOut}
+              className="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-red-600 hover:bg-red-700 active:bg-red-800 text-white text-sm font-semibold rounded-xl shadow-sm transition-colors whitespace-nowrap cursor-pointer disabled:opacity-60"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+              </svg>
+              {isLoggingOut ? 'Sedang Keluar...' : 'Keluar / Logout'}
+            </button>
+          </div>
+        </div>
       </div>
     </MemberLayout>
   );

@@ -336,8 +336,8 @@ function MemberLayoutContent({ children }: MemberLayoutProps) {
 
       {/*================= MAIN CONTENT =================*/}
       <div className="flex-1 flex flex-col overflow-hidden relative bg-white">
-        <header className="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-6 md:px-8 z-10 flex-shrink-0">
-          <h1 className="text-lg font-bold text-slate-900">
+        <header className="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-4 sm:px-6 md:px-8 z-10 flex-shrink-0">
+          <h1 className="text-base sm:text-lg font-bold text-slate-900 truncate pr-2">
             {pathname === '/dashboard' && (
               tab === 'subscription' ? 'Paket Langganan' :
               tab === 'notifications' ? 'Notifikasi' :
@@ -351,8 +351,21 @@ function MemberLayoutContent({ children }: MemberLayoutProps) {
             {pathname === '/dashboard/profile' && 'Profil Saya'}
             {pathname === '/dashboard/notifications' && 'Notifikasi'}
           </h1>
-          <div className="text-xs font-semibold text-blue-600 bg-blue-50 border border-blue-200 px-3 py-1 rounded-full hidden sm:block">
-            Klinik CPNS • CAT Simulation
+          <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
+            <div className="text-xs font-semibold text-blue-600 bg-blue-50 border border-blue-200 px-3 py-1 rounded-full hidden md:block">
+              Klinik CPNS • CAT Simulation
+            </div>
+            <button
+              type="button"
+              onClick={handleLogout}
+              title="Keluar dari Akun"
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-red-600 bg-red-50 hover:bg-red-100 hover:text-red-700 border border-red-200 rounded-lg transition-colors cursor-pointer shadow-sm active:scale-95"
+            >
+              <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+              </svg>
+              <span>Keluar</span>
+            </button>
           </div>
         </header>
 
