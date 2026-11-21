@@ -24,6 +24,29 @@ export default function TryoutPage() {
   // STEP 1: State untuk Toggle Panel Mobile
   const [showQuestionPanel, setShowQuestionPanel] = useState(false);
 
+  // STATE: 30 Days Challenge & Anti-Cheat Proctoring
+  const [challengeInfo, setChallengeInfo] = useState<{
+    isChallenge: boolean;
+    dayNumber: number | null;
+    progressId: string | null;
+  }>({
+    isChallenge: false,
+    dayNumber: null,
+    progressId: null,
+  });
+  const [isViolationModalOpen, setIsViolationModalOpen] = useState(false);
+  const [violationReason, setViolationReason] = useState('');
+  const [isConfirmFinishOpen, setIsConfirmFinishOpen] = useState(false);
+
+  const isSubmittingRef = useRef(false);
+  const hasTriggeredViolationRef = useRef(false);
+  const isProctorReadyRef = useRef(false);
+  const challengeInfoRef = useRef(challengeInfo);
+
+  useEffect(() => {
+    challengeInfoRef.current = challengeInfo;
+  }, [challengeInfo]);
+
   useEffect(() => {
     const fetchData = async () => {
       const { data: pkgData } = await supabase
@@ -40,15 +63,122 @@ export default function TryoutPage() {
         .order('question_number', { ascending: true });
       if (questionsData) setQuestions(questionsData);
 
+      // Cek apakah paket ini adalah paket aktif 30 Days Challenge untuk user yang login
+      const { data: { user: currentUser } } = await supabase.auth.getUser();
+      const { data: { session } } = await supabase.auth.getSession();
+      const user = currentUser || session?.user || null;
+
+      if (user) {
+        const { data: challengeDay } = await supabase
+          .from('challenge_packages')
+          .select('day_number')
+          .eq('package_id', params.package_id)
+          .single();
+
+        if (challengeDay) {
+          const { data: userProgress } = await supabase
+            .from('challenge_progress')
+            .select('id, current_day')
+            .eq('user_id', user.id)
+            .eq('status', 'active')
+            .single();
+
+          if (userProgress && userProgress.current_day === challengeDay.day_number) {
+            setChallengeInfo({
+              isChallenge: true,
+              dayNumber: challengeDay.day_number,
+              progressId: userProgress.id,
+            });
+          }
+        }
+      }
+
       setIsLoading(false);
     };
     fetchData();
   }, [params.package_id]);
 
-  const handleFinish = async (isAutoSubmit = false) => {
-    if (!isAutoSubmit && !confirm('Apakah Anda yakin ingin mengakhiri ujian?')) {
-      return;
+  // Handler Pelanggaran Anti-Curang
+  const triggerViolation = async (reasonText: string) => {
+    if (hasTriggeredViolationRef.current || isSubmittingRef.current || !isProctorReadyRef.current) return;
+    hasTriggeredViolationRef.current = true;
+    isSubmittingRef.current = true;
+
+    const currentInfo = challengeInfoRef.current;
+    const dayNum = currentInfo.dayNumber || 1;
+    const fullReason = `Terdeteksi keluar dari halaman ujian (${reasonText}) pada Hari ke-${dayNum}`;
+
+    if (currentInfo.progressId) {
+      try {
+        await supabase
+          .from('challenge_progress')
+          .update({
+            status: 'failed',
+            failed_reason: fullReason
+          })
+          .eq('id', currentInfo.progressId);
+
+        await supabase
+          .from('challenge_daily_scores')
+          .insert([{
+            progress_id: currentInfo.progressId,
+            day_number: dayNum,
+            skor_total: 0,
+            skor_twk: 0,
+            skor_tiu: 0,
+            skor_tkp: 0,
+            is_passed: false
+          }]);
+      } catch (err) {
+        console.error('Error saat mencatat pelanggaran:', err);
+      }
     }
+
+    localStorage.removeItem(`exam_start_${params.package_id}`);
+    setViolationReason(reasonText);
+    setIsViolationModalOpen(true);
+  };
+
+  // Effect Pengawasan Anti-Curang (Tab switch, window blur / buka kalkulator / aplikasi lain)
+  useEffect(() => {
+    if (!challengeInfo.isChallenge) return;
+
+    // Grace period 3 detik setelah halaman ujian termounting untuk mencegah false positive awal
+    const graceTimer = setTimeout(() => {
+      isProctorReadyRef.current = true;
+    }, 3000);
+
+    const handleVisibilityChange = () => {
+      if (document.hidden || document.visibilityState === 'hidden') {
+        triggerViolation('Berpindah tab atau me-minimize browser');
+      }
+    };
+
+    const handleBlur = () => {
+      triggerViolation('Membuka aplikasi lain (seperti kalkulator) atau berpindah jendela');
+    };
+
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (!isSubmittingRef.current) {
+        e.preventDefault();
+        e.returnValue = '';
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('blur', handleBlur);
+    window.addEventListener('beforeunload', handleBeforeUnload);
+
+    return () => {
+      clearTimeout(graceTimer);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('blur', handleBlur);
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
+  }, [challengeInfo.isChallenge]);
+
+  const handleFinish = async (isAutoSubmit = false) => {
+    isSubmittingRef.current = true;
 
     try {
       const { data: { user: currentUser } } = await supabase.auth.getUser();
@@ -131,8 +261,8 @@ export default function TryoutPage() {
                 isChallengePassed = total >= 400;
                 targetDesc = 'Total Skor ≥ 400';
               } else {
-                isChallengePassed = total >= 460;
-                targetDesc = 'Total Skor ≥ 460';
+                isChallengePassed = total >= 500;
+                targetDesc = 'Total Skor ≥ 500';
               }
 
               await supabase
@@ -219,6 +349,10 @@ export default function TryoutPage() {
 
     const timer = setInterval(() => {
       setTimeLeft((prev) => {
+        if (hasTriggeredViolationRef.current) {
+          clearInterval(timer);
+          return 0;
+        }
         if (prev <= 1) {
           clearInterval(timer);
           handleFinishRef.current(true);
@@ -262,6 +396,22 @@ export default function TryoutPage() {
 
   return (
     <div className="min-h-screen bg-slate-50">
+      {/* BANNER PROCTORING 30 DAYS CHALLENGE */}
+      {challengeInfo.isChallenge && (
+        <div className="bg-gradient-to-r from-amber-600 to-red-600 text-white px-4 py-2.5 text-xs md:text-sm font-semibold flex items-center justify-between shadow-md">
+          <div className="flex items-center gap-2">
+            <span className="text-base animate-pulse">🛡️</span>
+            <span>
+              <strong>30 Days Challenge (Hari ke-{challengeInfo.dayNumber}):</strong> Sistem Anti-Curang Aktif! 
+              Dilarang berpindah tab browser atau membuka aplikasi lain (seperti kalkulator).
+            </span>
+          </div>
+          <span className="hidden sm:inline bg-black/30 backdrop-blur-sm text-amber-200 px-2.5 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider border border-amber-300/40">
+            Terpantau Otomatis
+          </span>
+        </div>
+      )}
+
       {/* HEADER - Sticky */}
       <div className="sticky top-0 z-40 bg-white border-b border-slate-200 shadow-sm px-4 py-3 flex justify-between items-center">
         <h2 className="font-bold text-base md:text-lg text-slate-800 truncate max-w-[60%]">
@@ -444,8 +594,8 @@ export default function TryoutPage() {
 
             {/* Tombol Selesai */}
             <button
-              onClick={() => handleFinish(false)}
-              className="w-full bg-red-600 hover:bg-red-700 text-white py-3 rounded-lg font-bold text-sm transition-colors"
+              onClick={() => setIsConfirmFinishOpen(true)}
+              className="w-full bg-red-600 hover:bg-red-700 text-white py-3 rounded-lg font-bold text-sm transition-colors cursor-pointer"
             >
               🏁 SELESAI UJIAN
             </button>
@@ -523,13 +673,83 @@ export default function TryoutPage() {
               <button
                 onClick={() => {
                   setShowQuestionPanel(false);
-                  handleFinish(false);
+                  setIsConfirmFinishOpen(true);
                 }}
-                className="w-full bg-red-600 hover:bg-red-700 text-white py-3 rounded-lg font-bold text-sm mt-4"
+                className="w-full bg-red-600 hover:bg-red-700 text-white py-3 rounded-lg font-bold text-sm mt-4 cursor-pointer"
               >
                 🏁 SELESAI UJIAN
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL KONFIRMASI SELESAI UJIAN */}
+      {isConfirmFinishOpen && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl max-w-md w-full p-6 text-center shadow-2xl border border-slate-200">
+            <div className="w-14 h-14 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-3 text-2xl font-bold">
+              🏁
+            </div>
+            <h3 className="text-xl font-bold text-slate-800 mb-2">
+              Akhiri Ujian Sekarang?
+            </h3>
+            <p className="text-slate-600 text-sm mb-4 leading-relaxed">
+              Pastikan seluruh jawaban Anda sudah terisi dengan baik. Setelah diakhiri, lembar jawaban akan langsung dievaluasi.
+            </p>
+            <div className="bg-slate-50 rounded-xl p-3 mb-6 text-xs text-slate-600 flex justify-around border border-slate-200">
+              <div>Dijawab: <strong className="text-green-600 text-sm block">{Object.keys(answers).length}</strong></div>
+              <div>Ragu-ragu: <strong className="text-yellow-600 text-sm block">{Object.values(markedQuestions).filter(Boolean).length}</strong></div>
+              <div>Belum: <strong className="text-slate-500 text-sm block">{Math.max(0, questions.length - Object.keys(answers).length)}</strong></div>
+            </div>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setIsConfirmFinishOpen(false)}
+                className="flex-1 py-3 px-4 rounded-xl border border-slate-300 text-slate-700 font-semibold hover:bg-slate-100 transition-colors cursor-pointer text-sm"
+              >
+                Lanjut Mengerjakan
+              </button>
+              <button
+                onClick={() => {
+                  setIsConfirmFinishOpen(false);
+                  handleFinish(true);
+                }}
+                className="flex-1 py-3 px-4 rounded-xl bg-red-600 hover:bg-red-700 text-white font-bold transition-colors shadow-md cursor-pointer text-sm"
+              >
+                Ya, Akhiri Ujian
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL PELANGGARAN ANTI-CURANG PROCTORING (DISKUALIFIKASI) */}
+      {isViolationModalOpen && (
+        <div className="fixed inset-0 bg-red-950/85 backdrop-blur-md z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl max-w-lg w-full p-6 md:p-8 text-center shadow-2xl border-4 border-red-500 animate-in fade-in zoom-in duration-200">
+            <div className="w-16 h-16 bg-red-100 text-red-600 rounded-full flex items-center justify-center mx-auto mb-4 text-3xl font-extrabold shadow-inner">
+              🚨
+            </div>
+            <h3 className="text-2xl font-black text-red-600 mb-2">
+              PELANGGARAN TERDETEKSI!
+            </h3>
+            <div className="bg-red-50 border border-red-200 rounded-xl p-4 mb-4 text-left">
+              <p className="text-xs font-semibold text-red-500 uppercase tracking-wider mb-1">Penyebab Diskualifikasi:</p>
+              <p className="text-sm font-bold text-red-900">{violationReason}</p>
+            </div>
+            <p className="text-slate-600 text-sm mb-6 leading-relaxed">
+              Sesuai aturan ketat <strong>30 Days CPNS Challenge</strong>, peserta <strong>dilarang berpindah tab browser, me-minimize jendela, atau membuka aplikasi lain (seperti kalkulator)</strong>.
+              <br /><br />
+              Ujian Anda hari ini dinyatakan <strong className="text-red-600">GAGAL</strong> dan seluruh progres tantangan otomatis harus diulang dari awal (Hari ke-1).
+            </p>
+            <button
+              onClick={() => {
+                router.replace('/dashboard/challenge');
+              }}
+              className="w-full bg-gradient-to-r from-red-600 to-rose-700 hover:from-red-700 hover:to-rose-800 text-white font-extrabold py-3.5 px-6 rounded-xl shadow-lg hover:shadow-xl transition-all cursor-pointer text-sm"
+            >
+              Kembali ke Dashboard Challenge
+            </button>
           </div>
         </div>
       )}

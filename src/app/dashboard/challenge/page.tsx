@@ -259,11 +259,15 @@ export default function ChallengePage() {
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="text-green-600 font-bold">✓</span>
-                  <span>Hari 21-30: Minimal Total 460</span>
+                  <span>Hari 21-30: Minimal Total 500</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="text-red-600 font-bold">✗</span>
                   <span>Jika nilai target pada hari tersebut tidak tercapai atau 1 hari terlewat, challenge GAGAL dan otomatis mengulang dari awal (Hari ke-1)</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-red-600 font-bold">🛡️</span>
+                  <span><strong>Sistem Anti-Curang (Proctoring) Ketat:</strong> Selama ujian challenge berlangsung, dilarang berpindah tab browser atau membuka aplikasi lain (seperti kalkulator). Jika terdeteksi meninggalkan halaman ujian, challenge hari itu <strong>langsung otomatis GAGAL</strong>.</span>
                 </li>
               </ul>
             </div>
@@ -436,7 +440,7 @@ export default function ChallengePage() {
               <div className="font-bold text-blue-700">
                 {currentDay <= 10 && 'Passing Grade (TWK≥65, TIU≥80, TKP≥166)'}
                 {currentDay > 10 && currentDay <= 20 && 'Total Skor ≥ 400'}
-                {currentDay > 20 && 'Total Skor ≥ 460'}
+                {currentDay > 20 && 'Total Skor ≥ 500'}
               </div>
             </div>
             {challengeDays[currentDay - 1].package_id ? (
@@ -524,10 +528,23 @@ export default function ChallengePage() {
           </div>
         </div>
 
-        {/* Peringatan */}
-        <div className="bg-amber-50 border border-amber-300 rounded-xl p-4 text-sm text-amber-800">
-          <strong>⚠️ Penting:</strong> Anda harus mengerjakan try out hari ini tepat waktu. 
-          Jika terlewat 1 hari saja, challenge akan gagal dan Anda harus mulai dari awal!
+        {/* Peringatan & Aturan Anti-Curang */}
+        <div className="bg-amber-50 border border-amber-300 rounded-xl p-5 text-sm text-amber-900 space-y-3">
+          <div className="flex items-start gap-2">
+            <span className="text-lg">⚠️</span>
+            <div>
+              <strong>Penting:</strong> Anda harus mengerjakan try out hari ini tepat waktu. 
+              Jika terlewat 1 hari saja atau target skor tidak tercapai, challenge akan gagal dan Anda harus mulai dari awal!
+            </div>
+          </div>
+          <div className="pt-3 border-t border-amber-200/80 flex items-start gap-2">
+            <span className="text-lg">🛡️</span>
+            <div>
+              <strong>Sistem Anti-Curang (Proctoring) Aktif:</strong> Ujian harian 30 Days Challenge dilengkapi sensor anti-curang otomatis. 
+              Anda <strong>dilarang berpindah tab browser atau membuka aplikasi lain (seperti kalkulator)</strong> selama ujian berlangsung. 
+              Jika sistem mendeteksi Anda keluar dari halaman ujian, tantangan hari itu akan <strong>langsung otomatis GAGAL</strong>.
+            </div>
+          </div>
         </div>
       </div>
     </MemberLayout>

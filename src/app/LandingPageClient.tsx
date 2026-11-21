@@ -495,7 +495,7 @@ function Challenge() {
                     Hari 21–30
                   </p>
                   <p className="text-xs text-slate-400 mt-1">
-                    Target: Total Skor ≥ 460
+                    Target: Total Skor ≥ 500
                   </p>
                 </div>
               </div>

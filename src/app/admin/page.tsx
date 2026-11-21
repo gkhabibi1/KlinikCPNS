@@ -3140,7 +3140,7 @@ export default function AdminCommandCenter() {
                     </div>
                     <div className="bg-white/20 rounded-lg p-3 backdrop-blur-sm">
                       <div className="font-bold text-lg">Hari 21-30</div>
-                      <div>Minimal Total 460</div>
+                      <div>Minimal Total 500</div>
                     </div>
                   </div>
                 </div>
