@@ -21,7 +21,10 @@ import {
   Award,
   ChevronRight,
   HelpCircle,
-  TrendingUp
+  TrendingUp,
+  Printer,
+  FileDown,
+  X
 } from 'lucide-react';
 
 interface MistakeItem {
@@ -35,6 +38,7 @@ interface MistakeItem {
   option_c?: string;
   option_d?: string;
   option_e?: string;
+  options?: { [key: string]: string };
   correct_answer: string;
   user_answer?: string;
   explanation?: string;
@@ -57,6 +61,10 @@ export default function EvaluasiPage() {
   const [drillSelectedAnswer, setDrillSelectedAnswer] = useState<string | null>(null);
   const [isAnswerChecked, setIsAnswerChecked] = useState(false);
   const [isDrillSuccess, setIsDrillSuccess] = useState(false);
+
+  // State untuk Cetak / Ekspor PDF
+  const [showPrintModal, setShowPrintModal] = useState(false);
+  const [userName, setUserName] = useState('Member CPNS');
 
   useEffect(() => {
     loadMistakes();
@@ -83,6 +91,9 @@ export default function EvaluasiPage() {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
+        const { data: prof } = await supabase.from('profiles').select('full_name').eq('id', user.id).maybeSingle();
+        if (prof?.full_name) setUserName(prof.full_name);
+
         const { data, error } = await supabase
           .from('user_mistakes')
           .select('*')
@@ -301,6 +312,18 @@ export default function EvaluasiPage() {
               className="w-full bg-slate-50 border border-slate-200 focus:bg-white focus:border-blue-500 rounded-xl pl-9 pr-3 py-1.5 text-xs text-slate-800 placeholder-slate-400 outline-none transition"
             />
           </div>
+
+          {/* Ekspor PDF / Cetak Rangkuman */}
+          <button
+            type="button"
+            onClick={() => setShowPrintModal(true)}
+            disabled={filteredMistakes.length === 0}
+            className="flex items-center justify-center gap-1.5 px-3.5 py-1.5 bg-white border border-slate-300 hover:border-blue-600 hover:text-blue-600 text-slate-700 text-xs font-bold rounded-xl shadow-xs transition disabled:opacity-40 cursor-pointer shrink-0"
+            title="Cetak atau Simpan sebagai PDF"
+          >
+            <Printer className="w-3.5 h-3.5 text-blue-600" />
+            <span>Ekspor PDF ({filteredMistakes.length})</span>
+          </button>
 
         </div>
 
@@ -596,6 +619,128 @@ export default function EvaluasiPage() {
               )}
             </div>
 
+          </div>
+        )}
+
+        {/* MODAL CETAK / EKSPOR PDF RANGKUMAN EVALUASI */}
+        {showPrintModal && (
+          <div className="fixed inset-0 z-50 bg-slate-900/80 backdrop-blur-sm flex items-center justify-center p-3 sm:p-6 overflow-y-auto">
+            <div className="bg-white rounded-3xl max-w-3xl w-full max-h-[92vh] flex flex-col shadow-2xl border border-slate-200 overflow-hidden">
+              
+              {/* Modal Top Header (No-print) */}
+              <div className="p-4 sm:p-5 border-b border-slate-200 flex items-center justify-between bg-slate-50 shrink-0">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-xl bg-blue-600 text-white flex items-center justify-center shadow-xs">
+                    <Printer className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-sm text-slate-800">Pratinjau Dokumen PDF / Cetak</h3>
+                    <p className="text-[11px] text-slate-500">Siap dicetak atau disimpan sebagai PDF (Kertas A4)</p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => window.print()}
+                    className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl transition shadow-sm flex items-center gap-1.5 cursor-pointer"
+                  >
+                    <Printer className="w-4 h-4" />
+                    <span>Cetak Sekarang (PDF)</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setShowPrintModal(false)}
+                    className="w-8 h-8 rounded-xl border border-slate-200 hover:bg-slate-200 text-slate-600 flex items-center justify-center text-sm font-bold transition cursor-pointer"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+
+              {/* Printable Body Content */}
+              <div className="p-6 sm:p-8 overflow-y-auto space-y-6 text-slate-900 printable-document">
+                
+                {/* Kop Surat Dokumen */}
+                <div className="border-b-2 border-slate-900 pb-4 flex items-start justify-between gap-4">
+                  <div>
+                    <h1 className="text-xl sm:text-2xl font-black tracking-tight text-blue-900 uppercase">
+                      KLINIK CPNS • BUKU EVALUASI SOAL SALAH
+                    </h1>
+                    <p className="text-xs text-slate-600 mt-0.5">
+                      Dokumen Rangkuman Mandiri & Pembahasan Kunci Ujian Simulasi CAT BKN
+                    </p>
+                  </div>
+                  <div className="text-right text-[11px] text-slate-500 shrink-0">
+                    <div>Nama: <strong>{userName}</strong></div>
+                    <div>Tanggal: {new Date().toLocaleDateString('id-ID', { dateStyle: 'long' })}</div>
+                    <div>Kategori: <strong>{selectedCategory === 'ALL' ? 'Semua Subtes' : selectedCategory}</strong></div>
+                    <div>Total: <strong>{filteredMistakes.length} Soal</strong></div>
+                  </div>
+                </div>
+
+                {/* List of Questions for Print */}
+                <div className="space-y-6">
+                  {filteredMistakes.map((item, idx) => (
+                    <div key={item.id} className="border-b border-slate-200 pb-5 space-y-2.5 break-inside-avoid">
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="font-bold text-slate-800">
+                          SOAL #{idx + 1} • <span className="text-blue-600 uppercase">{item.category}</span>
+                        </span>
+                        <span className="text-[10px] text-slate-400">
+                          {item.package_name || 'Simulasi CAT BKN'}
+                        </span>
+                      </div>
+
+                      <p className="text-xs sm:text-sm text-slate-900 font-medium leading-relaxed">
+                        {item.question_text}
+                      </p>
+
+                      {/* Options */}
+                      <div className="grid grid-cols-1 gap-1 text-xs pl-2">
+                        {['a', 'b', 'c', 'd', 'e'].map((optKey) => {
+                          const optText = item.options ? item.options[optKey] : ((item as any)['option_' + optKey] || '');
+                          if (!optText) return null;
+                            const isUserChoice = (item.user_answer || '').toUpperCase() === optKey.toUpperCase();
+                            const isCorrectChoice = (item.correct_answer || '').toUpperCase() === optKey.toUpperCase();
+
+                            return (
+                              <div 
+                                key={optKey} 
+                                className={`py-1 px-2 rounded font-medium flex items-start gap-1.5 ${
+                                  isCorrectChoice 
+                                    ? 'bg-emerald-50 text-emerald-900 font-bold border border-emerald-300' 
+                                    : isUserChoice 
+                                    ? 'bg-rose-50 text-rose-900 border border-rose-200' 
+                                    : 'text-slate-700'
+                                }`}
+                              >
+                                <span className="font-bold uppercase w-4">{optKey}.</span>
+                                <span>{optText}</span>
+                                {isCorrectChoice && <span className="text-[10px] text-emerald-700 font-bold ml-auto">(Kunci Jawaban)</span>}
+                                {isUserChoice && !isCorrectChoice && <span className="text-[10px] text-rose-700 font-bold ml-auto">(Pilihan Anda)</span>}
+                              </div>
+                            );
+                          })}
+                        </div>
+
+                      {/* Explanation Box */}
+                      {item.explanation && (
+                        <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 leading-relaxed mt-2">
+                          <strong className="text-blue-900">Pembahasan: </strong>
+                          {item.explanation}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+
+                {/* Footer Dokumen */}
+                <div className="pt-6 border-t border-slate-300 text-center text-[10px] text-slate-400">
+                  © {new Date().getFullYear()} Klinik CPNS • Hak Cipta Dilindungi. Dicetak otomatis dari dashboard member Klinik CPNS.
+                </div>
+              </div>
+            </div>
           </div>
         )}
 

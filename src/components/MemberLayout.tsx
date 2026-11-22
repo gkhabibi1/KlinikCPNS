@@ -268,6 +268,34 @@ function MemberLayoutContent({ children }: MemberLayoutProps) {
             </svg>
             <span className={`${!isSidebarOpen && 'hidden'}`}>Buku Evaluasi</span>
           </Link>
+
+          <Link 
+            href="/dashboard/speed-drill" 
+            className={`flex items-center px-3.5 py-2.5 rounded-xl text-sm font-medium transition-colors ${
+              pathname === '/dashboard/speed-drill' 
+                ? 'bg-blue-50 text-blue-600 font-semibold' 
+                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+            }`}
+          >
+            <svg className="w-5 h-5 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+            </svg>
+            <span className={`${!isSidebarOpen && 'hidden'}`}>Speed Drill (50s)</span>
+          </Link>
+
+          <Link 
+            href="/dashboard/flashcards" 
+            className={`flex items-center px-3.5 py-2.5 rounded-xl text-sm font-medium transition-colors ${
+              pathname === '/dashboard/flashcards' 
+                ? 'bg-blue-50 text-blue-600 font-semibold' 
+                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+            }`}
+          >
+            <svg className="w-5 h-5 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+            </svg>
+            <span className={`${!isSidebarOpen && 'hidden'}`}>Flashcard TWK</span>
+          </Link>
           
           <Link
             href="/dashboard?tab=subscription"
@@ -363,6 +391,8 @@ function MemberLayoutContent({ children }: MemberLayoutProps) {
             {pathname === '/dashboard/challenge' && '30 Day CPNS Challenge'}
             {pathname === '/dashboard/materi' && 'Materi Pembelajaran'}
             {pathname === '/dashboard/evaluasi' && 'Buku Evaluasi & Bank Soal Salah'}
+            {pathname === '/dashboard/speed-drill' && 'Speed Drill CAT (50 Detik/Soal)'}
+            {pathname === '/dashboard/flashcards' && 'Kartu Hafalan Cepat TWK'}
             {pathname === '/dashboard/profile' && 'Profil Saya'}
             {pathname === '/dashboard/notifications' && 'Notifikasi'}
           </h1>
