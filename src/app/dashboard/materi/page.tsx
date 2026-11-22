@@ -6,6 +6,9 @@ import MemberLayout from '../../../components/MemberLayout';
 import { TWK_MODULES } from '@/data/twkModules';
 import { TIU_MODULES } from '@/data/tiuModules';
 import { TKP_MODULES } from '@/data/tkpModules';
+import { CHEATSHEET_DATA, CheatSheetItem } from '@/data/cheatsheetData';
+import ModuleAiTutor from '@/components/ModuleAiTutor';
+import { Printer, Zap, Sparkles, BookOpen, Search, HelpCircle } from 'lucide-react';
 
 function TkpIllustration({ type }: { type: string }) {
   const common = {
@@ -98,7 +101,8 @@ function TkpIllustration({ type }: { type: string }) {
 }
 
 export default function MateriPage() {
-  const [activeSubject, setActiveSubject] = useState<'twk' | 'tiu' | 'tkp'>('twk');
+  const [activeSubject, setActiveSubject] = useState<'twk' | 'tiu' | 'tkp' | 'cheatsheet'>('twk');
+  const [cheatSheetCategory, setCheatSheetCategory] = useState<'all' | 'tiu' | 'tkp' | 'twk'>('all');
   
   // TWK State
   const [twkUnlockedStage, setTwkUnlockedStage] = useState<number>(0);
@@ -507,6 +511,19 @@ export default function MateriPage() {
     );
   });
 
+  const filteredCheatSheets = CHEATSHEET_DATA.filter(item => {
+    const matchesCategory = cheatSheetCategory === 'all' || item.category === cheatSheetCategory;
+    if (!matchesCategory) return false;
+    if (!searchQuery.trim()) return true;
+    const q = searchQuery.toLowerCase();
+    return (
+      item.title.toLowerCase().includes(q) ||
+      item.summary.toLowerCase().includes(q) ||
+      item.keyFormula.toLowerCase().includes(q) ||
+      (item.exampleOrTrick && item.exampleOrTrick.toLowerCase().includes(q))
+    );
+  });
+
   const content = (
     <div className="min-h-screen text-[#172033] bg-[#f6f8fc] pb-16 font-sans antialiased">
       {/* GLOBAL STYLES FOR MODULE CONTENT */}
@@ -594,6 +611,21 @@ export default function MateriPage() {
               <span>TKP (6 Tahap)</span>
               <span className="text-[11px] bg-emerald-500 text-white px-2 py-0.5 rounded-full font-semibold ml-1">
                 Baru
+              </span>
+            </button>
+
+            <button
+              onClick={() => { setActiveSubject('cheatsheet'); setSearchQuery(''); }}
+              className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition-all cursor-pointer ${
+                activeSubject === 'cheatsheet'
+                  ? 'bg-amber-500 text-white shadow-sm shadow-amber-500/20'
+                  : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+              }`}
+            >
+              <span>⚡</span>
+              <span>Rumus Sakti & Cheat Sheet</span>
+              <span className="text-[11px] bg-white/20 text-white px-2 py-0.5 rounded-full font-semibold ml-1">
+                Penting
               </span>
             </button>
           </div>
@@ -827,6 +859,11 @@ export default function MateriPage() {
                         </aside>
                       </div>
                     </div>
+
+                    {/* TUTOR AI INTERAKTIF */}
+                    {!isLocked && (
+                      <ModuleAiTutor moduleTitle={module.title} subject="twk" />
+                    )}
 
                     {/* CHECKPOINT SECTION */}
                     <div className="mt-10 bg-[#eef5ff] border border-[#dbe5f5] rounded-2xl p-6 md:p-8 relative z-10">
@@ -1180,6 +1217,11 @@ export default function MateriPage() {
                         </aside>
                       </div>
                     </div>
+
+                    {/* TUTOR AI INTERAKTIF */}
+                    {!isLocked && (
+                      <ModuleAiTutor moduleTitle={module.title} subject="tiu" />
+                    )}
 
                     {/* CHECKPOINT SECTION */}
                     <div className="mt-10 bg-[#f0f6ff] border border-[#cfe2fe] rounded-2xl p-6 md:p-8 relative z-10">
@@ -1568,6 +1610,13 @@ export default function MateriPage() {
                       </div>
                     </div>
 
+                    {/* TUTOR AI INTERAKTIF */}
+                    {!isLocked && (
+                      <div className="px-6 md:px-8">
+                        <ModuleAiTutor moduleTitle={m.title} subject="tkp" />
+                      </div>
+                    )}
+
                     {/* CHECKPOINT QUIZ CARD */}
                     <div
                       id={`tkp-cp-${stageIndex}`}
@@ -1679,6 +1728,141 @@ export default function MateriPage() {
                 );
               })
             )}
+          </main>
+        </>
+      )}
+
+      {/* CONTENT: RUMUS SAKTI & CHEAT SHEET */}
+      {activeSubject === 'cheatsheet' && (
+        <>
+          {/* HERO BANNER */}
+          <header className="bg-gradient-to-br from-[#1e1b4b] via-[#312e81] to-[#4338ca] text-white pt-12 pb-16 px-5 relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-80 h-80 bg-amber-400/10 rounded-full blur-3xl pointer-events-none" />
+            <div className="max-w-[1120px] mx-auto relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+              <div>
+                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-400/20 text-amber-300 border border-amber-400/30 text-xs font-bold mb-3">
+                  <Zap className="w-3.5 h-3.5 fill-amber-300" /> Kompilasi Rumus Cepat & Kata Kunci SKD
+                </div>
+                <h1 className="text-3xl md:text-5xl font-black leading-tight mb-2">
+                  Rumus Sakti & Cheat Sheet
+                </h1>
+                <p className="text-sm md:text-base text-indigo-100 max-w-2xl leading-relaxed">
+                  Kumpulan rumus jalan pintas TIU, peta pasal krusial TWK, dan formula kata kunci jawaban skor 5 TKP yang wajib dikuasai sebelum masuk ruang ujian CAT BKN.
+                </p>
+              </div>
+
+              {/* Action: Cetak / Simpan PDF */}
+              <div className="shrink-0 flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => window.print()}
+                  className="px-5 py-3 rounded-2xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-black text-xs md:text-sm shadow-lg shadow-amber-400/20 transition-all flex items-center gap-2 cursor-pointer active:scale-95"
+                >
+                  <Printer className="w-4 h-4" />
+                  <span>Cetak / Simpan PDF Cheat Sheet</span>
+                </button>
+              </div>
+            </div>
+          </header>
+
+          {/* MAIN CHEAT SHEET CONTAINER */}
+          <main className="max-w-[1120px] mx-auto px-4 -mt-8 relative z-20 space-y-6">
+            
+            {/* FILTER BAR & SEARCH */}
+            <div className="bg-white border border-slate-200 rounded-3xl p-3 md:p-4 shadow-sm flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+              {/* Category Pills */}
+              <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar">
+                {[
+                  { id: 'all', label: 'Semua Rumus & Kunci', icon: '⚡' },
+                  { id: 'tiu', label: 'TIU (Hitung & Logika)', icon: '🧮' },
+                  { id: 'tkp', label: 'TKP (Kata Kunci Skor 5)', icon: '🤝' },
+                  { id: 'twk', label: 'TWK (Pasal & Sejarah)', icon: '🏛️' },
+                ].map((c) => (
+                  <button
+                    key={c.id}
+                    type="button"
+                    onClick={() => setCheatSheetCategory(c.id as any)}
+                    className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition cursor-pointer ${
+                      cheatSheetCategory === c.id
+                        ? 'bg-indigo-900 text-white shadow-xs'
+                        : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                    }`}
+                  >
+                    <span>{c.icon}</span>
+                    <span>{c.label}</span>
+                  </button>
+                ))}
+              </div>
+
+              {/* Search Box */}
+              <div className="relative min-w-[220px]">
+                <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Cari rumus atau kata kunci..."
+                  className="w-full bg-slate-50 border border-slate-200 focus:bg-white focus:border-indigo-600 rounded-xl pl-9 pr-3 py-2 text-xs text-slate-800 placeholder-slate-400 outline-none transition"
+                />
+              </div>
+            </div>
+
+            {/* LIST OF CHEAT SHEET CARDS */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5 printable-document">
+              {filteredCheatSheets.map((item) => (
+                <div 
+                  key={item.id}
+                  className="bg-white border border-slate-200/90 rounded-3xl p-6 shadow-sm hover:shadow-md transition-shadow flex flex-col justify-between break-inside-avoid"
+                >
+                  <div>
+                    {/* Header Card */}
+                    <div className="flex items-center justify-between gap-2 mb-2">
+                      <span className={`text-[10px] font-black uppercase px-2.5 py-0.5 rounded-full border ${
+                        item.category === 'tiu'
+                          ? 'bg-blue-50 text-blue-700 border-blue-200'
+                          : item.category === 'tkp'
+                          ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                          : 'bg-amber-50 text-amber-800 border-amber-200'
+                      }`}>
+                        {item.badge}
+                      </span>
+                      <span className="text-[10px] font-bold text-slate-400 uppercase font-mono">
+                        SUBTES {item.category.toUpperCase()}
+                      </span>
+                    </div>
+
+                    <h3 className="text-lg font-black text-slate-900 leading-snug mb-1.5">
+                      {item.title}
+                    </h3>
+                    <p className="text-xs text-slate-600 leading-relaxed mb-4">
+                      {item.summary}
+                    </p>
+
+                    {/* Formula / Key Box */}
+                    <div className="bg-slate-950 text-emerald-300 font-mono text-xs rounded-2xl p-4 leading-relaxed whitespace-pre-wrap shadow-inner border border-slate-800">
+                      {item.keyFormula}
+                    </div>
+                  </div>
+
+                  {/* Example / Trick */}
+                  {item.exampleOrTrick && (
+                    <div className="mt-4 pt-3 bg-amber-50/60 -mx-6 -mb-6 p-4 rounded-b-3xl border-t border-amber-100/70 text-xs text-amber-950 font-medium leading-relaxed">
+                      <strong className="text-amber-900 block font-bold mb-0.5">💡 Trik & Contoh CAT:</strong>
+                      <span className="whitespace-pre-wrap">{item.exampleOrTrick}</span>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+
+            {filteredCheatSheets.length === 0 && (
+              <div className="text-center py-16 bg-white border border-slate-200 rounded-3xl p-8">
+                <HelpCircle className="w-12 h-12 text-slate-400 mx-auto mb-3" />
+                <h3 className="text-base font-bold text-slate-800">Rumus atau kata kunci tidak ditemukan</h3>
+                <p className="text-xs text-slate-500 mt-1">Coba gunakan kata kunci pencarian yang lain.</p>
+              </div>
+            )}
+
           </main>
         </>
       )}
