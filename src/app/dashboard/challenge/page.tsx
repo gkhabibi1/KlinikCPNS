@@ -330,51 +330,79 @@ export default function ChallengePage() {
 
   // ================= KONDISI 2: CHALLENGE GAGAL =================
   if (progress.status === 'failed') {
+    const rawReason = failReason || progress.failed_reason || 'Target skor harian tidak terpenuhi atau terdapat hari yang terlewat.';
+
     return (
       <MemberLayout>
-        <div className="p-4 sm:p-6 md:p-8 min-h-[80vh] flex items-center justify-center max-w-4xl mx-auto">
-          <div className="relative w-full bg-slate-950 rounded-3xl p-6 sm:p-10 text-white border-2 border-rose-600/70 shadow-[0_0_50px_rgba(225,29,72,0.25)] overflow-hidden text-center">
+        <div className="p-4 sm:p-6 md:p-8 min-h-[85vh] flex items-center justify-center max-w-4xl mx-auto">
+          <div className="relative w-full bg-slate-950 rounded-3xl p-6 sm:p-10 md:p-12 text-white border-2 border-rose-600/70 shadow-[0_0_60px_rgba(225,29,72,0.25)] overflow-hidden">
             {/* Crimson Cyber Aura */}
             <div className="absolute top-0 left-1/2 -translate-x-1/2 w-96 h-96 bg-rose-600/15 rounded-full blur-3xl pointer-events-none"></div>
+            <div className="absolute bottom-0 right-0 w-80 h-80 bg-amber-500/10 rounded-full blur-3xl pointer-events-none"></div>
 
-            <div className="relative z-10 max-w-xl mx-auto space-y-6">
-              <div className="w-20 h-20 bg-rose-950/60 border-2 border-rose-500 text-rose-400 rounded-3xl flex items-center justify-center mx-auto shadow-[0_0_25px_rgba(244,63,94,0.4)]">
+            <div className="relative z-10 max-w-2xl mx-auto space-y-6 text-center">
+              {/* Icon Alert */}
+              <div className="w-20 h-20 bg-rose-950/70 border-2 border-rose-500 text-rose-400 rounded-3xl flex items-center justify-center mx-auto shadow-[0_0_30px_rgba(244,63,94,0.4)]">
                 <ShieldAlert className="w-10 h-10 animate-pulse" />
               </div>
 
+              {/* Title & Status */}
               <div>
-                <span className="text-xs font-bold uppercase tracking-widest text-rose-400 bg-rose-500/10 border border-rose-500/30 px-3 py-1 rounded-full">
-                  STATUS: PROTOCOL INTERRUPTED
+                <span className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-widest text-rose-400 bg-rose-500/15 border border-rose-500/40 px-3.5 py-1.5 rounded-full">
+                  <AlertTriangle className="w-3.5 h-3.5 text-rose-400" />
+                  EVALUASI HASIL TANTANGAN
                 </span>
                 <h1 className="text-2xl sm:text-4xl font-black text-white mt-3">
-                  TANTANGAN DINYATAKAN GAGAL
+                  Tantangan 30 Days Challenge Gagal
                 </h1>
               </div>
 
-              {/* Telemetry Log Box */}
-              <div className="bg-slate-900/90 border border-rose-500/30 rounded-2xl p-4.5 text-left text-xs space-y-1.5 font-mono">
-                <div className="text-rose-400 font-bold uppercase flex items-center gap-1.5">
-                  <AlertCircle className="w-3.5 h-3.5" />
-                  Penyebab Diskualifikasi:
+              {/* Box 1: PENYEBAB GAGAL */}
+              <div className="bg-rose-950/40 border-2 border-rose-500/50 rounded-2xl p-5 text-left space-y-2 shadow-inner">
+                <div className="flex items-center gap-2 text-rose-400 font-bold text-xs uppercase tracking-wider font-mono">
+                  <AlertCircle className="w-4 h-4 shrink-0 text-rose-400" />
+                  <span>Penyebab Tantangan Gagal:</span>
                 </div>
-                <div className="text-slate-200 text-sm font-sans font-semibold">
-                  {failReason || progress.failed_reason || 'Hari terlewat tanpa penyelesaian try out harian.'}
+                <div className="text-white text-sm sm:text-base font-semibold leading-relaxed pl-6">
+                  {rawReason}
+                </div>
+                <div className="text-[11px] text-rose-300/80 pl-6 border-t border-rose-500/20 pt-2 mt-1">
+                  Sesuai ketentuan ketat 30 Days Challenge, setiap hari try out wajib dikerjakan tepat waktu, memenuhi target passing grade, dan menaati aturan anti-curang proctoring.
                 </div>
               </div>
 
-              <p className="text-slate-400 text-xs sm:text-sm leading-relaxed">
-                Integritas latihan adalah kunci kelulusan murni di CAT BKN. Anda dapat menginisialisasi ulang sistem dan mencoba kembali tantangan dari <strong>Hari ke-1</strong>.
-              </p>
+              {/* Box 2: KATA-KATA PENYEMANGAT */}
+              <div className="bg-gradient-to-br from-slate-900 to-indigo-950/60 border border-indigo-500/40 rounded-2xl p-5 sm:p-6 text-left space-y-3 shadow-md">
+                <div className="flex items-center gap-2 text-amber-400 font-bold text-xs uppercase tracking-wider">
+                  <Flame className="w-4 h-4 text-amber-400 fill-amber-400/30" />
+                  <span>Pesan Motivasi untuk Calon ASN:</span>
+                </div>
+                <p className="text-slate-200 text-xs sm:text-sm leading-relaxed">
+                  <strong>Jangan berkecil hati dan pantang menyerah!</strong> Kegagalan pada satu sesi latihan ini bukanlah akhir dari segalanya, melainkan kompas evaluasi yang sangat berharga untuk mengetahui di mana letak kelemahan yang perlu diasah.
+                </p>
+                <p className="text-slate-300 text-xs sm:text-sm leading-relaxed">
+                  Hampir semua peserta yang kini sukses menjadi ASN pernah mengalami kegagalan dan terjatuh saat proses latihan. Yang membedakan mereka hanyalah keberanian untuk <strong>bangkit kembali dan terus melangkah</strong>.
+                </p>
+                <p className="text-cyan-300 text-xs sm:text-sm font-semibold leading-relaxed">
+                  Tarik napas dalam-dalam, evaluasi materi yang belum dikuasai, dan buktikan pada diri Anda bahwa Anda memiliki ketangguhan mental untuk menaklukkan 30 hari penuh sampai lulus CPNS resmi! 💪
+                </p>
+              </div>
 
-              <div>
+              {/* Box 3: TOMBOL MULAI ULANG (RESET KE HARI PERTAMA) */}
+              <div className="pt-2 space-y-3">
                 <button
+                  type="button"
                   onClick={restartChallenge}
                   disabled={isRestarting}
-                  className="inline-flex items-center justify-center gap-2.5 bg-gradient-to-r from-rose-600 to-red-600 hover:from-rose-500 hover:to-red-500 text-white font-extrabold py-3.5 px-8 rounded-xl text-sm shadow-[0_0_25px_rgba(225,29,72,0.4)] hover:shadow-[0_0_35px_rgba(225,29,72,0.6)] transition-all cursor-pointer disabled:opacity-50"
+                  className="w-full sm:w-auto inline-flex items-center justify-center gap-3 bg-gradient-to-r from-rose-600 via-red-600 to-orange-600 hover:from-rose-500 hover:to-orange-500 active:scale-95 text-white font-black py-4 px-10 rounded-2xl text-sm sm:text-base shadow-[0_0_35px_rgba(225,29,72,0.5)] hover:shadow-[0_0_50px_rgba(225,29,72,0.7)] transition-all cursor-pointer disabled:opacity-50"
                 >
-                  <RotateCcw className={`w-4 h-4 ${isRestarting ? 'animate-spin' : ''}`} />
-                  <span>{isRestarting ? 'Menginisialisasi Ulang...' : 'REBOOT TANTANGAN (MULAI HARI 01)'}</span>
+                  <RotateCcw className={`w-5 h-5 ${isRestarting ? 'animate-spin' : ''}`} />
+                  <span>{isRestarting ? 'Mereset Data Tantangan...' : 'MULAI ULANG CHALLENGE SEKARANG (RESET KE HARI 01)'}</span>
                 </button>
+
+                <p className="text-[11px] text-slate-400">
+                  ⚡ Dengan menekan tombol di atas, status tantangan Anda akan otomatis di-reset ke <strong>Hari ke-1</strong> dan Anda dapat langsung memulai pengerjaan try out baru.
+                </p>
               </div>
             </div>
           </div>
@@ -860,6 +888,56 @@ export default function ChallengePage() {
             Tiap sesi try out harian dilengkapi sensor pelacak jendela browser. Anda <strong>dilarang berpindah tab browser, me-minimize layar, atau membuka aplikasi eksternal (seperti kalkulator)</strong>. Jika terdeteksi meninggalkan lembar ujian, status tantangan hari itu langsung dinyatakan <strong>GAGAL</strong>.
           </p>
         </div>
+
+        {/* ================= 7. MODAL NOTIFIKASI GAGAL ================= */}
+        {showFailModal && (
+          <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4">
+            <div className="relative w-full max-w-lg bg-slate-950 rounded-3xl p-6 sm:p-8 text-white border-2 border-rose-600/70 shadow-[0_0_50px_rgba(225,29,72,0.3)] space-y-5 animate-in fade-in zoom-in duration-200">
+              <div className="w-16 h-16 bg-rose-950/70 border-2 border-rose-500 text-rose-400 rounded-2xl flex items-center justify-center mx-auto shadow-md">
+                <ShieldAlert className="w-8 h-8" />
+              </div>
+
+              <div className="text-center">
+                <span className="text-[11px] font-bold uppercase tracking-wider text-rose-400 bg-rose-500/15 border border-rose-500/30 px-3 py-1 rounded-full">
+                  PEMBERITAHUAN EVALUASI
+                </span>
+                <h3 className="text-xl sm:text-2xl font-black text-white mt-2">
+                  Tantangan 30 Days Challenge Gagal
+                </h3>
+              </div>
+
+              <div className="bg-rose-950/40 border border-rose-500/40 rounded-xl p-4 text-xs space-y-1">
+                <div className="text-rose-400 font-bold flex items-center gap-1.5 uppercase font-mono">
+                  <AlertCircle className="w-3.5 h-3.5" />
+                  Penyebab Gagal:
+                </div>
+                <div className="text-white font-medium pl-5">
+                  {failReason || 'Target skor harian tidak terpenuhi atau terdapat hari yang terlewat.'}
+                </div>
+              </div>
+
+              <div className="bg-slate-900 border border-indigo-500/30 rounded-xl p-4 text-xs text-slate-300 space-y-2 leading-relaxed">
+                <div className="text-amber-400 font-bold flex items-center gap-1.5 uppercase text-[11px]">
+                  <Flame className="w-3.5 h-3.5 text-amber-400" />
+                  Tetap Semangat, Calon ASN!
+                </div>
+                <p>
+                  Jangan berkecil hati. Setiap pejuang NIP pernah jatuh bangun dalam prosesnya. Jadikan hasil ini sebagai bahan evaluasi untuk bangkit lebih kuat.
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={restartChallenge}
+                disabled={isRestarting}
+                className="w-full inline-flex items-center justify-center gap-2 bg-gradient-to-r from-rose-600 to-red-600 hover:from-rose-500 hover:to-red-500 text-white font-bold py-3.5 px-6 rounded-xl text-sm shadow-lg transition-all cursor-pointer"
+              >
+                <RotateCcw className={`w-4 h-4 ${isRestarting ? 'animate-spin' : ''}`} />
+                <span>{isRestarting ? 'Mereset Data...' : 'Mulai Ulang Challenge (Reset ke Hari 01)'}</span>
+              </button>
+            </div>
+          </div>
+        )}
 
       </div>
     </MemberLayout>
