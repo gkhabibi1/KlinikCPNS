@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabaseClient';
 import FormattedText from '@/components/FormattedText';
+import ChatMessageContent from '@/components/ChatMessageContent';
 
 interface Profile {
   id: string;
@@ -4905,7 +4906,10 @@ export default function AdminCommandCenter() {
                                         {new Date(msg.created_at).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}
                                       </span>
                                     </div>
-                                    <p className="whitespace-pre-wrap">{msg.message}</p>
+                                    <ChatMessageContent
+                                      content={msg.message}
+                                      variant={isAdmin ? 'user' : isBot ? 'bot' : 'admin'}
+                                    />
                                   </div>
                                 </div>
                               );

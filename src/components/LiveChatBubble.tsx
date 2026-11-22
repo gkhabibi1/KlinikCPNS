@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { supabase } from '@/lib/supabaseClient';
 import { getKnowledgeAnswer } from '@/lib/knowledgeBase';
+import ChatMessageContent from './ChatMessageContent';
 import { 
   MessageCircle, 
   X, 
@@ -503,7 +504,10 @@ Tim Admin kami juga dapat dihubungi via WhatsApp resmi di [+62 851-9965-5534](${
                           {isAdmin ? 'Admin Klinik CPNS' : 'Asisten AI Virtual'}
                         </p>
                       )}
-                      <p className="whitespace-pre-wrap">{msg.message}</p>
+                      <ChatMessageContent
+                        content={msg.message}
+                        variant={isUser ? 'user' : isBot ? 'bot' : 'admin'}
+                      />
                       <div
                         className={`flex items-center justify-end gap-1 mt-1.5 text-[9px] ${
                           isUser ? 'text-blue-100' : 'text-slate-400'
