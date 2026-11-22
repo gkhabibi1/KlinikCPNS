@@ -1,20 +1,19 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { usePathname, useRouter } from 'next/navigation';
+import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { supabase } from '@/lib/supabaseClient';
+import { getKnowledgeAnswer } from '@/lib/knowledgeBase';
 import { 
   MessageCircle, 
   X, 
   Send, 
-  User, 
-  Sparkles, 
-  Clock, 
   ExternalLink, 
-  ShieldCheck, 
   Headphones,
-  CheckCheck
+  CheckCheck,
+  Sparkles,
+  User
 } from 'lucide-react';
 
 interface SupportMessage {
@@ -30,14 +29,28 @@ interface SupportMessage {
 
 const WA_ADMIN_URL = 'https://wa.me/6285199655534?text=Halo%20Admin%20KlinikCPNS,%20saya%20ingin%20bertanya%20seputar%20layanan%20Klinik%20CPNS.';
 
+const DEFAULT_WELCOME: SupportMessage = {
+  id: 'welcome-init',
+  user_id: 'system',
+  sender_type: 'bot',
+  sender_name: 'Asisten AI Virtual',
+  message: `Halo Calon ASN! 👋 Selamat datang di Klinik CPNS.
+
+Saya Asisten Virtual AI siap membantu menjawab pertanyaan Anda seputar materi SKD, aturan 30 Days Challenge, sistem anti-curang, passing grade, atau cara aktivasi paket try out.
+
+Ada yang bisa kami bantu hari ini?`,
+  is_read_by_admin: true,
+  is_read_by_user: true,
+  created_at: new Date().toISOString()
+};
+
 export default function LiveChatBubble() {
   const pathname = usePathname();
-  const router = useRouter();
 
   const [isOpen, setIsOpen] = useState(false);
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [userProfile, setUserProfile] = useState<any>(null);
-  const [messages, setMessages] = useState<SupportMessage[]>([]);
+  const [messages, setMessages] = useState<SupportMessage[]>([DEFAULT_WELCOME]);
   const [newMessage, setNewMessage] = useState('');
   const [isSending, setIsSending] = useState(false);
   const [isLoadingMessages, setIsLoadingMessages] = useState(false);
@@ -50,42 +63,56 @@ export default function LiveChatBubble() {
   const isExamPage = (pathname === '/tryout' || pathname?.startsWith('/tryout/')) && pathname !== '/tryout-list';
   const isAdminPage = pathname?.startsWith('/admin');
 
-  // 1. Cek User & Profil
+  // 1. Cek Sesi User & Profil
   useEffect(() => {
-    const checkUser = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      setCurrentUser(user);
+    let isMounted = true;
 
-      if (user) {
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('full_name, email')
-          .eq('id', user.id)
-          .single();
-        if (profile) setUserProfile(profile);
-      } else {
-        setUserProfile(null);
-        setMessages([]);
+    const checkUser = async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!isMounted) return;
+
+        setCurrentUser(user);
+
+        if (user) {
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('full_name, email')
+            .eq('id', user.id)
+            .maybeSingle();
+          if (isMounted && profile) setUserProfile(profile);
+          fetchMessages(user.id);
+        } else {
+          setUserProfile(null);
+          setMessages([DEFAULT_WELCOME]);
+        }
+      } catch (err) {
+        console.warn('Error saat cek auth user:', err);
       }
     };
 
     checkUser();
 
     const { data: authListener } = supabase.auth.onAuthStateChange((_event: any, session: any) => {
+      if (!isMounted) return;
       const user = session?.user || null;
       setCurrentUser(user);
-      if (!user) {
+
+      if (user) {
+        fetchMessages(user.id);
+      } else {
         setUserProfile(null);
-        setMessages([]);
+        setMessages([DEFAULT_WELCOME]);
       }
     });
 
     return () => {
+      isMounted = false;
       authListener?.subscription.unsubscribe();
     };
   }, []);
 
-  // 2. Fetch Riwayat Pesan jika user login
+  // 2. Fetch Riwayat Pesan dari Supabase jika user sudah login
   const fetchMessages = async (userId: string) => {
     setIsLoadingMessages(true);
     try {
@@ -95,27 +122,24 @@ export default function LiveChatBubble() {
         .eq('user_id', userId)
         .order('created_at', { ascending: true });
 
-      if (!error && data) {
+      if (!error && data && data.length > 0) {
         setMessages(data as SupportMessage[]);
         
         // Hitung pesan yang belum dibaca dari admin atau asisten bot
         const unread = data.filter((m: any) => (m.sender_type === 'admin' || m.sender_type === 'bot') && !m.is_read_by_user).length;
         setUnreadCount(unread);
+      } else {
+        setMessages([DEFAULT_WELCOME]);
       }
     } catch (err) {
-      console.warn('Tabel support_messages belum dibuat atau belum ada data:', err);
+      console.warn('Tabel support_messages belum ada atau gagal dimuat:', err);
+      setMessages([DEFAULT_WELCOME]);
     } finally {
       setIsLoadingMessages(false);
     }
   };
 
-  useEffect(() => {
-    if (currentUser?.id) {
-      fetchMessages(currentUser.id);
-    }
-  }, [currentUser?.id]);
-
-  // 3. Setup Realtime Subscription untuk Pesan Baru
+  // 3. Realtime Listener untuk User yang Login
   useEffect(() => {
     if (!currentUser?.id) return;
 
@@ -133,8 +157,9 @@ export default function LiveChatBubble() {
         (payload: any) => {
           const newMsg = payload.new as SupportMessage;
           setMessages(prev => {
-            // Hindari duplikasi jika sudah ditambahkan optimistik
-            if (prev.some(m => m.id === newMsg.id)) return prev;
+            if (prev.some(m => m.id === newMsg.id || (m.message === newMsg.message && m.sender_type === newMsg.sender_type))) {
+              return prev;
+            }
             return [...prev, newMsg];
           });
 
@@ -142,7 +167,6 @@ export default function LiveChatBubble() {
             if (!isOpen) {
               setUnreadCount(prev => prev + 1);
             } else {
-              // Jika sedang terbuka, langsung tandai telah dibaca
               markMessagesAsRead(currentUser.id);
             }
           }
@@ -184,72 +208,132 @@ export default function LiveChatBubble() {
     if (isOpen) {
       messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }
-  }, [messages, isOpen]);
+  }, [messages, isBotTyping, isOpen]);
 
-  // 5. Fungsi Kirim Pesan oleh User
+  // 5. FUNGSI KIRIM PESAN (BERFUNGSI UNTUK MEMBER MAUPUN GUEST)
   const handleSendMessage = async (e?: React.FormEvent, customText?: string) => {
     if (e) e.preventDefault();
-    const textToSend = customText || newMessage.trim();
-    if (!textToSend || !currentUser) return;
+    const textToSend = (customText || newMessage).trim();
+    if (!textToSend || isSending) return;
 
     setIsSending(true);
 
+    const isMember = Boolean(currentUser?.id);
+    const senderName = userProfile?.full_name || currentUser?.email?.split('@')[0] || (isMember ? 'Member' : 'Tamu');
+
     const tempId = `temp-${Date.now()}`;
-    const optimisticMessage: SupportMessage = {
+    const optimisticUserMessage: SupportMessage = {
       id: tempId,
-      user_id: currentUser.id,
+      user_id: currentUser?.id || 'guest',
       sender_type: 'user',
-      sender_name: userProfile?.full_name || currentUser.email?.split('@')[0],
+      sender_name: senderName,
       message: textToSend,
       is_read_by_admin: false,
       is_read_by_user: true,
       created_at: new Date().toISOString()
     };
 
-    setMessages(prev => [...prev, optimisticMessage]);
+    // Tampilkan pesan user langsung di layar
+    setMessages(prev => [...prev, optimisticUserMessage]);
     if (!customText) setNewMessage('');
 
-    try {
-      const { data, error } = await supabase
-        .from('support_messages')
-        .insert([{
-          user_id: currentUser.id,
-          user_email: currentUser.email,
-          user_name: userProfile?.full_name || currentUser.email?.split('@')[0],
-          sender_type: 'user',
-          sender_name: userProfile?.full_name || currentUser.email?.split('@')[0],
-          message: textToSend,
-          is_read_by_admin: false,
-          is_read_by_user: true
-        }])
-        .select()
-        .single();
+    // A. Jika Member, coba simpan ke Supabase support_messages
+    if (isMember) {
+      try {
+        const { data, error } = await supabase
+          .from('support_messages')
+          .insert([{
+            user_id: currentUser.id,
+            user_email: currentUser.email,
+            user_name: senderName,
+            sender_type: 'user',
+            sender_name: senderName,
+            message: textToSend,
+            is_read_by_admin: false,
+            is_read_by_user: true
+          }])
+          .select()
+          .maybeSingle();
 
-      if (!error && data) {
-        // Ganti ID sementara dengan ID resmi dari database
-        setMessages(prev => prev.map(m => m.id === tempId ? (data as SupportMessage) : m));
+        if (!error && data) {
+          setMessages(prev => prev.map(m => m.id === tempId ? (data as SupportMessage) : m));
+        }
+      } catch (dbErr) {
+        console.warn('Gagal insert ke Supabase, bot tetap akan membalas:', dbErr);
       }
+    }
 
-      // Pemicu AI Auto-Responder (Knowledge Base & Gemini)
-      setIsBotTyping(true);
-      fetch('/api/chat/auto-reply', {
+    // B. Pemicu AI Auto-Responder (Knowledge Base & Gemini)
+    setIsBotTyping(true);
+
+    try {
+      const response = await fetch('/api/chat/auto-reply', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          userId: currentUser.id,
-          userEmail: currentUser.email,
-          userName: userProfile?.full_name || currentUser.email?.split('@')[0],
+          userId: currentUser?.id || 'guest',
+          userEmail: currentUser?.email || 'guest@klinikcpns.com',
+          userName: senderName,
           message: textToSend
         })
-      })
-      .then(res => res.json())
-      .catch(err => console.warn('Auto-reply fetch info:', err))
-      .finally(() => {
-        setIsBotTyping(false);
       });
-    } catch (err) {
-      console.error('Gagal mengirim pesan chat:', err);
+
+      let botReplyText = '';
+
+      if (response.ok) {
+        const data = await response.json();
+        botReplyText = data?.reply || '';
+      }
+
+      // Jika API belum mengembalikan balasan, gunakan Smart Knowledge Base client-side fallback
+      if (!botReplyText) {
+        botReplyText = getKnowledgeAnswer(textToSend) || `Halo ${senderName}! Terima kasih atas pertanyaannya.
+
+Pertanyaan Anda mengenai: *"${textToSend}"* telah kami catat.
+
+💡 Untuk informasi cepat seputar passing grade SKD BKN:
+• **TWK:** Minimal 65
+• **TIU:** Minimal 80
+• **TKP:** Minimal 166
+
+Tim Admin kami juga dapat dihubungi via WhatsApp resmi di [+62 851-9965-5534](${WA_ADMIN_URL}) jika Anda memerlukan panduan lebih lanjut.`;
+      }
+
+      const botMessage: SupportMessage = {
+        id: `bot-${Date.now()}`,
+        user_id: currentUser?.id || 'guest',
+        sender_type: 'bot',
+        sender_name: 'Asisten AI Virtual',
+        message: botReplyText,
+        is_read_by_admin: true,
+        is_read_by_user: true,
+        created_at: new Date().toISOString()
+      };
+
+      // Tambahkan balasan bot langsung ke state chat secara instan!
+      setMessages(prev => {
+        if (prev.some(m => m.message === botReplyText && m.sender_type === 'bot')) return prev;
+        return [...prev, botMessage];
+      });
+
+    } catch (apiErr) {
+      console.warn('Error saat memanggil auto-reply API, menggunakan fallback lokal:', apiErr);
+      const fallbackReply = getKnowledgeAnswer(textToSend) || `Halo! Terima kasih atas pertanyaannya. Tim kami siap membantu persiapan tes CPNS & P3K Anda. Silakan hubungi WhatsApp Admin di [+62 851-9965-5534](${WA_ADMIN_URL}) untuk respon langsung.`;
+
+      const botMessage: SupportMessage = {
+        id: `bot-fallback-${Date.now()}`,
+        user_id: currentUser?.id || 'guest',
+        sender_type: 'bot',
+        sender_name: 'Asisten AI Virtual',
+        message: fallbackReply,
+        is_read_by_admin: true,
+        is_read_by_user: true,
+        created_at: new Date().toISOString()
+      };
+
+      setMessages(prev => [...prev, botMessage]);
     } finally {
+      setIsBotTyping(false);
       setIsSending(false);
     }
   };
@@ -267,6 +351,8 @@ export default function LiveChatBubble() {
     return null;
   }
 
+  const isGuest = !currentUser;
+
   return (
     <>
       {/* FLOATING CHAT BUBBLE BUTTON */}
@@ -274,7 +360,7 @@ export default function LiveChatBubble() {
         <button
           onClick={handleToggleOpen}
           aria-label="Buka Live Chat Support"
-          className="relative group flex items-center justify-center w-14 h-14 rounded-full bg-gradient-to-tr from-blue-600 via-blue-500 to-indigo-600 text-white shadow-xl hover:shadow-2xl hover:scale-105 active:scale-95 transition-all duration-300 focus:outline-none focus:ring-4 focus:ring-blue-300"
+          className="relative group flex items-center justify-center w-14 h-14 rounded-full bg-gradient-to-tr from-blue-600 via-blue-500 to-indigo-600 text-white shadow-xl hover:shadow-2xl hover:scale-105 active:scale-95 transition-all duration-300 focus:outline-none focus:ring-4 focus:ring-blue-300 cursor-pointer"
         >
           {isOpen ? (
             <X className="w-6 h-6 transition-transform transform rotate-0 hover:rotate-90 duration-200" />
@@ -301,10 +387,10 @@ export default function LiveChatBubble() {
 
       {/* CHAT WINDOW BOX */}
       {isOpen && (
-        <div className="fixed bottom-24 right-4 sm:right-6 z-50 w-[92vw] sm:w-[380px] max-h-[82vh] h-[550px] bg-white rounded-2xl shadow-2xl border border-slate-200 flex flex-col overflow-hidden animate-in fade-in slide-in-from-bottom-5 duration-200">
+        <div className="fixed bottom-24 right-4 sm:right-6 z-50 w-[92vw] sm:w-[380px] max-h-[82vh] h-[560px] bg-white rounded-2xl shadow-2xl border border-slate-200 flex flex-col overflow-hidden animate-in fade-in slide-in-from-bottom-5 duration-200">
           
           {/* HEADER */}
-          <div className="bg-gradient-to-r from-blue-600 to-indigo-700 text-white p-4 flex items-center justify-between shadow-md">
+          <div className="bg-gradient-to-r from-blue-600 to-indigo-700 text-white p-4 flex items-center justify-between shadow-md flex-shrink-0">
             <div className="flex items-center gap-3">
               <div className="relative">
                 <div className="w-10 h-10 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center text-white font-bold border border-white/30">
@@ -318,220 +404,210 @@ export default function LiveChatBubble() {
                 </h3>
                 <p className="text-[11px] text-blue-100 flex items-center gap-1">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-300 animate-ping"></span>
-                  Admin Online • Respon Cepat
+                  AI Auto-Responder & Admin Online
                 </p>
               </div>
             </div>
 
             <button
               onClick={() => setIsOpen(false)}
-              className="text-white/80 hover:text-white p-1.5 rounded-lg hover:bg-white/10 transition-colors"
+              className="text-white/80 hover:text-white p-1.5 rounded-lg hover:bg-white/10 transition-colors cursor-pointer"
               aria-label="Tutup Chat"
             >
               <X className="w-5 h-5" />
             </button>
           </div>
 
-          {/* ================= KONDISI 1: SEBELUM LOGIN ================= */}
-          {!currentUser ? (
-            <div className="flex-1 p-5 overflow-y-auto flex flex-col justify-between bg-gradient-to-b from-slate-50 to-white">
-              <div className="space-y-4">
-                {/* Greeting Bubble */}
-                <div className="flex items-start gap-2.5">
-                  <div className="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-xs font-bold shrink-0">
-                    CS
-                  </div>
-                  <div className="bg-white border border-slate-200 rounded-2xl rounded-tl-sm p-4 text-xs text-slate-700 shadow-sm space-y-2 leading-relaxed">
-                    <p className="font-semibold text-slate-900 text-sm">
-                      Halo Calon ASN! 👋
-                    </p>
-                    <p>
-                      Selamat datang di <strong>Klinik CPNS</strong>. Ada yang bisa kami bantu seputar pendaftaran, paket Try Out SKD, atau tantangan 30 Days Challenge?
-                    </p>
-                  </div>
-                </div>
-
-                {/* Callout Info: Buat Akun */}
-                <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 text-xs text-blue-900 space-y-2">
-                  <div className="flex items-center gap-2 font-bold text-blue-800">
-                    <ShieldCheck className="w-4 h-4 text-blue-600" />
-                    <span>Layanan Live Chat Terhubung ke Admin</span>
-                  </div>
-                  <p className="text-slate-600 leading-normal">
-                    Untuk dapat mengirim pesan pertanyaan dan menerima balasan langsung dari Admin kami di sistem, <strong>silakan buat akun atau masuk terlebih dahulu</strong> agar riwayat percakapan Anda tersimpan aman.
-                  </p>
-                </div>
+          {/* CALLOUT BANNER GUEST VS MEMBER */}
+          {isGuest ? (
+            <div className="bg-blue-50/95 border-b border-blue-200 px-4 py-2.5 text-xs text-blue-900 flex-shrink-0">
+              <div className="flex items-center justify-between gap-2 mb-1.5">
+                <span className="font-bold text-blue-800 flex items-center gap-1">
+                  <Sparkles className="w-3.5 h-3.5 text-blue-600" />
+                  Mode Tamu (AI Assistant Aktif)
+                </span>
+                <span className="text-[10px] bg-blue-200 text-blue-800 px-1.5 py-0.5 rounded font-semibold">Tamu</span>
               </div>
-
-              {/* Action Buttons */}
-              <div className="space-y-2 pt-4 border-t border-slate-100">
+              <p className="text-[11px] text-slate-600 leading-snug mb-2">
+                Tanyakan apa saja ke AI kami! Untuk menyimpan riwayat dan chat dengan Admin di sistem:
+              </p>
+              <div className="flex items-center gap-2">
                 <Link
                   href="/login?mode=register"
                   onClick={() => setIsOpen(false)}
-                  className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 px-4 rounded-xl text-xs flex items-center justify-center gap-2 shadow-md hover:shadow-lg transition-all"
+                  className="flex-1 bg-blue-600 hover:bg-blue-700 text-white text-[11px] font-bold py-1 px-2.5 rounded-lg text-center transition shadow-sm"
                 >
-                  🚀 Buat Akun Baru (Gratis)
+                  🚀 Buat Akun
                 </Link>
-
                 <Link
                   href="/login?mode=login"
                   onClick={() => setIsOpen(false)}
-                  className="w-full bg-white hover:bg-slate-50 text-slate-700 font-semibold py-2 px-4 rounded-xl text-xs border border-slate-300 flex items-center justify-center gap-2 transition-all"
+                  className="flex-1 bg-white hover:bg-slate-100 text-slate-700 text-[11px] font-semibold py-1 px-2.5 rounded-lg border border-slate-300 text-center transition"
                 >
-                  🔑 Masuk ke Akun Saya
+                  🔑 Masuk
                 </Link>
-
-                <div className="text-center pt-2">
-                  <a
-                    href={WA_ADMIN_URL}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-[11px] text-emerald-600 hover:text-emerald-700 font-semibold inline-flex items-center gap-1 hover:underline"
-                  >
-                    <span>💬 Butuh respon cepat via WhatsApp? Chat Admin</span>
-                    <ExternalLink className="w-3 h-3" />
-                  </a>
-                </div>
               </div>
             </div>
           ) : (
-            /* ================= KONDISI 2: SETELAH LOGIN (USER AKTIF) ================= */
-            <div className="flex-1 flex flex-col bg-slate-50/50 overflow-hidden">
-              
-              {/* Info Bar User */}
-              <div className="bg-slate-100/90 border-b border-slate-200 px-4 py-2 text-[11px] text-slate-500 flex items-center justify-between">
-                <span className="truncate">
-                  Akun: <strong className="text-slate-700">{userProfile?.full_name || currentUser.email}</strong>
-                </span>
-                <span className="text-[10px] bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full font-bold">
-                  Member
-                </span>
-              </div>
-
-              {/* Area Pesan Chat */}
-              <div className="flex-1 p-4 overflow-y-auto space-y-3">
-                
-                {/* Initial Welcome Message */}
-                <div className="flex items-start gap-2 max-w-[85%]">
-                  <div className="w-7 h-7 rounded-full bg-blue-600 text-white flex items-center justify-center text-[10px] font-bold shrink-0">
-                    CS
-                  </div>
-                  <div className="bg-white border border-slate-200 p-3 rounded-2xl rounded-tl-sm text-xs text-slate-700 shadow-sm leading-relaxed">
-                    <p className="font-semibold text-slate-800 mb-1">Admin Klinik CPNS</p>
-                    Halo! Ada yang bisa kami bantu hari ini? Tuliskan pertanyaan Anda di bawah ini dan Admin kami akan segera membalasnya.
-                  </div>
-                </div>
-
-                {isLoadingMessages && messages.length === 0 && (
-                  <div className="text-center py-6 text-xs text-slate-400">
-                    Memuat riwayat percakapan...
-                  </div>
-                )}
-
-                {/* Message Bubbles */}
-                {messages.map((msg) => {
-                  const isUser = msg.sender_type === 'user';
-                  const isAdmin = msg.sender_type === 'admin';
-                  const isBot = msg.sender_type === 'bot';
-
-                  return (
-                    <div
-                      key={msg.id}
-                      className={`flex flex-col ${isUser ? 'items-end' : 'items-start'}`}
-                    >
-                      <div className="flex items-end gap-1.5 max-w-[85%]">
-                        {!isUser && (
-                          <div className={`w-6 h-6 rounded-full flex items-center justify-center text-[9px] font-bold shrink-0 ${
-                            isBot ? 'bg-amber-500 text-white' : 'bg-blue-600 text-white'
-                          }`}>
-                            {isBot ? 'AI' : 'CS'}
-                          </div>
-                        )}
-
-                        <div
-                          className={`p-3 rounded-2xl text-xs leading-relaxed shadow-sm ${
-                            isUser
-                              ? 'bg-blue-600 text-white rounded-br-sm'
-                              : isBot
-                              ? 'bg-amber-50 border border-amber-200 text-amber-950 rounded-tl-sm'
-                              : 'bg-white border border-slate-200 text-slate-800 rounded-tl-sm'
-                          }`}
-                        >
-                          {!isUser && (
-                            <p className="font-bold text-[10px] text-blue-600 mb-1">
-                              {isAdmin ? 'Admin Klinik CPNS' : 'Asisten AI Virtual'}
-                            </p>
-                          )}
-                          <p className="whitespace-pre-wrap">{msg.message}</p>
-                          <div
-                            className={`flex items-center justify-end gap-1 mt-1 text-[9px] ${
-                              isUser ? 'text-blue-100' : 'text-slate-400'
-                            }`}
-                          >
-                            <span>{formatTime(msg.created_at)}</span>
-                            {isUser && <CheckCheck className="w-3 h-3 text-blue-200" />}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
-
-                {/* Typing Indicator Asisten AI */}
-                {isBotTyping && (
-                  <div className="flex items-end gap-1.5 max-w-[85%] animate-pulse">
-                    <div className="w-6 h-6 rounded-full bg-amber-500 text-white flex items-center justify-center text-[9px] font-bold shrink-0 shadow-sm">
-                      AI
-                    </div>
-                    <div className="bg-amber-50 border border-amber-200 text-amber-900 rounded-2xl rounded-tl-sm px-3.5 py-2 text-xs flex items-center gap-2 shadow-sm">
-                      <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-ping"></span>
-                      <span className="text-[11px] font-medium">Asisten AI sedang memproses jawaban...</span>
-                    </div>
-                  </div>
-                )}
-
-                <div ref={messagesEndRef} />
-              </div>
-
-              {/* Rekomendasi Pertanyaan Cepat (Bila belum ada chat dari user) */}
-              {messages.filter(m => m.sender_type === 'user').length === 0 && (
-                <div className="px-3 py-2 bg-slate-50 border-t border-slate-200 flex flex-wrap gap-1.5">
-                  <button
-                    onClick={() => handleSendMessage(undefined, 'Bagaimana cara mengikuti 30 Days CPNS Challenge?')}
-                    className="text-[10px] bg-white border border-slate-200 hover:border-blue-400 text-slate-600 hover:text-blue-600 px-2.5 py-1 rounded-full transition-colors"
-                  >
-                    💡 Info 30 Days Challenge
-                  </button>
-                  <button
-                    onClick={() => handleSendMessage(undefined, 'Bagaimana cara konfirmasi pembayaran atau aktivasi paket?')}
-                    className="text-[10px] bg-white border border-slate-200 hover:border-blue-400 text-slate-600 hover:text-blue-600 px-2.5 py-1 rounded-full transition-colors"
-                  >
-                    💳 Konfirmasi Pembayaran
-                  </button>
-                </div>
-              )}
-
-              {/* INPUT BAR */}
-              <form onSubmit={handleSendMessage} className="p-3 bg-white border-t border-slate-200 flex items-center gap-2">
-                <input
-                  type="text"
-                  value={newMessage}
-                  onChange={(e) => setNewMessage(e.target.value)}
-                  placeholder="Ketik pertanyaan Anda di sini..."
-                  className="flex-1 bg-slate-100 border border-slate-200 focus:bg-white focus:border-blue-500 rounded-xl px-3.5 py-2 text-xs text-slate-800 placeholder-slate-400 outline-none transition-all"
-                  disabled={isSending}
-                />
-                <button
-                  type="submit"
-                  disabled={!newMessage.trim() || isSending}
-                  className="w-9 h-9 rounded-xl bg-blue-600 hover:bg-blue-700 disabled:opacity-40 text-white flex items-center justify-center shrink-0 shadow transition-all cursor-pointer"
-                  aria-label="Kirim Pesan"
-                >
-                  <Send className="w-4 h-4" />
-                </button>
-              </form>
+            <div className="bg-slate-100/90 border-b border-slate-200 px-4 py-2 text-[11px] text-slate-500 flex items-center justify-between flex-shrink-0">
+              <span className="truncate flex items-center gap-1.5">
+                <User className="w-3.5 h-3.5 text-slate-400" />
+                <strong className="text-slate-700">{userProfile?.full_name || currentUser.email}</strong>
+              </span>
+              <span className="text-[10px] bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full font-bold">
+                Member
+              </span>
             </div>
           )}
+
+          {/* AREA PESAN CHAT */}
+          <div className="flex-1 p-4 overflow-y-auto space-y-3 bg-slate-50/50">
+            {isLoadingMessages && messages.length === 0 && (
+              <div className="text-center py-6 text-xs text-slate-400">
+                Memuat percakapan...
+              </div>
+            )}
+
+            {/* Render Pesan */}
+            {messages.map((msg) => {
+              const isUser = msg.sender_type === 'user';
+              const isAdmin = msg.sender_type === 'admin';
+              const isBot = msg.sender_type === 'bot';
+
+              return (
+                <div
+                  key={msg.id}
+                  className={`flex flex-col ${isUser ? 'items-end' : 'items-start'}`}
+                >
+                  <div className="flex items-end gap-1.5 max-w-[85%]">
+                    {!isUser && (
+                      <div className={`w-6 h-6 rounded-full flex items-center justify-center text-[9px] font-bold shrink-0 ${
+                        isBot ? 'bg-amber-500 text-white shadow-sm' : 'bg-blue-600 text-white shadow-sm'
+                      }`}>
+                        {isBot ? 'AI' : 'CS'}
+                      </div>
+                    )}
+
+                    <div
+                      className={`p-3 rounded-2xl text-xs leading-relaxed shadow-sm ${
+                        isUser
+                          ? 'bg-blue-600 text-white rounded-br-sm'
+                          : isBot
+                          ? 'bg-amber-50/90 border border-amber-200 text-amber-950 rounded-tl-sm'
+                          : 'bg-white border border-slate-200 text-slate-800 rounded-tl-sm'
+                      }`}
+                    >
+                      {!isUser && (
+                        <p className={`font-bold text-[10px] mb-1 flex items-center gap-1 ${isBot ? 'text-amber-800' : 'text-blue-600'}`}>
+                          {isBot && <Sparkles className="w-3 h-3 text-amber-600" />}
+                          {isAdmin ? 'Admin Klinik CPNS' : 'Asisten AI Virtual'}
+                        </p>
+                      )}
+                      <p className="whitespace-pre-wrap">{msg.message}</p>
+                      <div
+                        className={`flex items-center justify-end gap-1 mt-1.5 text-[9px] ${
+                          isUser ? 'text-blue-100' : 'text-slate-400'
+                        }`}
+                      >
+                        <span>{formatTime(msg.created_at)}</span>
+                        {isUser && <CheckCheck className="w-3 h-3 text-blue-200" />}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+
+            {/* Typing Indicator Asisten AI */}
+            {isBotTyping && (
+              <div className="flex items-end gap-1.5 max-w-[85%] animate-pulse">
+                <div className="w-6 h-6 rounded-full bg-amber-500 text-white flex items-center justify-center text-[9px] font-bold shrink-0 shadow-sm">
+                  AI
+                </div>
+                <div className="bg-amber-50 border border-amber-200 text-amber-900 rounded-2xl rounded-tl-sm px-3.5 py-2 text-xs flex items-center gap-2 shadow-sm">
+                  <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-ping"></span>
+                  <span className="text-[11px] font-medium">Asisten AI sedang menyusun jawaban...</span>
+                </div>
+              </div>
+            )}
+
+            <div ref={messagesEndRef} />
+          </div>
+
+          {/* QUICK PROMPT PILLS */}
+          <div className="px-3 py-2 bg-slate-100/80 border-t border-slate-200 flex items-center gap-1.5 overflow-x-auto no-scrollbar flex-shrink-0">
+            <button
+              type="button"
+              onClick={() => handleSendMessage(undefined, 'Bagaimana aturan 30 Days CPNS Challenge?')}
+              className="text-[10px] whitespace-nowrap bg-white border border-slate-300 hover:border-blue-500 hover:text-blue-600 px-2.5 py-1 rounded-full transition shadow-xs cursor-pointer"
+            >
+              🏆 30 Days Challenge
+            </button>
+            <button
+              type="button"
+              onClick={() => handleSendMessage(undefined, 'Berapa passing grade SKD CPNS?')}
+              className="text-[10px] whitespace-nowrap bg-white border border-slate-300 hover:border-blue-500 hover:text-blue-600 px-2.5 py-1 rounded-full transition shadow-xs cursor-pointer"
+            >
+              📊 Passing Grade
+            </button>
+            <button
+              type="button"
+              onClick={() => handleSendMessage(undefined, 'Bagaimana aturan anti curang selama ujian?')}
+              className="text-[10px] whitespace-nowrap bg-white border border-slate-300 hover:border-blue-500 hover:text-blue-600 px-2.5 py-1 rounded-full transition shadow-xs cursor-pointer"
+            >
+              🛡️ Anti-Curang
+            </button>
+            <button
+              type="button"
+              onClick={() => handleSendMessage(undefined, 'Bagaimana garansi uang kembali 100%?')}
+              className="text-[10px] whitespace-nowrap bg-white border border-slate-300 hover:border-blue-500 hover:text-blue-600 px-2.5 py-1 rounded-full transition shadow-xs cursor-pointer"
+            >
+              💰 Garansi 100%
+            </button>
+            <button
+              type="button"
+              onClick={() => handleSendMessage(undefined, 'Bagaimana cara konfirmasi pembayaran QRIS?')}
+              className="text-[10px] whitespace-nowrap bg-white border border-slate-300 hover:border-blue-500 hover:text-blue-600 px-2.5 py-1 rounded-full transition shadow-xs cursor-pointer"
+            >
+              💳 Bayar QRIS
+            </button>
+          </div>
+
+          {/* INPUT FORM BAR */}
+          <div className="p-3 bg-white border-t border-slate-200 flex-shrink-0">
+            <form onSubmit={handleSendMessage} className="flex items-center gap-2">
+              <input
+                type="text"
+                value={newMessage}
+                onChange={(e) => setNewMessage(e.target.value)}
+                placeholder={isGuest ? "Tanya Asisten AI di sini..." : "Ketik pesan untuk Admin / AI..."}
+                className="flex-1 bg-slate-100 border border-slate-200 focus:bg-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500 rounded-xl px-3.5 py-2 text-xs text-slate-800 placeholder-slate-400 outline-none transition-all"
+                disabled={isSending}
+              />
+              <button
+                type="submit"
+                disabled={!newMessage.trim() || isSending}
+                className="w-9 h-9 rounded-xl bg-blue-600 hover:bg-blue-700 disabled:opacity-40 text-white flex items-center justify-center shrink-0 shadow transition-all cursor-pointer"
+                aria-label="Kirim Pesan"
+              >
+                <Send className="w-4 h-4" />
+              </button>
+            </form>
+
+            <div className="mt-1.5 flex items-center justify-between text-[10px] text-slate-500 px-1">
+              <span>Respon instan oleh Smart AI</span>
+              <a
+                href={WA_ADMIN_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-emerald-600 hover:text-emerald-700 font-semibold inline-flex items-center gap-0.5 hover:underline"
+              >
+                <span>WhatsApp Admin</span>
+                <ExternalLink className="w-2.5 h-2.5" />
+              </a>
+            </div>
+          </div>
+
         </div>
       )}
     </>

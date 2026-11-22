@@ -11,6 +11,19 @@ export interface KnowledgeItem {
 
 export const KLINIK_CPNS_KNOWLEDGE: KnowledgeItem[] = [
   {
+    topic: 'Sapaan & Bantuan Awal',
+    keywords: ['halo', 'hai', 'hello', 'assalam', 'pagi', 'siang', 'sore', 'malam', 'permisi', 'tes', 'test', 'siang min', 'pagi min'],
+    answer: `Halo! Selamat datang di Klinik CPNS. 👋
+
+Senang bisa menyapa Anda! Saya Asisten Virtual AI siap membantu memberikan informasi seputar:
+• Aturan & target **30 Days CPNS Challenge**
+• Standar **Passing Grade SKD BKN** (TWK, TIU, TKP)
+• Program **Garansi Uang Kembali 100%**
+• Paket simulasi CAT dan cara aktivasi otomatis (QRIS)
+
+Ada yang ingin Anda tanyakan atau butuh panduan latihan hari ini?`
+  },
+  {
     topic: '30 Days Challenge & Aturan Anti-Curang',
     keywords: ['30 day', '30 days', 'challenge', 'tantangan', '30 hari', 'anti curang', 'kalkulator', 'pindah tab', 'gagal', 'ulang'],
     answer: `🏆 **Tentang 30 Days CPNS Challenge:**

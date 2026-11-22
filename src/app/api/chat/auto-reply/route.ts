@@ -4,14 +4,18 @@ import { getKnowledgeAnswer, KLINIK_CPNS_KNOWLEDGE } from '@/lib/knowledgeBase';
 
 export async function POST(req: Request) {
   try {
-    const { userId, userEmail, userName, message } = await req.json();
+    const body = await req.json();
+    const { userId, userEmail, userName, message } = body || {};
 
-    if (!userId || !message) {
+    if (!message || typeof message !== 'string' || !message.trim()) {
       return NextResponse.json(
-        { error: 'userId dan message diperlukan.' },
+        { error: 'Pesan pertanyaan wajib diisi.' },
         { status: 400 }
       );
     }
+
+    const cleanMessage = message.trim();
+    const isGuest = !userId || userId === 'guest' || userId === 'anonymous';
 
     let botReply = '';
     let source = 'knowledge_base';
@@ -32,8 +36,8 @@ ${knowledgePrompt}
 
 Pedoman menjawab:
 1. Jawab selalu dalam bahasa Indonesia yang ramah, santun, dan menyemangati ("Halo!", "Semangat berjuang!").
-2. Gunakan informasi resmi dari Knowledge Base di atas (Passing Grade, 30 Days Challenge, aturan anti-curang, garansi uang kembali 100%, WhatsApp admin +62 851-9965-5534).
-3. Buat jawaban padat dan to-the-point (maksimal 2-3 paragraf).
+2. Gunakan informasi resmi dari Knowledge Base di atas (Passing Grade SKD, 30 Days Challenge, aturan anti-curang, garansi uang kembali 100%, WhatsApp admin +62 851-9965-5534).
+3. Buat jawaban padat, informatif, dan to-the-point (maksimal 2-3 paragraf).
 4. Jika pertanyaan di luar konteks Klinik CPNS dan materi SKD, jawab dengan sopan bahwa Anda adalah asisten khusus Klinik CPNS dan sarankan menghubungi admin WhatsApp jika butuh bantuan lebih lanjut.`;
 
         const geminiRes = await fetch(
@@ -47,7 +51,7 @@ Pedoman menjawab:
                   role: 'user',
                   parts: [
                     { text: systemPrompt },
-                    { text: `Pertanyaan dari user (${userName || 'Member'}): "${message}"` }
+                    { text: `Pertanyaan dari user (${userName || (isGuest ? 'Calon Peserta' : 'Member')}): "${cleanMessage}"` }
                   ]
                 }
               ],
@@ -74,38 +78,54 @@ Pedoman menjawab:
 
     // 2. Opsi B: Built-in Smart Knowledge Engine (100% Gratis & Mandiri tanpa API eksternal)
     if (!botReply) {
-      const kbAnswer = getKnowledgeAnswer(message);
+      const kbAnswer = getKnowledgeAnswer(cleanMessage);
       if (kbAnswer) {
         botReply = kbAnswer;
         source = 'knowledge_base_match';
       } else {
-        // Fallback default jika tidak ada kata kunci yang cocok
+        // Fallback ramah jika pertanyaan umum belum ada di knowledge base
         botReply = `Halo ${userName || 'Kak'}! 👋 Terima kasih telah menghubungi Klinik CPNS.
 
-Pesan Anda telah kami terima dan masuk ke sistem panel admin kami. Tim Admin kami akan segera memeriksa dan memberikan balasan lebih lanjut di ruang obrolan ini.
+Pertanyaan Anda: *"${cleanMessage}"* telah kami catat.
 
-💡 *Tips Cepat:* Anda juga dapat melihat info panduan atau menghubungi WhatsApp Admin kami langsung di [+62 851-9965-5534](https://wa.me/6285199655534) untuk respon cepat.`;
+💡 **Informasi Cepat:**
+• Program unggulan kami: **30 Days CPNS Challenge** dengan Garansi Uang Kembali 100% jika tidak lolos SKD resmi.
+• Standar Passing Grade SKD: **TWK ≥ 65, TIU ≥ 80, TKP ≥ 166**.
+• Latihan try out CAT BKN & materi lengkap dapat diakses setelah login.
+
+Untuk bantuan langsung dari tim Admin kami, Anda dapat menghubungi WhatsApp kami di [+62 851-9965-5534](https://wa.me/6285199655534).`;
         source = 'knowledge_base_default';
       }
     }
 
-    // 3. Simpan balasan bot ke database Supabase
+    // Jika pengguna adalah Guest, tambahkan panduan pendaftaran di akhir jawaban
+    if (isGuest) {
+      botReply += `\n\n💬 *Ingin konsultasi langsung dengan Admin atau mulai latihan soal? Silakan buat akun gratis atau masuk ke akun Anda.*`;
+    }
+
+    // 3. Simpan balasan bot ke database Supabase (hanya jika member terdaftar & UUID valid)
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    const isValidUuid = userId && uuidRegex.test(userId);
+
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
     const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-    if (supabaseUrl && supabaseKey) {
-      const supabase = createClient(supabaseUrl, supabaseKey);
-
-      await supabase.from('support_messages').insert([{
-        user_id: userId,
-        user_email: userEmail,
-        user_name: userName,
-        sender_type: 'bot',
-        sender_name: 'Asisten AI Virtual',
-        message: botReply,
-        is_read_by_admin: true,
-        is_read_by_user: false
-      }]);
+    if (!isGuest && isValidUuid && supabaseUrl && supabaseKey) {
+      try {
+        const supabase = createClient(supabaseUrl, supabaseKey);
+        await supabase.from('support_messages').insert([{
+          user_id: userId,
+          user_email: userEmail || null,
+          user_name: userName || null,
+          sender_type: 'bot',
+          sender_name: 'Asisten AI Virtual',
+          message: botReply,
+          is_read_by_admin: true,
+          is_read_by_user: false
+        }]);
+      } catch (dbError) {
+        console.warn('Gagal menyimpan chat bot ke database Supabase (non-fatal):', dbError);
+      }
     }
 
     return NextResponse.json({
@@ -116,9 +136,11 @@ Pesan Anda telah kami terima dan masuk ke sistem panel admin kami. Tim Admin kam
 
   } catch (error: any) {
     console.error('Error pada API Auto-Reply:', error);
-    return NextResponse.json(
-      { error: error.message || 'Terjadi kesalahan sistem.' },
-      { status: 500 }
-    );
+    // Tetap kembalikan fallback jawaban agar user tidak melihat chat macet
+    return NextResponse.json({
+      success: true,
+      reply: `Halo! 👋 Terima kasih telah menghubungi Klinik CPNS. Sistem kami siap membantu menjawab seputar try out SKD, aturan 30 Days Challenge, dan panduan materi CPNS. Silakan tanyakan hal yang ingin Anda ketahui, atau hubungi WhatsApp Admin di [+62 851-9965-5534](https://wa.me/6285199655534).`,
+      source: 'safe_fallback'
+    });
   }
 }
