@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { supabase } from '@/lib/supabaseClient';
 import MemberLayout from '../../components/MemberLayout';
 import NotificationCenter from '../../components/NotificationCenter';
+import { Trophy, Award, Target, Zap, Lock, CheckCircle2, ChevronRight } from 'lucide-react';
 
 function DashboardContent() {
   const router = useRouter();
@@ -244,6 +245,48 @@ function DashboardContent() {
     ? new Date(userProfile.subscription_valid_until) < new Date() 
     : true;
 
+  const hasPassedPG = examHistory.some(h => (h.is_passed || (h.skor_twk >= 65 && h.skor_tiu >= 80 && h.skor_tkp >= 166)));
+  const isMasterTIU = examHistory.some(h => h.skor_tiu >= 120);
+  const isElite400 = examHistory.some(h => h.skor_total >= 400);
+  const isConsistent = examHistory.length >= 3;
+
+  const badges = [
+    {
+      id: 'pg_hunter',
+      title: 'Passing Grade Hunter',
+      desc: 'Lulus threshold PG di salah satu tryout',
+      icon: '🎯',
+      unlocked: hasPassedPG,
+      gradient: 'from-emerald-500/20 to-teal-500/20 border-emerald-500/30 text-emerald-300',
+    },
+    {
+      id: 'tiu_master',
+      title: 'Master TIU',
+      desc: 'Skor TIU mencapai >= 120 poin',
+      icon: '⚡',
+      unlocked: isMasterTIU,
+      gradient: 'from-amber-500/20 to-yellow-500/20 border-amber-500/30 text-amber-300',
+    },
+    {
+      id: 'elite_400',
+      title: 'Elite 400+ Club',
+      desc: 'Skor total simulasi tembus >= 400',
+      icon: '👑',
+      unlocked: isElite400,
+      gradient: 'from-purple-500/20 to-indigo-500/20 border-purple-500/30 text-purple-300',
+    },
+    {
+      id: 'pejuang_rutin',
+      title: 'Pejuang Tangguh',
+      desc: 'Telah menuntaskan minimal 3 tryout',
+      icon: '🔥',
+      unlocked: isConsistent,
+      gradient: 'from-blue-500/20 to-cyan-500/20 border-blue-500/30 text-blue-300',
+    },
+  ];
+
+  const unlockedCount = badges.filter(b => b.unlocked).length;
+
   if (isLoading) {
     return (
       <MemberLayout>
@@ -387,11 +430,16 @@ function DashboardContent() {
               {/* Quick Actions - Minimalist Cards */}
               <div>
                 <h2 className="text-lg font-bold text-slate-900 mb-3">Aksi Cepat</h2>
-                <div className="flex gap-3 overflow-x-auto pb-2 -mx-4 px-4 md:mx-0 md:px-0 md:grid md:grid-cols-4">
+                <div className="flex gap-3 overflow-x-auto pb-2 -mx-4 px-4 md:mx-0 md:px-0 md:grid md:grid-cols-5">
                   <Link href="/tryout-list" className="flex-shrink-0 w-32 md:w-auto bg-white border border-slate-200 hover:border-blue-600 hover:bg-blue-50/20 text-slate-900 p-4 rounded-2xl shadow-sm transition-all text-center group">
                     <div className="text-3xl mb-2 group-hover:scale-110 transition-transform">📝</div>
                     <div className="text-sm font-bold text-slate-900 group-hover:text-blue-600 transition-colors">Try Out</div>
                     <div className="text-[11px] text-slate-500 mt-0.5">Simulasi CAT</div>
+                  </Link>
+                  <Link href="/dashboard/evaluasi" className="flex-shrink-0 w-32 md:w-auto bg-white border border-slate-200 hover:border-indigo-600 hover:bg-indigo-50/20 text-slate-900 p-4 rounded-2xl shadow-sm transition-all text-center group">
+                    <div className="text-3xl mb-2 group-hover:scale-110 transition-transform">🎯</div>
+                    <div className="text-sm font-bold text-slate-900 group-hover:text-indigo-600 transition-colors">Evaluasi</div>
+                    <div className="text-[11px] text-slate-500 mt-0.5">Bank Soal Salah</div>
                   </Link>
                   <Link href="/dashboard/challenge" className="flex-shrink-0 w-32 md:w-auto bg-white border border-slate-200 hover:border-blue-600 hover:bg-blue-50/20 text-slate-900 p-4 rounded-2xl shadow-sm transition-all text-center group">
                     <div className="text-3xl mb-2 group-hover:scale-110 transition-transform">🔥</div>
@@ -408,6 +456,67 @@ function DashboardContent() {
                     <div className="text-sm font-bold text-slate-900 group-hover:text-blue-600 transition-colors">Riwayat</div>
                     <div className="text-[11px] text-slate-500 mt-0.5">Cek Pembelian</div>
                   </Link>
+                </div>
+              </div>
+
+              {/* Gamifikasi & Lencana Prestasi */}
+              <div className="bg-gradient-to-br from-slate-950 via-slate-900 to-indigo-950 text-white rounded-3xl p-5 md:p-6 shadow-xl border border-slate-800 relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-72 h-72 bg-blue-500/10 rounded-full blur-3xl pointer-events-none" />
+                <div className="relative z-10">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5">
+                    <div>
+                      <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-400/15 border border-amber-400/30 text-amber-300 text-xs font-bold mb-1.5">
+                        <Trophy className="w-3.5 h-3.5" /> Gamifikasi & Pencapaian
+                      </div>
+                      <h3 className="text-lg md:text-xl font-black text-white tracking-tight">Lencana Prestasi Pejuang CPNS</h3>
+                      <p className="text-xs text-slate-300 mt-0.5">Buktikan progres dan konsistensi belajarmu dengan membuka setiap badge eksklusif!</p>
+                    </div>
+                    <div className="flex items-center gap-2 bg-slate-800/80 border border-slate-700/80 px-4 py-2 rounded-2xl self-start sm:self-auto shadow-inner">
+                      <Award className="w-5 h-5 text-amber-400" />
+                      <div>
+                        <div className="text-xs text-slate-400 font-semibold leading-none">Terbuka</div>
+                        <div className="text-base font-black text-white leading-none mt-1">
+                          <span className="text-amber-400">{unlockedCount}</span> / {badges.length}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Grid 4 Badges */}
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                    {badges.map((b) => (
+                      <div 
+                        key={b.id}
+                        className={`rounded-2xl p-4 border transition-all duration-300 relative overflow-hidden flex flex-col justify-between ${
+                          b.unlocked 
+                            ? `bg-slate-900/90 border-slate-700 hover:border-slate-600 shadow-md` 
+                            : 'bg-slate-900/40 border-slate-800/70 opacity-60'
+                        }`}
+                      >
+                        <div>
+                          <div className="flex items-start justify-between mb-3">
+                            <span className="text-3xl drop-shadow-sm">{b.icon}</span>
+                            {b.unlocked ? (
+                              <span className="p-1 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+                                <CheckCircle2 className="w-3.5 h-3.5" />
+                              </span>
+                            ) : (
+                              <span className="p-1 rounded-full bg-slate-800 text-slate-500 border border-slate-700">
+                                <Lock className="w-3.5 h-3.5" />
+                              </span>
+                            )}
+                          </div>
+                          <h4 className="font-bold text-sm text-white mb-1 leading-snug">{b.title}</h4>
+                          <p className="text-[11px] text-slate-400 leading-relaxed">{b.desc}</p>
+                        </div>
+                        <div className="mt-3 pt-2.5 border-t border-slate-800/60 flex items-center justify-between text-[10px]">
+                          <span className={`font-semibold ${b.unlocked ? 'text-emerald-400' : 'text-slate-500'}`}>
+                            {b.unlocked ? '✓ Terbuka' : 'Terkunci'}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </div>
 
