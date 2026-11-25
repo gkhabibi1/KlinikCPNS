@@ -8,7 +8,20 @@ import { TIU_MODULES } from '@/data/tiuModules';
 import { TKP_MODULES } from '@/data/tkpModules';
 import { CHEATSHEET_DATA, CheatSheetItem } from '@/data/cheatsheetData';
 import ModuleAiTutor from '@/components/ModuleAiTutor';
-import { Printer, Zap, Sparkles, BookOpen, Search, HelpCircle } from 'lucide-react';
+import {
+  Printer,
+  Zap,
+  Sparkles,
+  BookOpen,
+  Search,
+  HelpCircle,
+  Landmark,
+  Calculator,
+  Users,
+  Maximize2,
+  Minimize2,
+  RotateCcw
+} from 'lucide-react';
 
 function TkpIllustration({ type }: { type: string }) {
   const common = {
@@ -566,67 +579,55 @@ export default function MateriPage() {
       `}</style>
 
       {/* TOP NAVIGATION / SUBJECT TABS */}
-      <div className="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-xs">
+      <div className="bg-white/90 backdrop-blur-md border-b border-slate-200/80 sticky top-0 z-30">
         <div className="max-w-[1120px] mx-auto px-4 py-3 flex flex-wrap items-center justify-between gap-3">
-          <div className="flex items-center gap-2 overflow-x-auto py-1">
+          <div className="flex items-center gap-1.5 overflow-x-auto py-0.5 no-scrollbar">
             <button
               onClick={() => { setActiveSubject('twk'); setSearchQuery(''); }}
-              className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition-all cursor-pointer ${
+              className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all cursor-pointer shrink-0 ${
                 activeSubject === 'twk'
-                  ? 'bg-blue-600 text-white shadow-sm shadow-blue-500/20'
-                  : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                  ? 'bg-blue-600 text-white shadow-xs'
+                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200/70'
               }`}
             >
-              <span>🇮🇩</span>
+              <Landmark className="w-4 h-4" strokeWidth={1.8} />
               <span>TWK (14 Tahap)</span>
-              <span className="text-[11px] bg-white/20 text-white px-2 py-0.5 rounded-full font-semibold ml-1">
-                Lengkap
-              </span>
             </button>
 
             <button
               onClick={() => { setActiveSubject('tiu'); setSearchQuery(''); }}
-              className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition-all cursor-pointer ${
+              className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all cursor-pointer shrink-0 ${
                 activeSubject === 'tiu'
-                  ? 'bg-blue-600 text-white shadow-sm shadow-blue-500/20'
-                  : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                  ? 'bg-blue-600 text-white shadow-xs'
+                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200/70'
               }`}
             >
-              <span>🧮</span>
+              <Calculator className="w-4 h-4" strokeWidth={1.8} />
               <span>TIU (12 Tahap)</span>
-              <span className="text-[11px] bg-emerald-500 text-white px-2 py-0.5 rounded-full font-semibold ml-1">
-                Baru
-              </span>
             </button>
 
             <button
               onClick={() => { setActiveSubject('tkp'); setSearchQuery(''); }}
-              className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition-all cursor-pointer ${
+              className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all cursor-pointer shrink-0 ${
                 activeSubject === 'tkp'
-                  ? 'bg-blue-600 text-white shadow-sm shadow-blue-500/20'
-                  : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                  ? 'bg-blue-600 text-white shadow-xs'
+                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200/70'
               }`}
             >
-              <span>👥</span>
+              <Users className="w-4 h-4" strokeWidth={1.8} />
               <span>TKP (6 Tahap)</span>
-              <span className="text-[11px] bg-emerald-500 text-white px-2 py-0.5 rounded-full font-semibold ml-1">
-                Baru
-              </span>
             </button>
 
             <button
               onClick={() => { setActiveSubject('cheatsheet'); setSearchQuery(''); }}
-              className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition-all cursor-pointer ${
+              className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all cursor-pointer shrink-0 ${
                 activeSubject === 'cheatsheet'
-                  ? 'bg-amber-500 text-white shadow-sm shadow-amber-500/20'
-                  : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                  ? 'bg-amber-500 text-white shadow-xs'
+                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200/70'
               }`}
             >
-              <span>⚡</span>
-              <span>Rumus Sakti & Cheat Sheet</span>
-              <span className="text-[11px] bg-white/20 text-white px-2 py-0.5 rounded-full font-semibold ml-1">
-                Penting
-              </span>
+              <Zap className="w-4 h-4" strokeWidth={1.8} />
+              <span>Rumus Sakti &amp; Cheat Sheet</span>
             </button>
           </div>
 
@@ -634,25 +635,24 @@ export default function MateriPage() {
             <div className="flex items-center gap-2 ml-auto">
               <button
                 onClick={() => setFocusMode(!focusMode)}
-                className={`text-xs px-3 py-1.5 rounded-lg border font-medium transition-colors flex items-center gap-1.5 cursor-pointer ${
+                className={`text-xs px-3 py-1.5 rounded-xl border font-medium transition-colors flex items-center gap-1.5 cursor-pointer ${
                   focusMode
-                    ? 'bg-blue-50 border-blue-300 text-blue-700'
+                    ? 'bg-blue-50 border-blue-200 text-blue-700'
                     : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
                 }`}
                 title="Beralih ke mode belajar fokus"
               >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
-                </svg>
-                <span>{focusMode ? 'Keluar Mode Fokus' : 'Mode Fokus'}</span>
+                {focusMode ? <Minimize2 className="w-3.5 h-3.5" /> : <Maximize2 className="w-3.5 h-3.5" />}
+                <span>{focusMode ? 'Keluar Fokus' : 'Mode Fokus'}</span>
               </button>
 
               <button
                 onClick={handleResetProgress}
-                className="text-xs px-3 py-1.5 rounded-lg border border-slate-200 text-slate-500 hover:text-red-600 hover:border-red-200 transition-colors cursor-pointer"
+                className="text-xs px-3 py-1.5 rounded-xl border border-slate-200 text-slate-500 hover:text-red-600 hover:border-red-200 transition-colors flex items-center gap-1.5 cursor-pointer"
                 title={`Reset progres materi ${activeSubject.toUpperCase()}`}
               >
-                🔄 Reset
+                <RotateCcw className="w-3.5 h-3.5" />
+                <span>Reset</span>
               </button>
             </div>
           )}
@@ -703,8 +703,8 @@ export default function MateriPage() {
           <div className="max-w-[1120px] mx-auto -mt-8 mb-8 px-4">
             <div className="bg-white border border-[#e4e7ec] rounded-2xl shadow-[0_12px_35px_rgba(16,24,40,0.07)] p-4 sm:p-5 flex flex-wrap items-center justify-between gap-4">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center font-bold text-base">
-                  📚
+                <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">
+                  <BookOpen className="w-5 h-5" strokeWidth={1.8} />
                 </div>
                 <div>
                   <div className="text-xs font-bold text-slate-500 uppercase tracking-wider">Progress Belajar TWK</div>
@@ -1871,8 +1871,8 @@ export default function MateriPage() {
       {showCompletionModal.isOpen && (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
           <div className="bg-white rounded-3xl max-w-md w-full p-6 md:p-8 text-center shadow-2xl animate-in fade-in zoom-in duration-300">
-            <div className="w-20 h-20 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center text-4xl mx-auto mb-4">
-              🏆
+            <div className="w-16 h-16 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-600 flex items-center justify-center mx-auto mb-4">
+              <Sparkles className="w-8 h-8" strokeWidth={1.8} />
             </div>
             <h3 className="text-2xl font-black text-slate-900 mb-2">
               Selamat! Anda Lulus Modul {showCompletionModal.subject.toUpperCase()}

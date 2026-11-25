@@ -2,9 +2,9 @@ import { Metadata } from 'next';
 import KlinikCPNSLandingPage from './LandingPageClient';
 
 export const metadata: Metadata = {
-  title: 'KlinikCPNS | Try Out CPNS & P3K Gratis 2026 - Simulasi CAT BKN',
+  title: 'KlinikCPNS | CPNS 2026 Resmi Dibuka (154.052 Formasi) - Simulasi CAT BKN',
   description:
-    'KlinikCPNS adalah platform Try Out CPNS dan P3K online terbaik 2026 dengan sistem penilaian resmi BKN, pembahasan lengkap, dan simulasi CAT persis seperti ujian asli. Mulai latihan di KlinikCPNS!',
+    'CPNS 2026 resmi dibuka mulai 27 November 2026 dengan 154.052 formasi! Latihan Try Out CAT BKN di KlinikCPNS yang sudah disesuaikan penuh dengan PermenPANRB No. 18/2026 & KepmenPANRB No. 674/2026.',
   keywords: [
     'KlinikCPNS',
     'Klinik CPNS',

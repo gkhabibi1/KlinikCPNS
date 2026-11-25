@@ -5,6 +5,17 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabaseClient';
 import MemberLayout from '../../components/MemberLayout';
+import {
+  FileText,
+  Briefcase,
+  AlertCircle,
+  Inbox,
+  Lock,
+  Clock,
+  BarChart3,
+  Play,
+  X
+} from 'lucide-react';
 
 export default function TryoutListPage() {
   const router = useRouter();
@@ -147,75 +158,72 @@ export default function TryoutListPage() {
 
   return (
     <MemberLayout>
-      <div className="space-y-6 p-4 md:p-8 max-w-6xl mx-auto">
-        {/* Tab Navigation */}
-        <div className="flex gap-4 border-b border-slate-200">
+      <div className="space-y-6 p-4 md:p-6 max-w-6xl mx-auto">
+        {/* Segmented Tab Navigation */}
+        <div className="inline-flex gap-1.5 bg-slate-200/60 p-1.5 rounded-2xl border border-slate-200/70">
           <button
             onClick={() => setActiveTab('CPNS')}
-            className={`px-6 py-3 font-semibold text-sm border-b-2 transition-colors flex items-center gap-2 ${
+            className={`px-5 py-2.5 rounded-xl font-semibold text-xs sm:text-sm transition-all flex items-center gap-2 cursor-pointer ${
               activeTab === 'CPNS'
-                ? 'border-blue-600 text-blue-600'
-                : 'border-transparent text-slate-500 hover:text-slate-700'
+                ? 'bg-white text-blue-600 shadow-xs'
+                : 'text-slate-600 hover:text-slate-900'
             }`}
           >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-            </svg>
-            Try Out CPNS
+            <FileText className="w-4 h-4" strokeWidth={1.8} />
+            <span>Try Out CPNS</span>
           </button>
           <button
             onClick={() => setActiveTab('P3K')}
-            className={`px-6 py-3 font-semibold text-sm border-b-2 transition-colors flex items-center gap-2 ${
+            className={`px-5 py-2.5 rounded-xl font-semibold text-xs sm:text-sm transition-all flex items-center gap-2 cursor-pointer ${
               activeTab === 'P3K'
-                ? 'border-green-600 text-green-600'
-                : 'border-transparent text-slate-500 hover:text-slate-700'
+                ? 'bg-white text-emerald-600 shadow-xs'
+                : 'text-slate-600 hover:text-slate-900'
             }`}
           >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
-            </svg>
-            Try Out P3K
+            <Briefcase className="w-4 h-4" strokeWidth={1.8} />
+            <span>Try Out P3K</span>
           </button>
         </div>
 
         {/* Status Langganan */}
         {isExpired && (
-          <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-center gap-3">
-            <svg className="w-5 h-5 text-red-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-            </svg>
-            <p className="text-sm text-red-700">
-              <strong>Langganan Expired</strong> - Anda hanya bisa mengakses paket Try Out Gratis.
-              <Link href="/dashboard?tab=subscription" className="underline ml-1 font-semibold">Perpanjang Sekarang</Link>
+          <div className="bg-amber-50/80 border border-amber-200 rounded-2xl p-4 flex items-center gap-3">
+            <div className="w-8 h-8 rounded-xl bg-amber-100 text-amber-700 flex items-center justify-center shrink-0">
+              <AlertCircle className="w-4.5 h-4.5" strokeWidth={1.8} />
+            </div>
+            <p className="text-xs sm:text-sm text-amber-900">
+              <strong className="font-bold">Akun Free</strong> — Anda saat ini hanya dapat mengakses paket Try Out Gratis.{' '}
+              <Link href="/dashboard?tab=subscription" className="underline font-bold text-blue-700 hover:text-blue-800">
+                Upgrade ke Premium →
+              </Link>
             </p>
           </div>
         )}
 
         {/* Error Message */}
         {error && (
-          <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-700">
+          <div className="bg-red-50 border border-red-200 rounded-2xl p-4 text-sm text-red-700">
             <strong>Error:</strong> {error}
           </div>
         )}
 
         {/* Daftar Paket */}
         {isLoading ? (
-          <div className="text-center py-10 text-slate-500">Memuat paket try out...</div>
+          <div className="text-center py-12 text-sm text-slate-500">Memuat paket try out...</div>
         ) : packages.length === 0 ? (
-          <div className="text-center py-16">
-            <div className="text-6xl mb-4">📭</div>
-            <h3 className="text-lg font-bold text-slate-700 mb-2">Belum Ada Paket Try Out</h3>
-            <p className="text-slate-500">
+          <div className="bg-white border border-slate-200/80 rounded-3xl text-center py-16 px-4 shadow-xs">
+            <div className="w-12 h-12 rounded-2xl bg-slate-100 text-slate-400 flex items-center justify-center mx-auto mb-3">
+              <Inbox className="w-6 h-6" strokeWidth={1.75} />
+            </div>
+            <h3 className="font-heading text-base font-bold text-slate-800 mb-1">Belum Ada Paket Try Out</h3>
+            <p className="text-xs sm:text-sm text-slate-500">
               {activeTab === 'CPNS' 
                 ? 'Belum ada paket Try Out CPNS yang tersedia.' 
                 : 'Belum ada paket Try Out P3K yang tersedia.'}
             </p>
-            <p className="text-sm text-slate-400 mt-2">
-              Silakan hubungi admin untuk menambahkan paket.
-            </p>
           </div>
         ) : (
-          <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {packages.map(pkg => {
               const isLocked = pkg.is_premium && isExpired;
               const latestScore = latestScores[pkg.id] ?? -1;
@@ -225,91 +233,90 @@ export default function TryoutListPage() {
               return (
                 <div 
                   key={pkg.id} 
-                  className={`bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm relative flex flex-col ${
-                    isLocked ? 'opacity-75' : ''
+                  className={`bg-white rounded-2xl border border-slate-200/80 hover:border-blue-300 overflow-hidden shadow-xs hover:shadow-md transition-all relative flex flex-col p-5 ${
+                    isLocked ? 'opacity-80' : ''
                   }`}
                 >
                   {/* Lock Overlay */}
                   {isLocked && (
-                    <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-[2px] z-10 flex items-center justify-center rounded-xl">
-                      <div className="text-center text-white p-2">
-                        <svg className="w-8 h-8 mx-auto mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                        </svg>
-                        <p className="text-xs font-bold">Premium</p>
+                    <div className="absolute inset-0 bg-slate-900/45 backdrop-blur-[2px] z-10 flex items-center justify-center rounded-2xl">
+                      <div className="text-center text-white p-3 bg-slate-900/70 rounded-2xl border border-white/10 backdrop-blur-md">
+                        <Lock className="w-6 h-6 mx-auto mb-1 text-amber-300" strokeWidth={1.8} />
+                        <p className="text-xs font-bold">Khusus Premium</p>
                       </div>
                     </div>
                   )}
 
-                  {/* Badge Gratis/Premium */}
-                  <div className="p-3 pb-2">
-                    <span className={`inline-block text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                  {/* Header Badge */}
+                  <div className="flex items-center justify-between gap-2 mb-3">
+                    <span className={`inline-block text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full border ${
                       isFree 
-                        ? 'bg-green-100 text-green-700' 
-                        : 'bg-amber-100 text-amber-700'
+                        ? 'bg-emerald-50 text-emerald-700 border-emerald-200' 
+                        : 'bg-indigo-50 text-indigo-700 border-indigo-200'
                     }`}>
-                      {isFree ? 'GRATIS' : 'PREMIUM'}
+                      {isFree ? 'Gratis' : 'Premium'}
                     </span>
-                  </div>
 
-                  {/* Nama Paket */}
-                  <div className="px-3 pb-2 flex-1">
-                    <h3 className="font-bold text-slate-800 text-sm leading-tight line-clamp-2 mb-1">
-                      {pkg.name}
-                    </h3>
-                    <p className="text-[10px] text-slate-500 line-clamp-2">
-                      {pkg.description || 'Gratis untuk All Member'}
-                    </p>
-                  </div>
-
-                  {/* Nilai Terakhir */}
-                  <div className="px-3 pb-2">
-                    <div className="bg-slate-50 rounded-lg p-2 border border-slate-100">
-                      <div className="text-[9px] text-slate-500 mb-0.5">Nilai Terakhir</div>
-                      <div className={`font-bold text-base ${
-                        latestScore === -1 
-                          ? 'text-slate-400' 
-                          : latestScore >= 200 
-                          ? 'text-green-600' 
-                          : 'text-blue-600'
-                      }`}>
-                        {latestScore === -1 ? '-' : latestScore}
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Tombol History (jika ada) */}
-                  {history.length > 0 && (
-                    <div className="px-3 pb-2">
+                    {history.length > 0 && (
                       <button
                         onClick={() => {
                           setSelectedPackage(pkg);
                           setShowHistoryModal(true);
                         }}
-                        className="w-full text-[10px] text-blue-600 font-medium py-1.5 border border-blue-200 rounded-lg hover:bg-blue-50 transition-colors flex items-center justify-center gap-1"
+                        className="text-[11px] text-blue-600 font-semibold px-2.5 py-1 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors inline-flex items-center gap-1 cursor-pointer"
                       >
-                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                        History ({history.length}x)
+                        <Clock className="w-3 h-3" strokeWidth={1.8} />
+                        Riwayat ({history.length}x)
                       </button>
-                    </div>
-                  )}
+                    )}
+                  </div>
+
+                  {/* Nama Paket */}
+                  <div className="flex-1 mb-4">
+                    <h3 className="font-heading font-bold text-slate-900 text-base leading-snug line-clamp-2 mb-1.5">
+                      {pkg.name}
+                    </h3>
+                    <p className="text-xs text-slate-500 line-clamp-2 leading-relaxed">
+                      {pkg.description || 'Simulasi CAT BKN 110 Soal (TWK, TIU, TKP)'}
+                    </p>
+                  </div>
+
+                  {/* Nilai Terakhir */}
+                  <div className="bg-slate-50/80 rounded-xl p-3 border border-slate-100 flex items-center justify-between mb-4">
+                    <span className="text-xs font-medium text-slate-500">Skor Terakhir</span>
+                    <span className={`font-bold text-lg font-mono ${
+                      latestScore === -1 
+                        ? 'text-slate-400' 
+                        : latestScore >= 311 
+                        ? 'text-emerald-600' 
+                        : 'text-blue-600'
+                    }`}>
+                      {latestScore === -1 ? '-' : latestScore}
+                    </span>
+                  </div>
 
                   {/* Tombol Mulai Ujian */}
-                  <div className="p-3 pt-0">
-                    <Link
-                      href={`/tryout/${pkg.id}`}
-                      className={`block w-full text-center py-2.5 rounded-lg font-semibold text-xs transition-colors ${
-                        isLocked 
-                          ? 'bg-slate-300 text-slate-500 cursor-not-allowed' 
-                          : 'bg-slate-900 hover:bg-slate-800 text-white'
-                      }`}
-                      onClick={(e) => isLocked && e.preventDefault()}
-                    >
-                      {isLocked ? '🔒 Terkunci' : 'Mulai Ujian'}
-                    </Link>
-                  </div>
+                  <Link
+                    href={`/tryout/${pkg.id}`}
+                    className={`w-full inline-flex items-center justify-center gap-1.5 py-2.5 rounded-xl font-semibold text-xs sm:text-sm transition-all ${
+                      isLocked 
+                        ? 'bg-slate-200 text-slate-500 cursor-not-allowed' 
+                        : 'bg-slate-900 hover:bg-blue-600 text-white shadow-xs'
+                    }`}
+                    onClick={(e) => isLocked && e.preventDefault()}
+                  >
+                    {isLocked ? (
+                      <>
+                        <Lock className="w-3.5 h-3.5" />
+                        <span>Terkunci</span>
+                      </>
+                    ) : (
+                      <>
+                        <Play className="w-3.5 h-3.5 fill-current" />
+                        <span>Mulai Ujian</span>
+                      </>
+                    )}
+                  </Link>
                 </div>
               );
             })}
@@ -318,18 +325,23 @@ export default function TryoutListPage() {
 
         {/* Modal History */}
         {showHistoryModal && selectedPackage && (
-          <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-            <div className="bg-white rounded-xl max-w-2xl w-full max-h-[80vh] overflow-hidden shadow-2xl">
-              <div className="p-6 border-b border-slate-200 flex justify-between items-center">
-                <div>
-                  <h3 className="text-xl font-bold text-slate-800">📊 History Pengerjaan</h3>
-                  <p className="text-sm text-slate-500 mt-1">{selectedPackage.name}</p>
+          <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
+            <div className="bg-white rounded-3xl max-w-2xl w-full max-h-[80vh] overflow-hidden shadow-2xl border border-slate-200">
+              <div className="p-5 sm:p-6 border-b border-slate-100 flex justify-between items-center">
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">
+                    <BarChart3 className="w-5 h-5" strokeWidth={1.8} />
+                  </div>
+                  <div>
+                    <h3 className="font-heading text-lg font-bold text-slate-900">History Pengerjaan</h3>
+                    <p className="text-xs text-slate-500 mt-0.5">{selectedPackage.name}</p>
+                  </div>
                 </div>
                 <button
                   onClick={() => setShowHistoryModal(false)}
-                  className="text-slate-400 hover:text-slate-600 text-2xl w-8 h-8 flex items-center justify-center rounded-lg hover:bg-slate-100"
+                  className="text-slate-400 hover:text-slate-600 p-2 rounded-xl hover:bg-slate-100 cursor-pointer"
                 >
-                  ×
+                  <X className="w-5 h-5" />
                 </button>
               </div>
 

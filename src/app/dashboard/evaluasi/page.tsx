@@ -200,9 +200,9 @@ export default function EvaluasiPage() {
                 <BrainCircuit className="w-3.5 h-3.5 text-cyan-400" />
                 <span>Smart Weakness Analyzer & Remedial Hub</span>
               </div>
-              <h1 className="text-2xl sm:text-4xl font-black tracking-tight text-white flex items-center gap-2">
-                <span>Buku Evaluasi & Bank Soal Salah</span>
-                <span className="text-2xl">📚</span>
+              <h1 className="font-heading text-2xl sm:text-4xl font-extrabold tracking-tight text-white flex items-center gap-2.5">
+                <BookOpen className="w-7 h-7 text-cyan-400 shrink-0" strokeWidth={1.8} />
+                <span>Buku Evaluasi &amp; Bank Soal Salah</span>
               </h1>
               <p className="text-slate-300 text-xs sm:text-sm max-w-xl leading-relaxed">
                 Kumpulan seluruh soal yang pernah Anda jawab salah saat try out. Latih dan kuasai kembali secara terarah agar kesalahan serupa tidak terulang di ujian CAT BKN sesungguhnya!
@@ -355,7 +355,8 @@ export default function EvaluasiPage() {
               href="/tryout-list"
               className="inline-flex items-center gap-2 px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition shadow-sm"
             >
-              🚀 Kerjakan Try Out Sekarang
+              <span>Kerjakan Try Out Sekarang</span>
+              <ArrowRight className="w-3.5 h-3.5" />
             </Link>
           </div>
         )}

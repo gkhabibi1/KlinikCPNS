@@ -5,6 +5,8 @@ import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabaseClient';
 import FormattedText from '@/components/FormattedText';
 import ChatMessageContent from '@/components/ChatMessageContent';
+import BatchPackageUpload from '@/components/BatchPackageUpload';
+import { parseQuestionsFromText, downloadQuestionTemplate } from '@/lib/questionParser';
 
 interface Profile {
   id: string;
@@ -119,6 +121,7 @@ export default function AdminCommandCenter() {
   // State Tab 3: Paket Try Out
   const [packages, setPackages] = useState<TryoutPackage[]>([]);
   const [packageSearchQuery, setPackageSearchQuery] = useState('');
+  const [packageUploadMode, setPackageUploadMode] = useState<'single' | 'batch'>('batch');
   const [isLoadingPackages, setIsLoadingPackages] = useState(true);
   const [isCreating, setIsCreating] = useState(false);
   const [newPackage, setNewPackage] = useState({
@@ -1682,117 +1685,6 @@ export default function AdminCommandCenter() {
     }
   };
 
-  // Fungsi parser TXT ke array soal (Mendukung Multi-line, LaTeX, dan HTML)
-  const parseQuestionsFromText = (text: string) => {
-    const questionsList: any[] = [];
-    const normalizedText = text.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
-    const blocks = normalizedText.split(/---+\n?/).filter(block => block.trim());
-
-    for (let bIndex = 0; bIndex < blocks.length; bIndex++) {
-      const block = blocks[bIndex];
-      const lines = block.split('\n');
-      const question: any = {
-        type: 'TWK',
-        number: null,
-        question: '',
-        correct: '',
-        explanation: '',
-        options: {},
-        scores: { a: 1, b: 2, c: 3, d: 4, e: 5 }
-      };
-
-      let currentField: string | null = null;
-
-      for (let i = 0; i < lines.length; i++) {
-        const rawLine = lines[i];
-        const line = rawLine.trim();
-
-        if (!line && !currentField) continue;
-
-        if (/^TYPE:\s*/i.test(line)) {
-          question.type = line.replace(/^TYPE:\s*/i, '').trim().toUpperCase();
-          currentField = null;
-        } else if (/^NUMBER:\s*/i.test(line)) {
-          const num = parseInt(line.replace(/^NUMBER:\s*/i, '').trim());
-          if (!isNaN(num)) question.number = num;
-          currentField = null;
-        } else if (/^QUESTION:\s*/i.test(line)) {
-          question.question = rawLine.replace(/^\s*QUESTION:\s*/i, '');
-          currentField = 'question';
-        } else if (/^CORRECT:\s*/i.test(line)) {
-          question.correct = line.replace(/^CORRECT:\s*/i, '').trim().toUpperCase();
-          currentField = null;
-        } else if (/^EXPLANATION:\s*/i.test(line)) {
-          question.explanation = rawLine.replace(/^\s*EXPLANATION:\s*/i, '');
-          currentField = 'explanation';
-        } else if (/^([A-E])[:\.\)]\s*/i.test(line)) {
-          const match = rawLine.match(/^\s*([A-E])[:\.\)]\s*(.*)$/i);
-          if (match) {
-            const optKey = match[1].toLowerCase();
-            question.options[optKey] = match[2];
-            currentField = `option_${optKey}`;
-          }
-        } else if (/^SCORE_([A-E]):\s*/i.test(line)) {
-          const match = line.match(/^SCORE_([A-E]):\s*(\d+)/i);
-          if (match) {
-            const optKey = match[1].toLowerCase();
-            question.scores[optKey] = parseInt(match[2]);
-          }
-          currentField = null;
-        } else {
-          // Lanjutan multi-line untuk question, explanation, atau options
-          if (currentField === 'question') {
-            question.question += (question.question ? '\n' : '') + rawLine;
-          } else if (currentField === 'explanation') {
-            question.explanation += (question.explanation ? '\n' : '') + rawLine;
-          } else if (currentField && currentField.startsWith('option_')) {
-            const optKey = currentField.replace('option_', '');
-            question.options[optKey] += (question.options[optKey] ? '\n' : '') + rawLine;
-          }
-        }
-      }
-
-      if (!question.number) question.number = bIndex + 1;
-
-      question.question = (question.question || '').trim();
-      question.explanation = (question.explanation || '').trim();
-      for (const key of ['a', 'b', 'c', 'd', 'e']) {
-        if (question.options[key] !== undefined) {
-          question.options[key] = question.options[key].trim();
-        }
-      }
-
-      // Jawaban terbaik untuk TKP jika tidak ditulis CORRECT
-      if (question.type === 'TKP' && !question.correct) {
-        let maxScore = -1;
-        let bestOpt = 'A';
-        for (const opt of ['a', 'b', 'c', 'd', 'e']) {
-          if ((question.scores[opt] || 0) > maxScore) {
-            maxScore = question.scores[opt];
-            bestOpt = opt.toUpperCase();
-          }
-        }
-        question.correct = bestOpt;
-      }
-
-      const optA = question.options.a !== undefined ? question.options.a : question.options.A;
-      const optB = question.options.b !== undefined ? question.options.b : question.options.B;
-
-      if (question.question && optA !== undefined && optB !== undefined) {
-        question.options.a = optA || '';
-        question.options.b = optB || '';
-        question.options.c = question.options.c || question.options.C || '';
-        question.options.d = question.options.d || question.options.D || '';
-        question.options.e = question.options.e || question.options.E || '';
-        if (!question.correct) question.correct = 'A';
-
-        questionsList.push(question);
-      }
-    }
-
-    return questionsList;
-  };
-
   // Update fungsi handleCreatePackage untuk auto-set question_number
   const handleCreatePackage = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -2204,7 +2096,45 @@ export default function AdminCommandCenter() {
 
             {activeTab === 'packages' && (
               <div className="space-y-8">
-                {/* Form Buat Paket Baru */}
+                {/* Mode Switcher: Upload Batch Template vs Buat Paket Satuan */}
+                <div className="flex flex-wrap items-center gap-2 bg-slate-100 p-1.5 rounded-xl border border-slate-200 w-fit">
+                  <button
+                    type="button"
+                    onClick={() => setPackageUploadMode('batch')}
+                    className={`px-4 py-2 rounded-lg text-sm font-bold transition-all cursor-pointer flex items-center gap-2 ${
+                      packageUploadMode === 'batch'
+                        ? 'bg-white text-blue-600 shadow-sm'
+                        : 'text-slate-600 hover:text-slate-900'
+                    }`}
+                  >
+                    <span>📦 Upload Batch Soal (Template)</span>
+                    <span className="text-[10px] bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full font-extrabold">
+                      Cepat
+                    </span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setPackageUploadMode('single')}
+                    className={`px-4 py-2 rounded-lg text-sm font-bold transition-all cursor-pointer ${
+                      packageUploadMode === 'single'
+                        ? 'bg-white text-blue-600 shadow-sm'
+                        : 'text-slate-600 hover:text-slate-900'
+                    }`}
+                  >
+                    ➕ Buat Paket Satuan
+                  </button>
+                </div>
+
+                {packageUploadMode === 'batch' ? (
+                  <BatchPackageUpload
+                    existingPackagesCount={packages.length}
+                    onSuccess={() => {
+                      fetchPackages();
+                      fetchChallengeData();
+                    }}
+                  />
+                ) : (
+                /* Form Buat Paket Baru */
                 <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
                   <h3 className="text-lg font-bold text-slate-800 mb-4 border-b pb-2">Buat Paket Try Out Baru</h3>
                   <form onSubmit={handleCreatePackage} className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -2286,6 +2216,7 @@ export default function AdminCommandCenter() {
                     </div>
                   </form>
                 </div>
+                )}
 
                 {/* Daftar Paket yang Sudah Ada */}
                 <div>
@@ -2568,9 +2499,13 @@ export default function AdminCommandCenter() {
                                     <h4 className="font-semibold text-blue-800 mb-2">📤 Upload Soal dari File TXT</h4>
                                     <p className="text-sm text-blue-700 mb-3">
                                       Upload file TXT dengan format yang sudah ditentukan. 
-                                      <a href="/contoh-soal.txt" className="underline ml-1" download>
-                                        Download contoh format
-                                      </a>
+                                      <button
+                                        type="button"
+                                        onClick={() => downloadQuestionTemplate('template-soal-cpns.txt')}
+                                        className="underline ml-1 font-semibold hover:text-blue-900 cursor-pointer"
+                                      >
+                                        Download template format (.txt)
+                                      </button>
                                     </p>
                                     <input
                                       type="file"

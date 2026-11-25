@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import Link from "next/link";
+import PanduanCPNS2026Content from "@/components/PanduanCPNS2026Content";
 import {
   Stethoscope,
   ClipboardCheck,
@@ -71,32 +72,38 @@ function Header() {
   };
 
   const links = [
-    { label: "Kenapa Sekarang", href: "#peluang" },
-    { label: "Resep Kami", href: "#resep" },
-    { label: "Paket", href: "#paket" },
-    { label: "Testimoni", href: "#testimoni" },
-    { label: "Blog", href: "/blog" },
-    { label: "FAQ", href: "#faq" },
+    { label: "Peluang 2026", href: "#peluang", isGuide: false },
+    { label: "Panduan 2026", href: "#panduan-2026", isGuide: true },
+    { label: "Fitur & Resep", href: "#resep", isGuide: false },
+    { label: "Paket", href: "#paket", isGuide: false },
+    { label: "Testimoni", href: "#testimoni", isGuide: false },
+    { label: "Blog", href: "/blog", isGuide: false },
+    { label: "FAQ", href: "#faq", isGuide: false },
   ];
   return (
-    <header className="sticky top-0 z-50 bg-white/90 backdrop-blur border-b border-slate-100">
+    <header className="sticky top-0 z-50 bg-white/85 backdrop-blur-md border-b border-slate-100">
       <div className="max-w-6xl mx-auto px-5 md:px-8 h-16 flex items-center justify-between">
         <a href="#top" className="flex items-center gap-2.5 shrink-0">
           <img
             src="https://ik.imagekit.io/e2yna5qg8/Logo%20Klinik%20CPNS.png"
             alt="Klinik CPNS Logo"
-            className="h-9 md:h-10 w-auto object-contain"
+            className="h-8 md:h-9 w-auto object-contain"
           />
         </a>
 
-        <nav className="hidden lg:flex items-center gap-8">
+        <nav className="hidden lg:flex items-center gap-7">
           {links.map((l) => (
             <a
               key={l.href}
               href={l.href}
-              className="text-sm font-medium text-slate-600 hover:text-blue-600 transition-colors"
+              className={`text-[13.5px] font-medium transition-colors inline-flex items-center gap-1.5 ${
+                l.isGuide
+                  ? "text-blue-700 font-semibold bg-blue-50/90 hover:bg-blue-100/80 px-3 py-1.5 rounded-full"
+                  : "text-slate-600 hover:text-slate-900"
+              }`}
             >
-              {l.label}
+              {l.isGuide && <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />}
+              <span>{l.label}</span>
             </a>
           ))}
         </nav>
@@ -147,15 +154,18 @@ function Header() {
       </div>
 
       {open && (
-        <div className="lg:hidden border-t border-slate-100 bg-white px-5 py-4 flex flex-col gap-4">
+        <div className="lg:hidden border-t border-slate-100 bg-white px-5 py-4 flex flex-col gap-3.5">
           {links.map((l) => (
             <a
               key={l.href}
               href={l.href}
               onClick={() => setOpen(false)}
-              className="text-sm font-medium text-slate-700"
+              className={`text-sm font-medium inline-flex items-center gap-2 ${
+                l.isGuide ? "text-blue-700 font-semibold" : "text-slate-700"
+              }`}
             >
-              {l.label}
+              {l.isGuide && <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />}
+              <span>{l.label}</span>
             </a>
           ))}
           <div className="pt-2 border-t border-slate-100 flex flex-col gap-2">
@@ -221,58 +231,54 @@ function Hero() {
         }}
       />
 
-      <div className="relative max-w-6xl mx-auto px-5 md:px-8 pt-14 pb-20 md:pt-20 md:pb-28 grid lg:grid-cols-2 gap-14 items-center">
+      <div className="relative max-w-6xl mx-auto px-5 md:px-8 pt-14 pb-20 md:pt-24 md:pb-28 grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
         <div>
-          <div className="inline-flex items-center gap-2 bg-blue-50 border border-blue-100 text-blue-700 text-xs font-semibold px-3.5 py-1.5 rounded-full mb-6">
-            <FileText className="w-3.5 h-3.5" />
-            Resep Sukses KlinikCPNS 2026
+          <div className="inline-flex items-center gap-2 bg-blue-50/90 border border-blue-100 text-blue-700 text-xs font-semibold px-3.5 py-1.5 rounded-full mb-7">
+            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+            CPNS 2026 Resmi Dibuka · 154.052 Formasi
           </div>
 
-          <h1 className="text-4xl md:text-[42px] lg:text-5xl font-extrabold text-slate-900 leading-[1.12] tracking-tight">
-            Persiapkan Lolos CPNS 2026 bersama{" "}
-            <span className="text-blue-600">KlinikCPNS</span> dengan Resep Simulasi CAT Terlengkap
+          <h1 className="font-heading text-4xl sm:text-5xl lg:text-[52px] font-extrabold text-slate-900 leading-[1.08] tracking-tight text-balance">
+            CPNS 2026 Resmi Dibuka.{" "}
+            <span className="bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+              Amankan Kursi ASN Sekarang.
+            </span>
           </h1>
 
-          <p className="mt-5 text-base md:text-lg text-slate-600 leading-relaxed max-w-xl">
-            Satu-satunya bimbel CPNS di{" "}
-            <span className="font-semibold text-slate-900">KlinikCPNS</span> yang{" "}
-            <span className="font-semibold text-slate-900">
-              berani kasih GARANSI UANG KEMBALI
-            </span>
-            . Bukan janji kosong — ada resep dan aturan mainnya.
+          <p className="mt-6 text-base md:text-[17.5px] text-slate-600 leading-[1.7] max-w-lg">
+            Pendaftaran SSCASN dimulai <strong className="font-semibold text-slate-900">27 November 2026</strong> dan SKD berlangsung Januari 2027. Latih dirimu dengan simulasi CAT yang sudah disesuaikan penuh dengan{" "}
+            <strong className="font-semibold text-slate-900">PermenPANRB 18/2026 &amp; KepmenPANRB 674/2026</strong>.
           </p>
 
-          <div className="mt-7 flex flex-col sm:flex-row gap-3">
+          <div className="mt-8 flex flex-col sm:flex-row gap-3">
             <a
               href="#paket"
-              className="inline-flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold px-6 py-3.5 rounded-full transition-colors shadow-lg shadow-blue-200"
+              className="inline-flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold px-7 py-3.5 rounded-full transition-all shadow-lg shadow-blue-600/20 hover:shadow-blue-600/30"
             >
-              <Coffee className="w-4.5 h-4.5" />
-              Mulai Try Out KlinikCPNS, Cuma Seharga Kopi
+              Mulai Try Out Sekarang
+              <ArrowRight className="w-4 h-4" />
             </a>
             <a
-              href="#resep"
-              className="inline-flex items-center justify-center gap-2 border border-slate-200 hover:border-blue-300 text-slate-700 font-semibold px-6 py-3.5 rounded-full transition-colors"
+              href="#panduan-2026"
+              className="inline-flex items-center justify-center gap-2 bg-white border border-slate-200 hover:border-slate-300 hover:bg-slate-50 text-slate-700 font-semibold px-6 py-3.5 rounded-full transition-colors"
             >
-              Lihat Resepnya
+              Lihat Panduan 2026
             </a>
           </div>
 
-          <div className="mt-8 flex items-center gap-3">
-            <div className="flex -space-x-2.5">
-              {[1, 2, 3, 4].map((i) => (
-                <div
-                  key={i}
-                  className="w-8 h-8 rounded-full bg-blue-100 border-2 border-white flex items-center justify-center text-[10px] font-bold text-blue-500"
-                >
-                  {i}
-                </div>
-              ))}
-            </div>
-            <p className="text-sm text-slate-600">
-              <span className="font-bold text-slate-900">7.800+ member KlinikCPNS</span>{" "}
-              sudah terdaftar dan latihan bareng kami
-            </p>
+          <div className="mt-8 pt-6 border-t border-slate-100 flex flex-wrap items-center gap-x-6 gap-y-2.5 text-xs font-medium text-slate-500">
+            <span className="inline-flex items-center gap-1.5">
+              <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+              Sesuai KepmenPANRB 674/2026
+            </span>
+            <span className="inline-flex items-center gap-1.5">
+              <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+              7.800+ Member Aktif
+            </span>
+            <span className="inline-flex items-center gap-1.5">
+              <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+              Garansi Uang Kembali 100%
+            </span>
           </div>
         </div>
 
@@ -296,8 +302,11 @@ function Hero() {
               </p>
             </div>
             <ul className="space-y-1.5">
-              {["399 paket try out", "Simulasi CAT asli", "Materi terbaru"].map(
-                (t) => (
+              {[
+                "Sesuai KepmenPANRB 674/2026",
+                "399 paket try out CAT",
+                "110 Soal | 100 Menit Resmi"
+              ].map((t) => (
                   <li
                     key={t}
                     className="flex items-center gap-1.5 text-[11px] text-slate-600"
@@ -345,56 +354,78 @@ function Hero() {
 function Opportunity() {
   return (
     <section id="peluang" className="bg-white py-20 md:py-28">
-      <div className="max-w-6xl mx-auto px-5 md:px-8 grid lg:grid-cols-2 gap-12 items-center">
+      <div className="max-w-6xl mx-auto px-5 md:px-8 grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
         <div>
-          <p className="text-xs font-bold text-blue-600 uppercase tracking-wider mb-3">
-            Kenapa Harus KlinikCPNS Sekarang
+          <p className="text-xs font-bold text-blue-600 uppercase tracking-widest mb-3">
+            Momentum CPNS 2026
           </p>
-          <h2 className="text-3xl md:text-4xl font-extrabold text-slate-900 leading-tight tracking-tight">
-            Tahun ini, peluangmu lolos CPNS 2026 bersama KlinikCPNS lebih besar
+          <h2 className="font-heading text-3xl md:text-[38px] font-extrabold text-slate-900 leading-[1.15] tracking-tight text-balance">
+            154.052 Formasi Dibuka. Peluangmu Lolos Tahun Ini Lebih Besar.
           </h2>
-          <p className="mt-5 text-slate-600 leading-relaxed">
-            Berdasarkan data formasi yang dibuka, kesempatan CPNS 2026 lebih
-            banyak dibanding tahun-tahun sebelumnya. Instansi butuh lebih
-            banyak ASN baru — artinya peluangmu untuk diterima juga lebih
-            terbuka.
+          <p className="mt-4 text-base text-slate-600 leading-[1.7]">
+            Pendaftaran resmi dibuka mulai <strong className="font-semibold text-slate-900">27 November 2026</strong> di{" "}
+            <span className="font-semibold text-blue-600">sscasn.bkn.go.id</span> dengan alokasi prioritas nasional mulai dari Kehutanan, Dosen, Tenaga Kesehatan, hingga Hukum &amp; HAM.
           </p>
-          <p className="mt-4 text-slate-900 font-semibold leading-relaxed">
-            Tapi ingat: kalau cuma belajar teori tanpa latihan soal di KlinikCPNS, kamu
-            tetap nggak akan lolos.
-          </p>
-          <p className="mt-4 text-slate-600 leading-relaxed">
-            Maka dari itu, di{" "}
-            <span className="font-semibold text-slate-900">
-              KlinikCPNS
-            </span>
-            , kami nggak cuma kasih materi — kami kasih{" "}
-            <span className="font-semibold text-blue-600">resep KlinikCPNS</span>: satu
-            paket latihan terarah yang sudah terbukti bikin member kami
-            terbiasa menghadapi ujian asli.
-          </p>
+
+          <div className="mt-7 space-y-4">
+            <div className="flex items-start gap-3.5">
+              <div className="w-9 h-9 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center shrink-0 mt-0.5">
+                <Timer className="w-4.5 h-4.5" />
+              </div>
+              <div>
+                <h3 className="text-sm font-bold text-slate-900">Jangan Buang Waktu</h3>
+                <p className="text-sm text-slate-600 leading-relaxed mt-0.5">
+                  Seleksi administrasi berjalan Desember 2026 dan ujian SKD CAT BKN dimulai Januari–Maret 2027. Mulai lebih awal berarti selangkah di depan pesaing.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-start gap-3.5">
+              <div className="w-9 h-9 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0 mt-0.5">
+                <ClipboardCheck className="w-4.5 h-4.5" />
+              </div>
+              <div>
+                <h3 className="text-sm font-bold text-slate-900">100% Sesuai Regulasi Pemerintah 2026</h3>
+                <p className="text-sm text-slate-600 leading-relaxed mt-0.5">
+                  Seluruh soal, pembobotan, dan ambang batas sudah disesuaikan menurut <strong className="font-semibold text-slate-800">PermenPANRB 18/2026</strong> &amp; <strong className="font-semibold text-slate-800">KepmenPANRB 674/2026</strong>.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-start gap-3.5">
+              <div className="w-9 h-9 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0 mt-0.5">
+                <TrendingUp className="w-4.5 h-4.5" />
+              </div>
+              <div>
+                <h3 className="text-sm font-bold text-slate-900">Terbiasa Menghadapi CAT BKN</h3>
+                <p className="text-sm text-slate-600 leading-relaxed mt-0.5">
+                  Bukan sekadar teori — latihan rutin membuatmu menguasai manajemen waktu 100 menit dan pola soal asli.
+                </p>
+              </div>
+            </div>
+          </div>
         </div>
 
         <div className="grid grid-cols-2 gap-4">
-          <div className="col-span-2 overflow-hidden rounded-2xl border border-slate-100 shadow-md">
+          <div className="col-span-2 overflow-hidden rounded-3xl border border-slate-100 shadow-lg shadow-slate-200/50">
             <img
               src="https://ik.imagekit.io/e2yna5qg8/Home%202.jpg"
               alt="Peluang Lolos CPNS 2026 - KlinikCPNS"
-              className="w-full h-auto rounded-2xl"
+              className="w-full h-auto rounded-3xl"
             />
           </div>
-          <div className="bg-blue-50 rounded-2xl p-5 flex flex-col gap-1">
+          <div className="bg-blue-50/80 border border-blue-100/80 rounded-2xl p-5 flex flex-col gap-1">
             <TrendingUp className="w-5 h-5 text-blue-600 mb-1" />
-            <p className="text-2xl font-extrabold text-slate-900">Naik</p>
+            <p className="font-heading text-2xl font-extrabold text-slate-900">154.052</p>
             <p className="text-xs text-slate-600 leading-snug">
-              formasi dibuka dibanding tahun sebelumnya*
+              formasi resmi dibuka di SSCASN 2026
             </p>
           </div>
           <div className="bg-slate-900 rounded-2xl p-5 flex flex-col gap-1">
             <Users className="w-5 h-5 text-blue-400 mb-1" />
-            <p className="text-2xl font-extrabold text-white">7.800+</p>
+            <p className="font-heading text-2xl font-extrabold text-white">7.800+</p>
             <p className="text-xs text-slate-300 leading-snug">
-              member sudah latihan bareng KlinikCPNS
+              member sudah latihan sesuai kisi-kisi 2026
             </p>
           </div>
         </div>
@@ -460,44 +491,45 @@ function RxCard({ eyebrow, title, desc, icon: Icon, imageLabel, imageUrl, revers
 
 function Resep() {
   return (
-    <section id="resep" className="bg-blue-50/50 py-20 md:py-28">
+    <section id="resep" className="bg-blue-50/40 py-20 md:py-28">
       <div className="max-w-6xl mx-auto px-5 md:px-8">
         <div className="max-w-2xl mb-14">
-          <p className="text-xs font-bold text-blue-600 uppercase tracking-wider mb-3">
-            Resep Lolos KlinikCPNS
+          <p className="text-xs font-bold text-blue-600 uppercase tracking-widest mb-3">
+            Metode Latihan Terarah
           </p>
-          <h2 className="text-3xl md:text-4xl font-extrabold text-slate-900 leading-tight tracking-tight">
-            3 resep latihan KlinikCPNS yang bikin persiapanmu beda
+          <h2 className="font-heading text-3xl md:text-4xl font-extrabold text-slate-900 leading-[1.15] tracking-tight text-balance">
+            3 Pilar Persiapan yang Disesuaikan Standar Resmi 2026
           </h2>
-          <p className="mt-4 text-slate-600 leading-relaxed">
-            Setiap resep di KlinikCPNS dirancang untuk satu tujuan: bikin kamu terbiasa,
-            bukan cuma tahu.
+          <p className="mt-4 text-base text-slate-600 leading-[1.7]">
+            Seluruh bank soal, sistem penilaian, dan modul materi disusun mengacu pada{" "}
+            <strong className="font-semibold text-slate-800">PermenPANRB 18/2026</strong> &amp;{" "}
+            <strong className="font-semibold text-slate-800">KepmenPANRB 674/2026</strong>.
           </p>
         </div>
 
         <div className="flex flex-col gap-6">
           <RxCard
-            eyebrow="Dosis Latihan KlinikCPNS"
+            eyebrow="01 · Bank Soal Lengkap"
             icon={ClipboardCheck}
-            title="399 Paket Try Out CPNS Lengkap + Pembahasan KlinikCPNS"
-            desc="Bank soal terbesar di KlinikCPNS dengan pembahasan detail di setiap butir, biar kamu ngerti bukan cuma hafal jawaban."
+            title="399 Paket Try Out + Pembahasan Detail"
+            desc="Format resmi 110 soal (30 TWK, 35 TIU, 45 TKP) dalam 100 menit lengkap dengan pembahasan langkah demi langkah di setiap butir soal."
             imageLabel="Screenshot / bukti visual jumlah paket soal (399 paket) di dashboard"
             imageUrl="https://ik.imagekit.io/e2yna5qg8/ChatGPT%20Image%20Aug%2023,%202026,%2005_55_53%20AM_11zon.png"
           />
           <RxCard
-            eyebrow="Simulasi Nyata KlinikCPNS"
+            eyebrow="02 · Simulasi CAT BKN"
             icon={Stethoscope}
-            title="Simulasi CAT BKN Seperti Ujian Asli di KlinikCPNS"
-            desc="Tampilan, waktu, dan sistem penilaian dibuat semirip mungkin dengan CAT BKN — nggak ada kejutan di hari-H."
+            title="Tampilan & Passing Grade Resmi CPNS 2026"
+            desc="Timer 100 menit dan sistem ambang batas (TWK 65, TIU 80, TKP 166, Total min. 311) dirancang persis seperti ujian CAT BKN sesungguhnya."
             imageLabel="Screenshot tampilan simulasi CAT / interface ujian di aplikasi"
             imageUrl="https://ik.imagekit.io/e2yna5qg8/ChatGPT%20Image%20Aug%2023,%202026,%2005_59_08%20AM_11zon.png"
             reverse
           />
           <RxCard
-            eyebrow="Materi Terkini KlinikCPNS"
+            eyebrow="03 · Kurikulum Terkini"
             icon={FileText}
-            title="Materi Terbaru Sesuai Kisi-Kisi Resmi KlinikCPNS"
-            desc="Selalu diperbarui mengikuti kisi-kisi resmi terbaru, jadi kamu latihan soal CPNS yang relevan — bukan soal basi."
+            title="Materi & Kisi-Kisi Terbaru KepmenPANRB 674/2026"
+            desc="Selalu selaras dengan Lampiran I & II regulasi pemerintah 2026 — mulai dari Pilar Negara, Verbal/Numerik/Figural, hingga 6 aspek TKP termasuk Anti-Radikalisme."
             imageLabel="Foto modul / rangkuman materi terbaru sesuai kisi-kisi"
             imageUrl="https://ik.imagekit.io/e2yna5qg8/ChatGPT%20Image%20Aug%2023,%202026,%2006_42_10%20AM_11zon.png"
           />
@@ -521,19 +553,17 @@ function Challenge() {
             <div className="lg:col-span-7">
               <div className="inline-flex items-center gap-2 bg-blue-500/20 border border-blue-400/30 text-blue-300 text-xs font-semibold px-3.5 py-1.5 rounded-full mb-6">
                 <Flame className="w-4 h-4 text-amber-400" />
-                Fitur Unggulan KlinikCPNS — Garansi Uang Kembali
+                Program Unggulan · Garansi Uang Kembali
               </div>
 
-              <h2 className="text-3xl md:text-4xl font-extrabold leading-tight tracking-tight">
-                30 Days CPNS Challenge KlinikCPNS: Rahasia konsisten tanpa tapi
+              <h2 className="font-heading text-3xl md:text-4xl font-extrabold leading-[1.15] tracking-tight text-balance">
+                30 Days CPNS Challenge: Rahasia Konsisten Tanpa Tapi
               </h2>
 
-              <p className="mt-4 text-slate-300 text-base md:text-lg leading-relaxed">
-                Tiap hari kamu wajib selesaikan 1 paket try out di KlinikCPNS dengan target
-                nilai yang terus meningkat. Selesaikan 30 hari tanpa putus —
-                kalau kamu tetap nggak lolos tes CPNS,{" "}
+              <p className="mt-4 text-slate-300 text-base md:text-lg leading-[1.7]">
+                Selesaikan 1 paket try out setiap hari dengan target skor yang terus naik. Jika kamu menuntaskan 30 hari tanpa putus namun belum lolos seleksi CPNS 2026,{" "}
                 <span className="font-bold text-white underline decoration-blue-400 underline-offset-4">
-                  uangmu kami kembalikan 100% dari KlinikCPNS
+                  uangmu kami kembalikan 100%
                 </span>
                 .
               </p>
@@ -737,14 +767,14 @@ function Pricing({
     <section id="paket" className="bg-white py-20 md:py-28">
       <div className="max-w-6xl mx-auto px-5 md:px-8">
         <div className="text-center max-w-2xl mx-auto mb-16">
-          <p className="text-xs font-bold text-blue-600 uppercase tracking-wider mb-3">
-            Pilihan Resep Paket KlinikCPNS
+          <p className="text-xs font-bold text-blue-600 uppercase tracking-widest mb-3">
+            Pilihan Paket Belajar
           </p>
-          <h2 className="text-3xl md:text-4xl font-extrabold text-slate-900 leading-tight tracking-tight">
-            Investasi Paket KlinikCPNS Seharga Kopi untuk Masa Depan ASN
+          <h2 className="font-heading text-3xl md:text-4xl font-extrabold text-slate-900 leading-[1.15] tracking-tight text-balance">
+            Investasi Seharga Kopi untuk Masa Depan ASN
           </h2>
           <p className="mt-4 text-slate-600 text-base leading-relaxed">
-            Pilih durasi resep KlinikCPNS yang paling sesuai dengan target persiapanmu.
+            Pilih durasi paket yang paling sesuai dengan target persiapan ujianmu.
           </p>
         </div>
 
@@ -907,11 +937,11 @@ function Testimonials() {
     <section id="testimoni" className="bg-blue-50/50 py-20 md:py-28">
       <div className="max-w-6xl mx-auto px-5 md:px-8">
         <div className="max-w-2xl mb-14">
-          <p className="text-xs font-bold text-blue-600 uppercase tracking-wider mb-3">
-            Testimoni Peserta KlinikCPNS
+          <p className="text-xs font-bold text-blue-600 uppercase tracking-widest mb-3">
+            Cerita Alumni
           </p>
-          <h2 className="text-3xl md:text-4xl font-extrabold text-slate-900 leading-tight tracking-tight">
-            Peserta KlinikCPNS Lolos Karena Rajin Latihan, Bukan Kebetulan
+          <h2 className="font-heading text-3xl md:text-4xl font-extrabold text-slate-900 leading-[1.15] tracking-tight text-balance">
+            Lolos Karena Rajin Latihan, Bukan Kebetulan
           </h2>
         </div>
         <div className="grid md:grid-cols-3 gap-6">
@@ -975,8 +1005,12 @@ function FAQ() {
       a: "Sangat cocok! Pembahasan di KlinikCPNS dirancang mudah dipahami dari dasar, lengkap dengan statistik perkembangan nilai biar kamu tahu bagian mana yang harus ditingkatkan.",
     },
     {
-      q: "Apakah soal-soal try out di KlinikCPNS selalu di-update?",
-      a: "Ya! Tim KlinikCPNS selalu memperbarui bank soal sesuai kisi-kisi resmi KemenPAN-RB & BKN terbaru.",
+      q: "Apakah soal-soal try out di KlinikCPNS sudah sesuai aturan CPNS 2026?",
+      a: "Ya! Seluruh soal try out, pembobotan nilai, waktu 100 menit (110 soal), dan passing grade (TWK 65, TIU 80, TKP 166) di KlinikCPNS telah disesuaikan 100% menurut dokumen resmi pemerintah terbaru: PermenPANRB Nomor 18 Tahun 2026 dan KepmenPANRB Nomor 674 Tahun 2026.",
+    },
+    {
+      q: "Kapan CPNS 2026 dibuka dan bagaimana jadwal SKD-nya?",
+      a: "Berdasarkan pengumuman resmi, pendaftaran CPNS 2026 dibuka mulai Jumat, 27 November 2026 di portal sscasn.bkn.go.id dengan total 154.052 formasi, dilanjutkan seleksi administrasi pada pekan pertama Desember 2026, serta ujian SKD & SKB pada Januari–Maret 2027. Jangan tunda latihanmu dari sekarang!",
     },
   ];
 
@@ -984,11 +1018,11 @@ function FAQ() {
     <section id="faq" className="bg-white py-20 md:py-28">
       <div className="max-w-4xl mx-auto px-5 md:px-8">
         <div className="text-center mb-14">
-          <p className="text-xs font-bold text-blue-600 uppercase tracking-wider mb-3">
-            FAQ KlinikCPNS
+          <p className="text-xs font-bold text-blue-600 uppercase tracking-widest mb-3">
+            Pertanyaan Umum
           </p>
-          <h2 className="text-3xl md:text-4xl font-extrabold text-slate-900 leading-tight tracking-tight">
-            Pertanyaan yang Sering Ditanyakan Tentang KlinikCPNS
+          <h2 className="font-heading text-3xl md:text-4xl font-extrabold text-slate-900 leading-[1.15] tracking-tight">
+            Yang Sering Ditanyakan Peserta
           </h2>
         </div>
 
@@ -1013,22 +1047,22 @@ function FAQ() {
 /* ----------------------------------------------------------------------- */
 function FinalCTA() {
   return (
-    <section className="bg-blue-600 text-white py-20 md:py-24 relative overflow-hidden">
-      <div className="max-w-4xl mx-auto px-5 md:px-8 text-center relative z-10">
-        <h2 className="text-3xl md:text-5xl font-extrabold leading-tight tracking-tight">
-          Siap lolos CPNS 2026 bersama KlinikCPNS?
+    <section className="bg-gradient-to-br from-blue-600 to-indigo-700 text-white py-20 md:py-24 relative overflow-hidden">
+      <div className="max-w-3xl mx-auto px-5 md:px-8 text-center relative z-10">
+        <h2 className="font-heading text-3xl md:text-5xl font-extrabold leading-[1.12] tracking-tight text-balance">
+          CPNS 2026 Sudah Dibuka. Mulai Latihanmu Hari Ini.
         </h2>
-        <p className="mt-5 text-blue-100 text-base md:text-lg leading-relaxed max-w-2xl mx-auto">
-          Mulai latihan bersama KlinikCPNS sekarang sebelum pendaftaran dibuka. Makin awal kamu
-          mulai di KlinikCPNS, makin besar peluangmu lolos.
+        <p className="mt-5 text-blue-100 text-base md:text-lg leading-[1.7] max-w-xl mx-auto">
+          Jangan tunggu mendekati ujian SKD Januari 2027. Kuasai soal standar{" "}
+          <strong className="text-white font-semibold">KepmenPANRB 674/2026</strong> lebih dulu bersama 7.800+ pejuang ASN lainnya.
         </p>
         <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-4">
           <a
             href="#paket"
-            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-white text-blue-600 hover:bg-blue-50 font-extrabold text-base px-8 py-4 rounded-full transition-colors shadow-xl"
+            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-white text-blue-700 hover:bg-blue-50 font-bold text-base px-8 py-4 rounded-full transition-colors shadow-xl"
           >
-            <Coffee className="w-5 h-5" />
-            Ambil Resep Try Out KlinikCPNS Sekarang
+            Pilih Paket Try Out Sekarang
+            <ArrowRight className="w-4.5 h-4.5" />
           </a>
         </div>
       </div>
@@ -1054,6 +1088,9 @@ function Footer() {
           <a href="#peluang" className="hover:text-white transition-colors">
             Kenapa Sekarang
           </a>
+          <Link href="/panduan-cpns-2026" className="text-amber-300 hover:text-amber-200 font-semibold transition-colors">
+            Panduan CPNS 2026
+          </Link>
           <a href="#resep" className="hover:text-white transition-colors">
             Resep Kami
           </a>
@@ -1101,6 +1138,44 @@ function StickyCTA() {
 }
 
 /* ----------------------------------------------------------------------- */
+/*  Panduan CPNS 2026 Tabbed Showcase                                       */
+/* ----------------------------------------------------------------------- */
+function Panduan2026Section() {
+  return (
+    <section id="panduan-2026" className="bg-slate-50/70 border-y border-slate-100 py-20 md:py-24">
+      <div className="max-w-6xl mx-auto px-5 md:px-8 space-y-8">
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+          <div>
+            <p className="text-xs font-bold text-blue-600 uppercase tracking-widest mb-2.5">
+              Pusat Informasi Resmi CASN 2026
+            </p>
+            <h2 className="font-heading text-3xl md:text-4xl font-extrabold text-slate-900 leading-[1.15] tracking-tight">
+              Panduan Lengkap Seleksi CPNS 2026
+            </h2>
+            <p className="mt-2.5 text-sm md:text-base text-slate-600 max-w-2xl leading-relaxed">
+              Cek jadwal resmi, rincian 154.052 formasi, kebijakan dokumen terbaru, hingga kisi-kisi &amp; passing grade SKD–SKB 2026 sebelum mendaftar.
+            </p>
+          </div>
+          <Link
+            href="/panduan-cpns-2026"
+            className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-semibold text-blue-700 bg-white hover:bg-blue-50 border border-slate-200 hover:border-blue-200 px-4 py-2.5 rounded-full shadow-xs transition-colors shrink-0 self-start md:self-auto"
+          >
+            Buka Halaman Panduan Khusus
+            <ArrowRight className="w-4 h-4" />
+          </Link>
+        </div>
+
+        <PanduanCPNS2026Content
+          isMember={false}
+          defaultTab="jadwal"
+          showPrintButton={true}
+        />
+      </div>
+    </section>
+  );
+}
+
+/* ----------------------------------------------------------------------- */
 /*  Page                                                                    */
 /* ----------------------------------------------------------------------- */
 export interface LandingPageProps {
@@ -1141,6 +1216,7 @@ export default function KlinikCPNSLandingPage({
       <Header />
       <Hero />
       <Opportunity />
+      <Panduan2026Section />
       <Resep />
       <Challenge />
       <Pricing resellerCode={resellerCode} customCheckoutLink={customCheckoutLink} discountPercentage={discountPercentage} />

@@ -6,7 +6,30 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { supabase } from '@/lib/supabaseClient';
 import MemberLayout from '../../components/MemberLayout';
 import NotificationCenter from '../../components/NotificationCenter';
-import { Trophy, Award, Target, Zap, Lock, CheckCircle2, ChevronRight, Clock, Sparkles } from 'lucide-react';
+import {
+  Trophy,
+  Award,
+  Target,
+  Zap,
+  Lock,
+  CheckCircle2,
+  ChevronRight,
+  Clock,
+  Sparkles,
+  LayoutGrid,
+  Gem,
+  Bell,
+  Ticket,
+  ClipboardCheck,
+  Layers,
+  Flame,
+  BookOpen,
+  FileText,
+  Crown,
+  Check,
+  ClipboardList,
+  ArrowRight
+} from 'lucide-react';
 
 function DashboardContent() {
   const router = useRouter();
@@ -255,40 +278,44 @@ function DashboardContent() {
       id: 'pg_hunter',
       title: 'Passing Grade Hunter',
       desc: 'Lulus threshold PG di salah satu tryout',
-      icon: '🎯',
+      Icon: Target,
+      iconColor: 'text-emerald-400',
+      iconBg: 'bg-emerald-500/15 border-emerald-500/30',
       unlocked: hasPassedPG,
-      gradient: 'from-emerald-500/20 to-teal-500/20 border-emerald-500/30 text-emerald-300',
     },
     {
       id: 'tiu_master',
       title: 'Master TIU',
       desc: 'Skor TIU mencapai >= 120 poin',
-      icon: '⚡',
+      Icon: Zap,
+      iconColor: 'text-amber-400',
+      iconBg: 'bg-amber-500/15 border-amber-500/30',
       unlocked: isMasterTIU,
-      gradient: 'from-amber-500/20 to-yellow-500/20 border-amber-500/30 text-amber-300',
     },
     {
       id: 'elite_400',
       title: 'Elite 400+ Club',
       desc: 'Skor total simulasi tembus >= 400',
-      icon: '👑',
+      Icon: Crown,
+      iconColor: 'text-purple-400',
+      iconBg: 'bg-purple-500/15 border-purple-500/30',
       unlocked: isElite400,
-      gradient: 'from-purple-500/20 to-indigo-500/20 border-purple-500/30 text-purple-300',
     },
     {
       id: 'pejuang_rutin',
       title: 'Pejuang Tangguh',
       desc: 'Telah menuntaskan minimal 3 tryout',
-      icon: '🔥',
+      Icon: Flame,
+      iconColor: 'text-blue-400',
+      iconBg: 'bg-blue-500/15 border-blue-500/30',
       unlocked: isConsistent,
-      gradient: 'from-blue-500/20 to-cyan-500/20 border-blue-500/30 text-blue-300',
     },
   ];
 
   const unlockedCount = badges.filter(b => b.unlocked).length;
 
-  // Target SKD CPNS 2026 Countdown
-  const targetSKD = new Date('2026-11-01T08:00:00');
+  // Target SKD CPNS 2026 Countdown (Estimasi SKD mulai Januari 2027)
+  const targetSKD = new Date('2027-01-15T08:00:00');
   const now = new Date();
   const diffTime = Math.max(0, targetSKD.getTime() - now.getTime());
   const daysLeftToSKD = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
@@ -361,87 +388,91 @@ function DashboardContent() {
 
   return (
     <MemberLayout>
-      <div className="min-h-screen bg-white pb-20 md:pb-8 p-4 md:p-6 max-w-6xl mx-auto space-y-6">
+      <div className="min-h-screen bg-[#f8fafc] pb-20 md:pb-10 p-4 md:p-6 max-w-6xl mx-auto space-y-6">
         
-        {/* HEADER - Welcome Section (Minimalist White & Brand Blue) */}
-        <div className="bg-white border border-slate-200 rounded-2xl p-6 md:p-8 shadow-sm">
+        {/* HEADER - Welcome Section */}
+        <div className="bg-white border border-slate-200/80 rounded-3xl p-6 md:p-7 shadow-xs">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
             <div>
-              <p className="text-xs uppercase tracking-wider font-semibold text-slate-500 mb-1">
-                Selamat Datang di Klinik CPNS
+              <p className="text-[11px] uppercase tracking-widest font-bold text-slate-400 mb-1">
+                Selamat Datang Kembali
               </p>
-              <h1 className="text-2xl md:text-3xl font-extrabold text-slate-900">
-                {userProfile?.full_name?.split(' ')[0] || 'Member'} 👋
+              <h1 className="font-heading text-2xl md:text-3xl font-extrabold text-slate-900 tracking-tight">
+                Halo, {userProfile?.full_name?.split(' ')[0] || 'Pejuang ASN'}
               </h1>
             </div>
             <div>
-              <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-bold border ${
+              <span className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-semibold border ${
                 isExpired 
-                  ? 'bg-slate-100 text-slate-700 border-slate-200' 
-                  : 'bg-blue-50 text-blue-700 border-blue-200'
+                  ? 'bg-slate-50 text-slate-600 border-slate-200' 
+                  : 'bg-emerald-50 text-emerald-700 border-emerald-200'
               }`}>
-                {isExpired ? (hasSubscription ? '• Paket Kedaluwarsa' : '• Belum Berlangganan') : '✓ Paket Aktif'}
+                <span className={`w-1.5 h-1.5 rounded-full ${isExpired ? 'bg-slate-400' : 'bg-emerald-500 animate-pulse'}`} />
+                {isExpired ? (hasSubscription ? 'Paket Kedaluwarsa' : 'Akun Free') : 'Paket Aktif'}
               </span>
             </div>
           </div>
           
           {/* Progress Card */}
-          <div className="bg-slate-50 border border-slate-100 rounded-xl p-4 mt-4">
+          <div className="bg-slate-50/80 border border-slate-100 rounded-2xl p-4 mt-4">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-slate-600 text-sm font-medium">Progress Simulasi Belajar</span>
-              <span className="text-blue-600 font-bold text-sm">
+              <span className="text-slate-600 text-xs sm:text-sm font-medium">Progress Simulasi Belajar</span>
+              <span className="text-blue-600 font-bold text-xs sm:text-sm font-mono">
                 {examHistory.length} Ujian Selesai
               </span>
             </div>
-            <div className="w-full bg-slate-200 rounded-full h-2">
+            <div className="w-full bg-slate-200/80 rounded-full h-2 overflow-hidden">
               <div 
-                className="bg-blue-600 rounded-full h-2 transition-all"
+                className="bg-gradient-to-r from-blue-600 to-indigo-600 rounded-full h-2 transition-all duration-500"
                 style={{ width: `${Math.min(examHistory.length * 10, 100)}%` }}
               ></div>
             </div>
           </div>
         </div>
 
-        {/* NAVIGATION - Tab Menu */}
-        <div className="flex gap-2 bg-slate-100 p-1.5 rounded-xl border border-slate-200">
+        {/* NAVIGATION - Segmented Tab Menu */}
+        <div className="flex gap-1.5 bg-slate-200/60 p-1.5 rounded-2xl border border-slate-200/70">
           <button
             onClick={() => {
               setActiveTab('overview');
               router.replace('/dashboard');
             }}
-            className={`flex-1 py-2.5 px-4 rounded-lg font-bold text-sm transition-all ${
+            className={`flex-1 py-2.5 px-3 sm:px-4 rounded-xl font-semibold text-xs sm:text-sm transition-all flex items-center justify-center gap-2 cursor-pointer ${
               activeTab === 'overview' 
-                ? 'bg-white text-blue-600 shadow-sm' 
+                ? 'bg-white text-blue-600 shadow-xs' 
                 : 'text-slate-600 hover:text-slate-900'
             }`}
           >
-            📊 Overview
+            <LayoutGrid className="w-4 h-4" strokeWidth={1.8} />
+            <span>Overview</span>
           </button>
           <button
             onClick={() => {
               setActiveTab('subscription');
               router.replace('/dashboard?tab=subscription');
             }}
-            className={`flex-1 py-2.5 px-4 rounded-lg font-bold text-sm transition-all ${
+            className={`flex-1 py-2.5 px-3 sm:px-4 rounded-xl font-semibold text-xs sm:text-sm transition-all flex items-center justify-center gap-2 cursor-pointer ${
               activeTab === 'subscription' 
-                ? 'bg-white text-blue-600 shadow-sm' 
+                ? 'bg-white text-blue-600 shadow-xs' 
                 : 'text-slate-600 hover:text-slate-900'
             }`}
           >
-            💎 Paket
+            <Gem className="w-4 h-4" strokeWidth={1.8} />
+            <span>Paket</span>
           </button>
           <button
             onClick={() => {
               setActiveTab('notifications');
               router.replace('/dashboard?tab=notifications');
             }}
-            className={`flex-1 py-2.5 px-4 rounded-lg font-bold text-sm transition-all ${
+            className={`flex-1 py-2.5 px-3 sm:px-4 rounded-xl font-semibold text-xs sm:text-sm transition-all flex items-center justify-center gap-2 cursor-pointer ${
               activeTab === 'notifications' 
-                ? 'bg-white text-blue-600 shadow-sm' 
+                ? 'bg-white text-blue-600 shadow-xs' 
                 : 'text-slate-600 hover:text-slate-900'
             }`}
           >
-            🔔 Notif
+            <Bell className="w-4 h-4" strokeWidth={1.8} />
+            <span>Notifikasi</span>
           </button>
         </div>
 
@@ -453,26 +484,33 @@ function DashboardContent() {
             <div className="space-y-6">
               
               {/* KLAIM VOUCHER MASA AKTIF */}
-              <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
-                <h2 className="text-lg font-bold text-slate-900 mb-2 flex items-center gap-2">
-                  <span>🎟️</span> Klaim Voucher Masa Aktif
-                </h2>
-                <p className="text-sm text-slate-600 mb-4">
-                  Punya kode voucher masa aktif dari reseller atau promo? Masukkan di sini untuk mengaktifkan langganan Anda.
-                </p>
+              <div className="bg-white rounded-3xl border border-slate-200/80 p-5 sm:p-6 shadow-xs">
+                <div className="flex items-center gap-3 mb-2">
+                  <div className="w-9 h-9 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
+                    <Ticket className="w-4.5 h-4.5" strokeWidth={1.8} />
+                  </div>
+                  <div>
+                    <h2 className="font-heading text-base sm:text-lg font-bold text-slate-900">
+                      Klaim Voucher Masa Aktif
+                    </h2>
+                    <p className="text-xs text-slate-500">
+                      Masukkan kode voucher dari reseller atau promo untuk mengaktifkan langganan.
+                    </p>
+                  </div>
+                </div>
                 
-                <div className="flex flex-col sm:flex-row gap-2.5">
+                <div className="flex flex-col sm:flex-row gap-2.5 mt-4">
                   <input
                     type="text"
                     value={activationVoucherCode}
                     onChange={(e) => setActivationVoucherCode(e.target.value)}
                     placeholder="Contoh: ABC12-XYZ78"
-                    className="flex-1 border border-slate-300 rounded-xl px-4 py-2.5 text-sm uppercase focus:ring-2 focus:ring-blue-600 focus:border-blue-600 focus:outline-none"
+                    className="flex-1 border border-slate-200 bg-slate-50/70 focus:bg-white rounded-xl px-4 py-2.5 text-sm uppercase focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 focus:outline-none transition"
                   />
                   <button
                     onClick={handleClaimActivationVoucher}
                     disabled={isClaiming}
-                    className="bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white px-6 py-2.5 rounded-xl font-bold text-sm transition-all shadow-sm shadow-blue-600/10"
+                    className="bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white px-6 py-2.5 rounded-xl font-semibold text-sm transition-all shadow-xs cursor-pointer"
                   >
                     {isClaiming ? 'Memproses...' : 'Klaim Voucher'}
                   </button>
@@ -518,18 +556,20 @@ function DashboardContent() {
                 </div>
 
                 {/* 2. Misi Harian ("Daily Quests") */}
-                <div className="md:col-span-2 bg-white border border-slate-200 rounded-3xl p-5 shadow-sm flex flex-col justify-between">
+                <div className="md:col-span-2 bg-white border border-slate-200/80 rounded-3xl p-5 shadow-xs flex flex-col justify-between">
                   <div>
                     <div className="flex items-center justify-between gap-3 mb-2">
-                      <div className="flex items-center gap-2">
-                        <span className="text-xl">🎯</span>
+                      <div className="flex items-center gap-2.5">
+                        <div className="w-9 h-9 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
+                          <Target className="w-4.5 h-4.5" strokeWidth={1.8} />
+                        </div>
                         <div>
-                          <h3 className="text-sm md:text-base font-black text-slate-900">Misi Belajar Hari Ini</h3>
+                          <h3 className="font-heading text-sm md:text-base font-bold text-slate-900">Misi Belajar Hari Ini</h3>
                           <p className="text-[11px] text-slate-500">Tuntaskan 3 misi harian untuk membangun konsistensi CAT</p>
                         </div>
                       </div>
                       <div className="text-right shrink-0">
-                        <span className="text-xs font-black text-blue-600">{completedQuestsCount} / 3 Misi</span>
+                        <span className="text-xs font-bold text-blue-600">{completedQuestsCount} / 3 Misi</span>
                         <span className="text-[10px] text-slate-400 block font-mono">+{completedQuestsCount * 50} XP</span>
                       </div>
                     </div>
@@ -586,39 +626,82 @@ function DashboardContent() {
 
               </div>
 
-              {/* Quick Actions - Minimalist Cards */}
+              {/* INFO RESMI CPNS 2026 BANNER */}
+              <Link
+                href="/dashboard/panduan-cpns-2026"
+                className="block bg-white border border-blue-200/80 hover:border-blue-400 rounded-2xl p-4 sm:p-5 shadow-xs transition-all group"
+              >
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div className="flex items-start sm:items-center gap-3.5">
+                    <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 border border-blue-100 flex items-center justify-center shrink-0">
+                      <FileText className="w-5 h-5" strokeWidth={1.8} />
+                    </div>
+                    <div>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-blue-600 text-white">
+                          Info Resmi CASN
+                        </span>
+                        <span className="text-[11px] font-medium text-slate-500">
+                          Pembukaan SSCASN: 27 Nov 2026 · 154.052 Formasi
+                        </span>
+                      </div>
+                      <h3 className="font-heading text-sm sm:text-base font-bold text-slate-900 mt-1 group-hover:text-blue-600 transition-colors">
+                        Panduan Lengkap Seleksi CPNS 2026: Jadwal, Syarat, Kebijakan Baru &amp; Kisi-Kisi SKD–SKB
+                      </h3>
+                    </div>
+                  </div>
+                  <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-blue-600 bg-blue-50 group-hover:bg-blue-600 group-hover:text-white px-3.5 py-2 rounded-xl transition-colors shrink-0 self-start sm:self-center">
+                    <span>Buka Panduan</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </span>
+                </div>
+              </Link>
+
+              {/* Quick Actions - Minimalist Modern Cards */}
               <div>
-                <h2 className="text-lg font-bold text-slate-900 mb-3">Aksi Cepat</h2>
-                <div className="flex gap-3 overflow-x-auto pb-2 -mx-4 px-4 md:mx-0 md:px-0 md:grid md:grid-cols-6">
-                  <Link href="/tryout-list" className="flex-shrink-0 w-32 md:w-auto bg-white border border-slate-200 hover:border-blue-600 hover:bg-blue-50/20 text-slate-900 p-4 rounded-2xl shadow-sm transition-all text-center group">
-                    <div className="text-3xl mb-2 group-hover:scale-110 transition-transform">📝</div>
+                <h2 className="font-heading text-base sm:text-lg font-bold text-slate-900 mb-3">Aksi Cepat</h2>
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+                  <Link href="/tryout-list" className="bg-white border border-slate-200/80 hover:border-blue-300 hover:shadow-md hover:-translate-y-0.5 text-slate-900 p-4 rounded-2xl shadow-xs transition-all flex flex-col items-center text-center group">
+                    <div className="w-11 h-11 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center mb-3 group-hover:scale-105 transition-transform">
+                      <ClipboardCheck className="w-5 h-5" strokeWidth={1.8} />
+                    </div>
                     <div className="text-sm font-bold text-slate-900 group-hover:text-blue-600 transition-colors">Try Out</div>
-                    <div className="text-[11px] text-slate-500 mt-0.5">Simulasi CAT</div>
+                    <div className="text-[11px] text-slate-400 mt-0.5">Simulasi CAT</div>
                   </Link>
-                  <Link href="/dashboard/speed-drill" className="flex-shrink-0 w-32 md:w-auto bg-white border border-slate-200 hover:border-amber-500 hover:bg-amber-50/20 text-slate-900 p-4 rounded-2xl shadow-sm transition-all text-center group">
-                    <div className="text-3xl mb-2 group-hover:scale-110 transition-transform">⚡</div>
+                  <Link href="/dashboard/speed-drill" className="bg-white border border-slate-200/80 hover:border-amber-300 hover:shadow-md hover:-translate-y-0.5 text-slate-900 p-4 rounded-2xl shadow-xs transition-all flex flex-col items-center text-center group">
+                    <div className="w-11 h-11 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center mb-3 group-hover:scale-105 transition-transform">
+                      <Zap className="w-5 h-5" strokeWidth={1.8} />
+                    </div>
                     <div className="text-sm font-bold text-slate-900 group-hover:text-amber-600 transition-colors">Speed Drill</div>
-                    <div className="text-[11px] text-slate-500 mt-0.5">50s / Soal</div>
+                    <div className="text-[11px] text-slate-400 mt-0.5">50s / Soal</div>
                   </Link>
-                  <Link href="/dashboard/flashcards" className="flex-shrink-0 w-32 md:w-auto bg-white border border-slate-200 hover:border-indigo-600 hover:bg-indigo-50/20 text-slate-900 p-4 rounded-2xl shadow-sm transition-all text-center group">
-                    <div className="text-3xl mb-2 group-hover:scale-110 transition-transform">🃏</div>
+                  <Link href="/dashboard/flashcards" className="bg-white border border-slate-200/80 hover:border-indigo-300 hover:shadow-md hover:-translate-y-0.5 text-slate-900 p-4 rounded-2xl shadow-xs transition-all flex flex-col items-center text-center group">
+                    <div className="w-11 h-11 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center mb-3 group-hover:scale-105 transition-transform">
+                      <Layers className="w-5 h-5" strokeWidth={1.8} />
+                    </div>
                     <div className="text-sm font-bold text-slate-900 group-hover:text-indigo-600 transition-colors">Flashcard</div>
-                    <div className="text-[11px] text-slate-500 mt-0.5">Hafalan TWK</div>
+                    <div className="text-[11px] text-slate-400 mt-0.5">Hafalan TWK</div>
                   </Link>
-                  <Link href="/dashboard/evaluasi" className="flex-shrink-0 w-32 md:w-auto bg-white border border-slate-200 hover:border-rose-500 hover:bg-rose-50/20 text-slate-900 p-4 rounded-2xl shadow-sm transition-all text-center group">
-                    <div className="text-3xl mb-2 group-hover:scale-110 transition-transform">🎯</div>
+                  <Link href="/dashboard/evaluasi" className="bg-white border border-slate-200/80 hover:border-rose-300 hover:shadow-md hover:-translate-y-0.5 text-slate-900 p-4 rounded-2xl shadow-xs transition-all flex flex-col items-center text-center group">
+                    <div className="w-11 h-11 rounded-2xl bg-rose-50 text-rose-600 flex items-center justify-center mb-3 group-hover:scale-105 transition-transform">
+                      <Target className="w-5 h-5" strokeWidth={1.8} />
+                    </div>
                     <div className="text-sm font-bold text-slate-900 group-hover:text-rose-600 transition-colors">Evaluasi</div>
-                    <div className="text-[11px] text-slate-500 mt-0.5">Bank Soal Salah</div>
+                    <div className="text-[11px] text-slate-400 mt-0.5">Bank Soal Salah</div>
                   </Link>
-                  <Link href="/dashboard/challenge" className="flex-shrink-0 w-32 md:w-auto bg-white border border-slate-200 hover:border-orange-500 hover:bg-orange-50/20 text-slate-900 p-4 rounded-2xl shadow-sm transition-all text-center group">
-                    <div className="text-3xl mb-2 group-hover:scale-110 transition-transform">🔥</div>
+                  <Link href="/dashboard/challenge" className="bg-white border border-slate-200/80 hover:border-orange-300 hover:shadow-md hover:-translate-y-0.5 text-slate-900 p-4 rounded-2xl shadow-xs transition-all flex flex-col items-center text-center group">
+                    <div className="w-11 h-11 rounded-2xl bg-orange-50 text-orange-600 flex items-center justify-center mb-3 group-hover:scale-105 transition-transform">
+                      <Flame className="w-5 h-5" strokeWidth={1.8} />
+                    </div>
                     <div className="text-sm font-bold text-slate-900 group-hover:text-orange-600 transition-colors">Challenge</div>
-                    <div className="text-[11px] text-slate-500 mt-0.5">30 Hari Rutin</div>
+                    <div className="text-[11px] text-slate-400 mt-0.5">30 Hari Rutin</div>
                   </Link>
-                  <Link href="/dashboard/materi" className="flex-shrink-0 w-32 md:w-auto bg-white border border-slate-200 hover:border-blue-600 hover:bg-blue-50/20 text-slate-900 p-4 rounded-2xl shadow-sm transition-all text-center group">
-                    <div className="text-3xl mb-2 group-hover:scale-110 transition-transform">📚</div>
-                    <div className="text-sm font-bold text-slate-900 group-hover:text-blue-600 transition-colors">Materi</div>
-                    <div className="text-[11px] text-slate-500 mt-0.5">Modul & Tips</div>
+                  <Link href="/dashboard/materi" className="bg-white border border-slate-200/80 hover:border-emerald-300 hover:shadow-md hover:-translate-y-0.5 text-slate-900 p-4 rounded-2xl shadow-xs transition-all flex flex-col items-center text-center group">
+                    <div className="w-11 h-11 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center mb-3 group-hover:scale-105 transition-transform">
+                      <BookOpen className="w-5 h-5" strokeWidth={1.8} />
+                    </div>
+                    <div className="text-sm font-bold text-slate-900 group-hover:text-emerald-600 transition-colors">Materi</div>
+                    <div className="text-[11px] text-slate-400 mt-0.5">Modul &amp; Rumus</div>
                   </Link>
                 </div>
               </div>
@@ -648,7 +731,9 @@ function DashboardContent() {
 
                   {/* Grid 4 Badges */}
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                    {badges.map((b) => (
+                    {badges.map((b) => {
+                      const BadgeIcon = b.Icon;
+                      return (
                       <div 
                         key={b.id}
                         className={`rounded-2xl p-4 border transition-all duration-300 relative overflow-hidden flex flex-col justify-between ${
@@ -659,7 +744,9 @@ function DashboardContent() {
                       >
                         <div>
                           <div className="flex items-start justify-between mb-3">
-                            <span className="text-3xl drop-shadow-sm">{b.icon}</span>
+                            <div className={`w-10 h-10 rounded-xl border flex items-center justify-center ${b.iconBg}`}>
+                              <BadgeIcon className={`w-5 h-5 ${b.iconColor}`} strokeWidth={1.8} />
+                            </div>
                             {b.unlocked ? (
                               <span className="p-1 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
                                 <CheckCircle2 className="w-3.5 h-3.5" />
@@ -675,11 +762,12 @@ function DashboardContent() {
                         </div>
                         <div className="mt-3 pt-2.5 border-t border-slate-800/60 flex items-center justify-between text-[10px]">
                           <span className={`font-semibold ${b.unlocked ? 'text-emerald-400' : 'text-slate-500'}`}>
-                            {b.unlocked ? '✓ Terbuka' : 'Terkunci'}
+                            {b.unlocked ? 'Terbuka' : 'Terkunci'}
                           </span>
                         </div>
                       </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 </div>
               </div>
@@ -745,16 +833,19 @@ function DashboardContent() {
 
               {/* Recent Exam History */}
               <div>
-                <h2 className="text-lg font-bold text-slate-900 mb-3">Riwayat Ujian</h2>
+                <h2 className="font-heading text-base sm:text-lg font-bold text-slate-900 mb-3">Riwayat Ujian</h2>
                 {examHistory.length === 0 ? (
-                  <div className="bg-white p-8 rounded-2xl border border-slate-200 text-center shadow-sm">
-                    <div className="text-4xl mb-2">📝</div>
+                  <div className="bg-white p-8 rounded-2xl border border-slate-200/80 text-center shadow-xs">
+                    <div className="w-12 h-12 rounded-2xl bg-slate-100 text-slate-400 flex items-center justify-center mx-auto mb-3">
+                      <ClipboardList className="w-6 h-6" strokeWidth={1.75} />
+                    </div>
                     <p className="text-slate-600 text-sm font-medium">Belum ada riwayat ujian</p>
                     <Link 
                       href="/tryout-list" 
-                      className="inline-block mt-3 bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-xl text-sm font-bold transition-all shadow-sm"
+                      className="inline-flex items-center gap-1.5 mt-3 bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-xl text-xs font-semibold transition-all shadow-xs"
                     >
-                      Mulai Try Out Sekarang
+                      <span>Mulai Try Out Sekarang</span>
+                      <ArrowRight className="w-3.5 h-3.5" />
                     </Link>
                   </div>
                 ) : (
