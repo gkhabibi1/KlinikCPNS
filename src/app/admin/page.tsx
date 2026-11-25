@@ -122,6 +122,8 @@ export default function AdminCommandCenter() {
   const [packages, setPackages] = useState<TryoutPackage[]>([]);
   const [packageSearchQuery, setPackageSearchQuery] = useState('');
   const [packageUploadMode, setPackageUploadMode] = useState<'single' | 'batch'>('batch');
+  const [selectedPackageIds, setSelectedPackageIds] = useState<string[]>([]);
+  const [isBulkDeletingPackages, setIsBulkDeletingPackages] = useState(false);
   const [isLoadingPackages, setIsLoadingPackages] = useState(true);
   const [isCreating, setIsCreating] = useState(false);
   const [newPackage, setNewPackage] = useState({
@@ -1766,6 +1768,48 @@ export default function AdminCommandCenter() {
     }
   };
 
+  const handleInsertPresetBanners = async () => {
+    const presets = [
+      {
+        title: 'Siap Lolos SKD CPNS 2026',
+        image_url: '/banners/promo-cpns-2026.jpg',
+        link_url: '/tryout-list',
+        display_order: 1,
+        is_active: true,
+      },
+      {
+        title: 'Upgrade Paket Belajar Pro',
+        image_url: '/banners/promo-upgrade-premium.jpg',
+        link_url: '/dashboard/subscription',
+        display_order: 2,
+        is_active: true,
+      },
+      {
+        title: '30 Days SKD Challenge',
+        image_url: '/banners/promo-30-days-challenge.jpg',
+        link_url: '/dashboard/challenge',
+        display_order: 3,
+        is_active: true,
+      },
+    ];
+
+    const existingUrls = new Set(banners.map((b) => b.image_url));
+    const toInsert = presets.filter((p) => !existingUrls.has(p.image_url));
+
+    if (toInsert.length === 0) {
+      alert('Semua banner promosi bawaan sudah ada di daftar banner aktif.');
+      return;
+    }
+
+    const { error } = await supabase.from('promotional_banners').insert(toInsert);
+    if (error) {
+      alert('Gagal menambahkan banner bawaan: ' + error.message);
+    } else {
+      alert(`✅ ${toInsert.length} banner promosi berhasil ditambahkan!`);
+      fetchBanners();
+    }
+  };
+
   // Fungsi untuk updates
   const handleAddUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -2231,6 +2275,86 @@ export default function AdminCommandCenter() {
                       );
                     });
 
+                    const filteredIds = filteredPackages.map((p) => p.id);
+                    const allFilteredSelected =
+                      filteredIds.length > 0 &&
+                      filteredIds.every((id) => selectedPackageIds.includes(id));
+                    const someFilteredSelected =
+                      filteredIds.some((id) => selectedPackageIds.includes(id));
+
+                    const toggleSelectPackage = (pkgId: string) => {
+                      setSelectedPackageIds((prev) =>
+                        prev.includes(pkgId)
+                          ? prev.filter((id) => id !== pkgId)
+                          : [...prev, pkgId]
+                      );
+                    };
+
+                    const toggleSelectAllFiltered = () => {
+                      if (allFilteredSelected) {
+                        setSelectedPackageIds((prev) =>
+                          prev.filter((id) => !filteredIds.includes(id))
+                        );
+                      } else {
+                        setSelectedPackageIds((prev) =>
+                          Array.from(new Set([...prev, ...filteredIds]))
+                        );
+                      }
+                    };
+
+                    const handleBulkDeletePackages = async () => {
+                      if (selectedPackageIds.length === 0 || isBulkDeletingPackages) return;
+
+                      const selectedNames = packages
+                        .filter((p) => selectedPackageIds.includes(p.id))
+                        .slice(0, 5)
+                        .map((p) => `• ${p.name}`);
+                      const moreCount = selectedPackageIds.length - selectedNames.length;
+                      const previewText =
+                        selectedNames.join('\n') +
+                        (moreCount > 0 ? `\n• ...dan ${moreCount} paket lainnya` : '');
+
+                      if (
+                        !confirm(
+                          `Hapus ${selectedPackageIds.length} paket try out yang dipilih?\n\n${previewText}\n\nSemua soal di dalam paket-paket ini juga akan ikut terhapus dan tidak dapat dikembalikan.`
+                        )
+                      ) {
+                        return;
+                      }
+
+                      setIsBulkDeletingPackages(true);
+                      try {
+                        // Hapus bertahap per 50 ID agar aman dari batas panjang query URL
+                        const chunkSize = 50;
+                        for (let i = 0; i < selectedPackageIds.length; i += chunkSize) {
+                          const chunk = selectedPackageIds.slice(i, i + chunkSize);
+                          const { error } = await supabase
+                            .from('tryout_packages')
+                            .delete()
+                            .in('id', chunk);
+
+                          if (error) {
+                            throw error;
+                          }
+                        }
+
+                        if (editingPackage && selectedPackageIds.includes(editingPackage.id)) {
+                          setEditingPackage(null);
+                        }
+
+                        const deletedCount = selectedPackageIds.length;
+                        setSelectedPackageIds([]);
+                        await fetchPackages();
+                        alert(`✅ Berhasil menghapus ${deletedCount} paket try out.`);
+                      } catch (err: any) {
+                        console.error('Error bulk deleting packages:', err);
+                        alert('❌ Gagal menghapus beberapa paket: ' + (err?.message || 'Terjadi kesalahan'));
+                        await fetchPackages();
+                      } finally {
+                        setIsBulkDeletingPackages(false);
+                      }
+                    };
+
                     return (
                       <>
                         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
@@ -2267,6 +2391,67 @@ export default function AdminCommandCenter() {
                           </div>
                         </div>
 
+                        {/* Toolbar Checklist & Hapus Massal */}
+                        {filteredPackages.length > 0 && (
+                          <div className={`mb-4 px-4 py-3 rounded-xl border flex flex-wrap items-center justify-between gap-3 transition-colors ${
+                            selectedPackageIds.length > 0
+                              ? 'bg-red-50/70 border-red-200'
+                              : 'bg-white border-slate-200 shadow-xs'
+                          }`}>
+                            <label className="inline-flex items-center gap-2.5 cursor-pointer select-none">
+                              <input
+                                type="checkbox"
+                                checked={allFilteredSelected}
+                                ref={(el) => {
+                                  if (el) el.indeterminate = !allFilteredSelected && someFilteredSelected;
+                                }}
+                                onChange={toggleSelectAllFiltered}
+                                className="w-4 h-4 rounded border-slate-300 text-blue-600 accent-blue-600 cursor-pointer"
+                              />
+                              <span className="text-xs sm:text-sm font-semibold text-slate-700">
+                                {allFilteredSelected
+                                  ? `Batal Pilih Semua (${filteredPackages.length})`
+                                  : `Pilih Semua Ditampilkan (${filteredPackages.length})`}
+                              </span>
+                            </label>
+
+                            <div className="flex flex-wrap items-center gap-2">
+                              {selectedPackageIds.length > 0 ? (
+                                <>
+                                  <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-red-100 text-red-700">
+                                    {selectedPackageIds.length} paket dipilih
+                                  </span>
+                                  <button
+                                    type="button"
+                                    onClick={() => setSelectedPackageIds([])}
+                                    disabled={isBulkDeletingPackages}
+                                    className="px-3 py-1.5 rounded-lg text-xs font-semibold border border-slate-300 bg-white text-slate-600 hover:bg-slate-50 transition-colors cursor-pointer disabled:opacity-50"
+                                  >
+                                    Batal Pilih
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={handleBulkDeletePackages}
+                                    disabled={isBulkDeletingPackages}
+                                    className="px-3.5 py-1.5 rounded-lg text-xs font-bold bg-red-600 hover:bg-red-700 text-white shadow-xs transition-colors flex items-center gap-1.5 cursor-pointer disabled:opacity-60"
+                                  >
+                                    <span>🗑</span>
+                                    <span>
+                                      {isBulkDeletingPackages
+                                        ? 'Menghapus...'
+                                        : `Hapus Terpilih (${selectedPackageIds.length})`}
+                                    </span>
+                                  </button>
+                                </>
+                              ) : (
+                                <span className="text-xs text-slate-400">
+                                  Centang kotak di kartu paket untuk menghapus beberapa paket sekaligus
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        )}
+
                         {isLoadingPackages ? (
                           <div className="text-center py-6 text-slate-500">Memuat data paket...</div>
                         ) : filteredPackages.length === 0 ? (
@@ -2287,18 +2472,37 @@ export default function AdminCommandCenter() {
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             {filteredPackages.map((pkg) => {
                               const isActive = pkg.is_active !== false; // Default true jika null
+                              const isSelected = selectedPackageIds.includes(pkg.id);
                               
                               return (
-                                  <div key={pkg.id} className={`bg-white p-5 rounded-xl border shadow-sm flex flex-col transition-opacity ${
-                                      !isActive ? 'opacity-60 border-dashed border-slate-300' : 'border-slate-200'
+                                  <div key={pkg.id} className={`bg-white p-5 rounded-xl border shadow-sm flex flex-col transition-all ${
+                                      isSelected
+                                        ? 'border-blue-500 ring-2 ring-blue-500/20 bg-blue-50/15'
+                                        : !isActive
+                                        ? 'opacity-60 border-dashed border-slate-300'
+                                        : 'border-slate-200'
                                   }`}>
-                                      <div className="flex justify-between items-start mb-2">
-                                          <div>
-                                              <h3 className="font-bold text-lg">{pkg.name}</h3>
-                                              <p className="text-xs text-slate-500 mt-1 font-semibold">
-                                                  {pkg.exam_type === 'CPNS' ? 'Ujian CPNS' : 'Ujian P3K'}
-                                              </p>
-                                              <p className="text-slate-500 text-sm mt-1">{pkg.description || 'Tidak ada deskripsi'}</p>
+                                      <div className="flex justify-between items-start gap-3 mb-2">
+                                          <div className="flex items-start gap-2.5 min-w-0">
+                                              <input
+                                                type="checkbox"
+                                                checked={isSelected}
+                                                onChange={() => toggleSelectPackage(pkg.id)}
+                                                aria-label={`Pilih paket ${pkg.name}`}
+                                                className="mt-1.5 w-4 h-4 rounded border-slate-300 text-blue-600 accent-blue-600 cursor-pointer shrink-0"
+                                              />
+                                              <div className="min-w-0">
+                                                  <h3
+                                                    onClick={() => toggleSelectPackage(pkg.id)}
+                                                    className="font-bold text-lg cursor-pointer hover:text-blue-700 transition-colors break-words"
+                                                  >
+                                                    {pkg.name}
+                                                  </h3>
+                                                  <p className="text-xs text-slate-500 mt-1 font-semibold">
+                                                      {pkg.exam_type === 'CPNS' ? 'Ujian CPNS' : 'Ujian P3K'}
+                                                  </p>
+                                                  <p className="text-slate-500 text-sm mt-1 break-words">{pkg.description || 'Tidak ada deskripsi'}</p>
+                                              </div>
                                           </div>
                                           <div className="flex flex-col gap-1 items-end">
                                                <div className="flex gap-1.5">
@@ -2440,7 +2644,10 @@ export default function AdminCommandCenter() {
                                           <button
                                               onClick={async () => {
                                                   if (confirm('Hapus paket ini? Semua soal di dalamnya juga akan terhapus.')) {
-                                                      await supabase.from('tryout_packages').delete().eq('id', pkg.id);
+                                                      const { error } = await supabase.from('tryout_packages').delete().eq('id', pkg.id);
+                                                      if (!error) {
+                                                        setSelectedPackageIds((prev) => prev.filter((id) => id !== pkg.id));
+                                                      }
                                                       fetchPackages();
                                                   }
                                               }}
@@ -3164,7 +3371,16 @@ export default function AdminCommandCenter() {
             {activeTab === 'banners' && (
               <div className="space-y-6">
                 <form onSubmit={handleAddBanner} className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
-                  <h3 className="font-bold text-lg text-slate-800 mb-4 border-b pb-2">Tambah Banner Baru</h3>
+                  <div className="flex flex-wrap items-center justify-between gap-3 mb-4 border-b pb-3">
+                    <h3 className="font-bold text-lg text-slate-800">Tambah Banner Baru</h3>
+                    <button
+                      type="button"
+                      onClick={handleInsertPresetBanners}
+                      className="px-4 py-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 rounded-lg text-xs font-bold transition-colors cursor-pointer"
+                    >
+                      ✨ Pasang 3 Banner Promosi Siap Pakai
+                    </button>
+                  </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-sm font-medium text-slate-600 mb-1">Judul Banner</label>
@@ -3172,11 +3388,11 @@ export default function AdminCommandCenter() {
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-slate-600 mb-1">URL Gambar</label>
-                      <input name="image_url" placeholder="URL Gambar" required className="w-full border border-slate-300 rounded-lg p-2 focus:ring-2 focus:ring-blue-500 focus:outline-none" />
+                      <input name="image_url" placeholder="Contoh: /banners/promo-cpns-2026.jpg atau https://..." required className="w-full border border-slate-300 rounded-lg p-2 focus:ring-2 focus:ring-blue-500 focus:outline-none" />
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-slate-600 mb-1">Link Tujuan (opsional)</label>
-                      <input name="link_url" placeholder="Link Tujuan" className="w-full border border-slate-300 rounded-lg p-2 focus:ring-2 focus:ring-blue-500 focus:outline-none" />
+                      <input name="link_url" placeholder="Contoh: /dashboard/subscription" className="w-full border border-slate-300 rounded-lg p-2 focus:ring-2 focus:ring-blue-500 focus:outline-none" />
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-slate-600 mb-1">Urutan Tampilan</label>
@@ -3191,18 +3407,21 @@ export default function AdminCommandCenter() {
                   {isLoadingBanners ? (
                     <div className="text-center py-6 text-slate-500">Memuat data banner...</div>
                   ) : banners.length === 0 ? (
-                    <div className="text-center py-6 text-slate-400">Belum ada banner promosi.</div>
+                    <div className="bg-white rounded-xl border border-slate-200 p-6 text-center text-slate-500">
+                      <p className="text-sm font-medium text-slate-700">Belum ada banner kustom di database.</p>
+                      <p className="text-xs text-slate-400 mt-1">Halaman member saat ini otomatis menampilkan 3 banner promosi bawaan Klinik CPNS, atau klik &quot;Pasang 3 Banner Promosi Siap Pakai&quot; di atas untuk mengedit/mengaturnya dari sini.</p>
+                    </div>
                   ) : (
                     <div className="space-y-4">
                       {banners.map(banner => (
-                        <div key={banner.id} className="bg-white p-4 rounded-xl border border-slate-200 flex gap-4 items-center shadow-sm">
-                          <img src={banner.image_url} alt={banner.title} className="w-48 h-24 object-cover rounded-lg border border-slate-200" />
-                          <div className="flex-1">
+                        <div key={banner.id} className="bg-white p-4 rounded-xl border border-slate-200 flex flex-col sm:flex-row gap-4 sm:items-center shadow-sm">
+                          <img src={banner.image_url} alt={banner.title} className="w-full sm:w-48 aspect-video object-cover rounded-lg border border-slate-200" />
+                          <div className="flex-1 min-w-0">
                             <h4 className="font-bold text-slate-800">{banner.title}</h4>
-                            {banner.link_url && <p className="text-sm text-blue-600 hover:underline">{banner.link_url}</p>}
+                            {banner.link_url && <p className="text-sm text-blue-600 hover:underline break-all">{banner.link_url}</p>}
                             <p className="text-xs text-slate-400 mt-1">Urutan: {banner.display_order}</p>
                           </div>
-                          <button onClick={() => handleDeleteBanner(banner.id)} className="text-red-600 hover:bg-red-50 p-2 rounded-lg transition-colors" title="Hapus Banner">
+                          <button onClick={() => handleDeleteBanner(banner.id)} className="self-start sm:self-center text-red-600 hover:bg-red-50 p-2 rounded-lg transition-colors cursor-pointer" title="Hapus Banner">
                             🗑️ Hapus
                           </button>
                         </div>

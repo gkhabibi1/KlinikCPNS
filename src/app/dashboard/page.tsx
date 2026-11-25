@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, Suspense } from 'react';
+import { useState, useEffect, useRef, Suspense } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { supabase } from '@/lib/supabaseClient';
@@ -13,6 +13,7 @@ import {
   Zap,
   Lock,
   CheckCircle2,
+  ChevronLeft,
   ChevronRight,
   Clock,
   Sparkles,
@@ -31,9 +32,31 @@ import {
   ArrowRight
 } from 'lucide-react';
 
+const DEFAULT_PROMO_BANNERS = [
+  {
+    id: 'default-promo-1',
+    title: 'Siap Lolos SKD CPNS 2026',
+    image_url: '/banners/promo-cpns-2026.jpg',
+    link_url: '/tryout-list',
+  },
+  {
+    id: 'default-promo-2',
+    title: 'Upgrade Paket Belajar Pro',
+    image_url: '/banners/promo-upgrade-premium.jpg',
+    link_url: '/dashboard/subscription',
+  },
+  {
+    id: 'default-promo-3',
+    title: '30 Days SKD Challenge',
+    image_url: '/banners/promo-30-days-challenge.jpg',
+    link_url: '/dashboard/challenge',
+  },
+];
+
 function DashboardContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const bannerScrollRef = useRef<HTMLDivElement>(null);
   
   const tabFromUrl = searchParams ? searchParams.get('tab') : null;
   const initialTab = (tabFromUrl === 'subscription' || tabFromUrl === 'notifications') ? tabFromUrl : 'overview';
@@ -772,27 +795,65 @@ function DashboardContent() {
                 </div>
               </div>
 
-              {/* Banners - Horizontal Scroll */}
-              {banners.length > 0 && (
-                <div>
-                  <h2 className="text-lg font-bold text-slate-900 mb-3">Promosi</h2>
-                  <div className="flex gap-3 overflow-x-auto pb-2 -mx-4 px-4 md:mx-0 md:px-0 md:grid md:grid-cols-2">
-                    {banners.map(banner => (
-                      <Link 
-                        key={banner.id} 
-                        href={banner.link_url || '#'} 
-                        className="flex-shrink-0 w-64 md:w-full overflow-hidden rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow"
-                      >
-                        <img 
-                          src={banner.image_url} 
-                          alt={banner.title} 
-                          className="w-full h-32 md:h-48 object-cover"
-                        />
-                      </Link>
-                    ))}
+              {/* Banners - Horizontal Slide */}
+              {(() => {
+                const displayedBanners = banners.length > 0 ? banners : DEFAULT_PROMO_BANNERS;
+                const scrollBanners = (direction: 'prev' | 'next') => {
+                  const el = bannerScrollRef.current;
+                  if (!el) return;
+                  const amount = Math.max(280, Math.round(el.clientWidth * 0.75));
+                  el.scrollBy({
+                    left: direction === 'next' ? amount : -amount,
+                    behavior: 'smooth',
+                  });
+                };
+
+                return (
+                  <div>
+                    <div className="flex items-center justify-between mb-3">
+                      <h2 className="text-lg font-bold text-slate-900">Promosi</h2>
+                      {displayedBanners.length > 1 && (
+                        <div className="flex items-center gap-1.5">
+                          <button
+                            type="button"
+                            onClick={() => scrollBanners('prev')}
+                            aria-label="Banner sebelumnya"
+                            className="w-8 h-8 rounded-full border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 flex items-center justify-center transition-colors cursor-pointer shadow-2xs"
+                          >
+                            <ChevronLeft className="w-4 h-4" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => scrollBanners('next')}
+                            aria-label="Banner berikutnya"
+                            className="w-8 h-8 rounded-full border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 flex items-center justify-center transition-colors cursor-pointer shadow-2xs"
+                          >
+                            <ChevronRight className="w-4 h-4" />
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                    <div
+                      ref={bannerScrollRef}
+                      className="flex gap-3.5 overflow-x-auto pb-2 snap-x snap-mandatory scroll-smooth no-scrollbar -mx-4 px-4 sm:mx-0 sm:px-0"
+                    >
+                      {displayedBanners.map((banner) => (
+                        <Link
+                          key={banner.id}
+                          href={banner.link_url || '#'}
+                          className="flex-shrink-0 w-[86%] sm:w-[62%] md:w-[calc(50%-8px)] snap-start overflow-hidden rounded-2xl border border-slate-200/90 bg-slate-900 shadow-xs hover:shadow-md transition-all group"
+                        >
+                          <img
+                            src={banner.image_url}
+                            alt={banner.title}
+                            className="w-full aspect-video object-cover group-hover:scale-[1.015] transition-transform duration-300"
+                          />
+                        </Link>
+                      ))}
+                    </div>
                   </div>
-                </div>
-              )}
+                );
+              })()}
 
               {/* Latest Updates - Card List */}
               <div>
