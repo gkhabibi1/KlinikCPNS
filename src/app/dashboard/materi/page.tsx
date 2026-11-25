@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { supabase } from '@/lib/supabaseClient';
 import MemberLayout from '../../../components/MemberLayout';
 import { TWK_MODULES } from '@/data/twkModules';
 import { TIU_MODULES } from '@/data/tiuModules';
@@ -35,7 +36,9 @@ import {
   Laptop,
   ShieldCheck,
   ArrowLeft,
-  CircleDot
+  ArrowRight,
+  CircleDot,
+  Crown
 } from 'lucide-react';
 
 function TkpIllustration({ type }: { type: string }) {
@@ -152,10 +155,51 @@ export default function MateriPage() {
 
   const [searchQuery, setSearchQuery] = useState('');
   const [focusMode, setFocusMode] = useState(false);
+  const [hasActiveSubscription, setHasActiveSubscription] = useState<boolean>(false);
+  const [isCheckingSubscription, setIsCheckingSubscription] = useState<boolean>(true);
   const [showCompletionModal, setShowCompletionModal] = useState<{ isOpen: boolean; subject: 'twk' | 'tiu' | 'tkp' }>({
     isOpen: false,
     subject: 'twk'
   });
+
+  // Cek status langganan user dari Supabase profiles
+  useEffect(() => {
+    let isMounted = true;
+    const checkSubscription = async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user || !isMounted) {
+          if (isMounted) {
+            setHasActiveSubscription(false);
+            setIsCheckingSubscription(false);
+          }
+          return;
+        }
+
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('subscription_valid_until')
+          .eq('id', user.id)
+          .maybeSingle();
+
+        if (!isMounted) return;
+        const isActive = profile?.subscription_valid_until
+          ? new Date(profile.subscription_valid_until) > new Date()
+          : false;
+        setHasActiveSubscription(isActive);
+      } catch (err) {
+        console.error('Error checking subscription status in materi:', err);
+        if (isMounted) setHasActiveSubscription(false);
+      } finally {
+        if (isMounted) setIsCheckingSubscription(false);
+      }
+    };
+
+    checkSubscription();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   // Load progress from localStorage
   useEffect(() => {
@@ -276,7 +320,8 @@ export default function MateriPage() {
     }
 
     if (allCorrect) {
-      const nextUnlocked = Math.max(twkUnlockedStage, stageIndex + 1);
+      const maxAccessibleStage = hasActiveSubscription ? TWK_MODULES.length - 1 : 1;
+      const nextUnlocked = Math.min(maxAccessibleStage, Math.max(twkUnlockedStage, stageIndex + 1));
       const newCompleted = { ...twkCompletedStages, [stageIndex]: true };
       setTwkUnlockedStage(nextUnlocked);
       setTwkCompletedStages(newCompleted);
@@ -286,7 +331,9 @@ export default function MateriPage() {
         [stageIndex]: {
           isSubmitted: true,
           isAllCorrect: true,
-          message: stageIndex === TWK_MODULES.length - 1 
+          message: !hasActiveSubscription && stageIndex >= 1
+            ? '🎉 Sempurna! Seluruh materi gratis (Tahap 1–2) telah selesai. Upgrade paket langganan untuk membuka Tahap 3 ke atas!'
+            : stageIndex === TWK_MODULES.length - 1
             ? '🎉 Luar biasa! Anda telah menyelesaikan seluruh 14 Tahap Materi TWK CPNS!'
             : '🎉 Sempurna! Semua jawaban benar. Tahap berikutnya telah terbuka!'
         }
@@ -294,9 +341,9 @@ export default function MateriPage() {
 
       saveTwkProgress(nextUnlocked, newCompleted, twkUserAnswers);
 
-      if (stageIndex === TWK_MODULES.length - 1) {
+      if (hasActiveSubscription && stageIndex === TWK_MODULES.length - 1) {
         setShowCompletionModal({ isOpen: true, subject: 'twk' });
-      } else {
+      } else if (hasActiveSubscription || stageIndex < 1) {
         setTimeout(() => {
           const nextEl = document.getElementById(`twk-module-${stageIndex + 1}`);
           if (nextEl) nextEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -345,7 +392,8 @@ export default function MateriPage() {
     }
 
     if (allCorrect) {
-      const nextUnlocked = Math.max(tiuUnlockedStage, stageIndex + 1);
+      const maxAccessibleStage = hasActiveSubscription ? TIU_MODULES.length - 1 : 1;
+      const nextUnlocked = Math.min(maxAccessibleStage, Math.max(tiuUnlockedStage, stageIndex + 1));
       const newCompleted = { ...tiuCompletedStages, [stageIndex]: true };
       setTiuUnlockedStage(nextUnlocked);
       setTiuCompletedStages(newCompleted);
@@ -355,7 +403,9 @@ export default function MateriPage() {
         [stageIndex]: {
           isSubmitted: true,
           isAllCorrect: true,
-          message: stageIndex === TIU_MODULES.length - 1 
+          message: !hasActiveSubscription && stageIndex >= 1
+            ? '🎉 Sempurna! Seluruh materi gratis (Tahap 1–2) telah selesai. Upgrade paket langganan untuk membuka Tahap 3 ke atas!'
+            : stageIndex === TIU_MODULES.length - 1
             ? '🎉 Luar biasa! Anda telah menyelesaikan seluruh 12 Tahap Materi TIU CPNS!'
             : '🎉 Sempurna! Semua jawaban benar. Tahap berikutnya telah terbuka!'
         }
@@ -363,9 +413,9 @@ export default function MateriPage() {
 
       saveTiuProgress(nextUnlocked, newCompleted, tiuUserAnswers);
 
-      if (stageIndex === TIU_MODULES.length - 1) {
+      if (hasActiveSubscription && stageIndex === TIU_MODULES.length - 1) {
         setShowCompletionModal({ isOpen: true, subject: 'tiu' });
-      } else {
+      } else if (hasActiveSubscription || stageIndex < 1) {
         setTimeout(() => {
           const nextEl = document.getElementById(`tiu-module-${stageIndex + 1}`);
           if (nextEl) nextEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -414,7 +464,8 @@ export default function MateriPage() {
     }
 
     if (allCorrect) {
-      const nextUnlocked = Math.max(tkpUnlockedStage, stageIndex + 1);
+      const maxAccessibleStage = hasActiveSubscription ? TKP_MODULES.length - 1 : 1;
+      const nextUnlocked = Math.min(maxAccessibleStage, Math.max(tkpUnlockedStage, stageIndex + 1));
       const newCompleted = { ...tkpCompletedStages, [stageIndex]: true };
       setTkpUnlockedStage(nextUnlocked);
       setTkpCompletedStages(newCompleted);
@@ -424,7 +475,9 @@ export default function MateriPage() {
         [stageIndex]: {
           isSubmitted: true,
           isAllCorrect: true,
-          message: stageIndex === TKP_MODULES.length - 1 
+          message: !hasActiveSubscription && stageIndex >= 1
+            ? '🎉 Sempurna! Seluruh materi gratis (Tahap 1–2) telah selesai. Upgrade paket langganan untuk membuka Tahap 3 ke atas!'
+            : stageIndex === TKP_MODULES.length - 1
             ? '🎉 Luar biasa! Anda telah menyelesaikan seluruh 6 Subbab Materi TKP CPNS!'
             : '🎉 Sempurna! Semua jawaban benar (3/3). Subbab berikutnya telah terbuka!'
         }
@@ -432,9 +485,9 @@ export default function MateriPage() {
 
       saveTkpProgress(nextUnlocked, newCompleted, tkpUserAnswers);
 
-      if (stageIndex === TKP_MODULES.length - 1) {
+      if (hasActiveSubscription && stageIndex === TKP_MODULES.length - 1) {
         setShowCompletionModal({ isOpen: true, subject: 'tkp' });
-      } else {
+      } else if (hasActiveSubscription || stageIndex < 1) {
         setTimeout(() => {
           const nextEl = document.getElementById(`tkp-module-${stageIndex + 1}`);
           if (nextEl) nextEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -483,6 +536,43 @@ export default function MateriPage() {
       }
     }
   };
+
+  // Helper kartu kunci khusus member non-subscribe (Tahap 3 ke atas)
+  const renderSubscriptionLockCard = (
+    moduleId: string,
+    stageNumber: string,
+    title: string,
+    categoryTag?: string
+  ) => (
+    <section
+      key={moduleId}
+      id={moduleId}
+      className="bg-gradient-to-br from-amber-50/70 via-white to-slate-50 border border-amber-200/80 rounded-2xl sm:rounded-3xl p-5 sm:p-8 text-center shadow-xs"
+    >
+      <div className="w-12 h-12 rounded-2xl bg-amber-100 border border-amber-200 text-amber-600 flex items-center justify-center mx-auto mb-3 shadow-2xs">
+        <Crown className="w-5 h-5" strokeWidth={2} />
+      </div>
+      <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-100/80 text-amber-800 text-[11px] font-bold uppercase tracking-wider mb-2">
+        <span>Khusus Member Berlangganan</span>
+      </div>
+      <div className="text-xs font-bold uppercase tracking-wider text-slate-400">
+        {stageNumber}{categoryTag ? ` • ${categoryTag}` : ''}
+      </div>
+      <h2 className="font-heading text-lg sm:text-2xl font-extrabold text-slate-800 mt-1 mb-2">
+        {title}
+      </h2>
+      <p className="text-slate-600 text-xs sm:text-sm max-w-lg mx-auto leading-relaxed mb-5">
+        Akun gratis dapat mempelajari hingga <strong>Tahap 2</strong> pada tiap bidang (TWK, TIU, TKP). Aktifkan paket langganan untuk membuka Tahap 3 dan seluruh materi pembahasan lengkap.
+      </p>
+      <Link
+        href="/dashboard/subscription"
+        className="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs sm:text-sm font-bold transition-all shadow-sm"
+      >
+        <span>Upgrade Langganan Sekarang</span>
+        <ArrowRight className="w-4 h-4" />
+      </Link>
+    </section>
+  );
 
   // Scroll to stage
   const scrollToStage = (prefix: 'twk' | 'tiu' | 'tkp', stageIdx: number) => {
@@ -724,6 +814,27 @@ export default function MateriPage() {
         </div>
       </div>
 
+      {/* BANNER INFO AKSES GRATIS (TAHAP 1-2) */}
+      {!isCheckingSubscription && !hasActiveSubscription && activeSubject !== 'cheatsheet' && (
+        <div className="bg-amber-50 border-b border-amber-200/80 px-3 sm:px-4 py-2.5">
+          <div className="max-w-[1120px] mx-auto flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs sm:text-sm">
+            <div className="flex items-center gap-2 text-amber-950 font-medium">
+              <Crown className="w-4 h-4 text-amber-600 shrink-0" />
+              <span>
+                <strong>Mode Akses Gratis:</strong> Materi terbuka hingga <strong>Tahap 2</strong> di tiap bidang (TWK, TIU, TKP).
+              </span>
+            </div>
+            <Link
+              href="/dashboard/subscription"
+              className="inline-flex items-center gap-1 text-xs font-bold text-blue-700 hover:text-blue-800 whitespace-nowrap shrink-0"
+            >
+              <span>Buka Semua Tahap</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </Link>
+          </div>
+        </div>
+      )}
+
 
       {/* CONTENT: TWK INTERACTIVE COURSE */}
       {activeSubject === 'twk' && (
@@ -797,22 +908,24 @@ export default function MateriPage() {
             {/* QUICK TAHAP NAVIGATOR CHIPS */}
             <div className="flex gap-2 overflow-x-auto py-3 no-scrollbar">
               {TWK_MODULES.map((m, idx) => {
-                const isLocked = idx > twkUnlockedStage;
-                const isCompleted = !!twkCompletedStages[idx];
-                const isActive = idx === twkUnlockedStage;
+                const isLockedBySubscription = !hasActiveSubscription && idx >= 2;
+                const isLocked = isLockedBySubscription || idx > twkUnlockedStage;
+                const isCompleted = !!twkCompletedStages[idx] && !isLockedBySubscription;
+                const isActive = idx === twkUnlockedStage && !isLockedBySubscription;
 
                 return (
                   <button
                     key={m.id}
                     onClick={() => {
-                      if (!isLocked) scrollToStage('twk', idx);
+                      scrollToStage('twk', idx);
                     }}
-                    disabled={isLocked}
                     className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all flex items-center gap-1.5 shrink-0 ${
                       isCompleted
                         ? 'bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100 cursor-pointer'
                         : isActive
                         ? 'bg-blue-600 text-white shadow-xs cursor-pointer'
+                        : isLockedBySubscription
+                        ? 'bg-amber-50 text-amber-700 border border-amber-200 hover:bg-amber-100 cursor-pointer'
                         : isLocked
                         ? 'bg-slate-100 text-slate-400 border border-slate-200 cursor-not-allowed opacity-65'
                         : 'bg-white text-slate-700 border border-slate-200 hover:bg-slate-50 cursor-pointer'
@@ -820,6 +933,8 @@ export default function MateriPage() {
                   >
                     {isCompleted ? (
                       <Check className="w-3.5 h-3.5" strokeWidth={2.5} />
+                    ) : isLockedBySubscription ? (
+                      <Crown className="w-3 h-3" strokeWidth={2.2} />
                     ) : isLocked ? (
                       <Lock className="w-3 h-3" strokeWidth={2.2} />
                     ) : (
@@ -847,9 +962,18 @@ export default function MateriPage() {
             ) : (
               filteredTwkModules.map((module) => {
                 const stageIndex = parseInt(module.id.replace('m', ''), 10);
-                const isLocked = stageIndex > twkUnlockedStage;
+                const isLockedBySubscription = !hasActiveSubscription && stageIndex >= 2;
+                const isLocked = isLockedBySubscription || stageIndex > twkUnlockedStage;
                 const isCompleted = !!twkCompletedStages[stageIndex];
                 const result = twkStageResults[stageIndex];
+
+                if (isLockedBySubscription) {
+                  return renderSubscriptionLockCard(
+                    `twk-module-${stageIndex}`,
+                    module.stageNumber,
+                    module.title
+                  );
+                }
 
                 return (
                   <section
@@ -1146,22 +1270,24 @@ export default function MateriPage() {
             {/* QUICK TAHAP NAVIGATOR CHIPS */}
             <div className="flex gap-2 overflow-x-auto py-3 no-scrollbar">
               {TIU_MODULES.map((m, idx) => {
-                const isLocked = idx > tiuUnlockedStage;
-                const isCompleted = !!tiuCompletedStages[idx];
-                const isActive = idx === tiuUnlockedStage;
+                const isLockedBySubscription = !hasActiveSubscription && idx >= 2;
+                const isLocked = isLockedBySubscription || idx > tiuUnlockedStage;
+                const isCompleted = !!tiuCompletedStages[idx] && !isLockedBySubscription;
+                const isActive = idx === tiuUnlockedStage && !isLockedBySubscription;
 
                 return (
                   <button
                     key={m.id}
                     onClick={() => {
-                      if (!isLocked) scrollToStage('tiu', idx);
+                      scrollToStage('tiu', idx);
                     }}
-                    disabled={isLocked}
                     className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all flex items-center gap-1.5 shrink-0 ${
                       isCompleted
                         ? 'bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100 cursor-pointer'
                         : isActive
                         ? 'bg-blue-600 text-white shadow-xs cursor-pointer'
+                        : isLockedBySubscription
+                        ? 'bg-amber-50 text-amber-700 border border-amber-200 hover:bg-amber-100 cursor-pointer'
                         : isLocked
                         ? 'bg-slate-100 text-slate-400 border border-slate-200 cursor-not-allowed opacity-65'
                         : 'bg-white text-slate-700 border border-slate-200 hover:bg-slate-50 cursor-pointer'
@@ -1169,6 +1295,8 @@ export default function MateriPage() {
                   >
                     {isCompleted ? (
                       <Check className="w-3.5 h-3.5" strokeWidth={2.5} />
+                    ) : isLockedBySubscription ? (
+                      <Crown className="w-3 h-3" strokeWidth={2.2} />
                     ) : isLocked ? (
                       <Lock className="w-3 h-3" strokeWidth={2.2} />
                     ) : (
@@ -1194,10 +1322,21 @@ export default function MateriPage() {
                 </button>
               </div>
             ) : (
-              filteredTiuModules.map((module, stageIndex) => {
-                const isLocked = stageIndex > tiuUnlockedStage;
+              filteredTiuModules.map((module) => {
+                const stageIndex = TIU_MODULES.findIndex((item) => item.id === module.id);
+                const isLockedBySubscription = !hasActiveSubscription && stageIndex >= 2;
+                const isLocked = isLockedBySubscription || stageIndex > tiuUnlockedStage;
                 const isCompleted = !!tiuCompletedStages[stageIndex];
                 const result = tiuStageResults[stageIndex];
+
+                if (isLockedBySubscription) {
+                  return renderSubscriptionLockCard(
+                    `tiu-module-${stageIndex}`,
+                    module.stageNumber,
+                    module.title,
+                    module.categoryTag
+                  );
+                }
 
                 return (
                   <section
@@ -1550,27 +1689,31 @@ export default function MateriPage() {
             {/* QUICK TAHAP NAVIGATOR CHIPS */}
             <div className="flex gap-2 overflow-x-auto py-3 no-scrollbar">
               {TKP_MODULES.map((m, idx) => {
-                const isLocked = idx > tkpUnlockedStage;
-                const isCompleted = !!tkpCompletedStages[idx];
-                const isCurrent = idx === tkpUnlockedStage;
+                const isLockedBySubscription = !hasActiveSubscription && idx >= 2;
+                const isLocked = isLockedBySubscription || idx > tkpUnlockedStage;
+                const isCompleted = !!tkpCompletedStages[idx] && !isLockedBySubscription;
+                const isCurrent = idx === tkpUnlockedStage && !isLockedBySubscription;
 
                 return (
                   <button
                     key={m.id}
-                    onClick={() => !isLocked && scrollToStage('tkp', idx)}
-                    disabled={isLocked}
+                    onClick={() => scrollToStage('tkp', idx)}
                     className={`shrink-0 px-3.5 py-1.5 rounded-full text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer ${
                       isCompleted
                         ? 'bg-emerald-50 text-emerald-700 border border-emerald-300 hover:bg-emerald-100'
                         : isCurrent
                         ? 'bg-blue-600 text-white shadow-xs shadow-blue-500/20'
+                        : isLockedBySubscription
+                        ? 'bg-amber-50 text-amber-700 border border-amber-200 hover:bg-amber-100'
                         : isLocked
-                        ? 'bg-slate-100 text-slate-400 border border-slate-200 cursor-not-allowed'
+                        ? 'bg-slate-100 text-slate-400 border border-slate-200'
                         : 'bg-white text-slate-700 border border-slate-300 hover:bg-slate-50'
                     }`}
                   >
                     {isCompleted ? (
                       <Check className="w-3.5 h-3.5" strokeWidth={2.5} />
+                    ) : isLockedBySubscription ? (
+                      <Crown className="w-3 h-3" strokeWidth={2.2} />
                     ) : isLocked ? (
                       <Lock className="w-3 h-3" strokeWidth={2.2} />
                     ) : (
@@ -1598,9 +1741,19 @@ export default function MateriPage() {
             ) : (
               filteredTkpModules.map((m) => {
                 const stageIndex = TKP_MODULES.findIndex(item => item.id === m.id);
-                const isLocked = stageIndex > tkpUnlockedStage;
+                const isLockedBySubscription = !hasActiveSubscription && stageIndex >= 2;
+                const isLocked = isLockedBySubscription || stageIndex > tkpUnlockedStage;
                 const isCompleted = !!tkpCompletedStages[stageIndex];
                 const result = tkpStageResults[stageIndex];
+
+                if (isLockedBySubscription) {
+                  return renderSubscriptionLockCard(
+                    `tkp-module-${stageIndex}`,
+                    m.stageNumber,
+                    m.title,
+                    m.categoryTag
+                  );
+                }
 
                 if (isLocked) {
                   return (
