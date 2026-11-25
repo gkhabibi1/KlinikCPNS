@@ -574,14 +574,14 @@ export default function ResultPage() {
             </div>
 
             {/* CERTIFICATE CANVAS VIEW */}
-            <div id="printable-certificate" className="p-6 sm:p-10 bg-gradient-to-b from-amber-50/40 via-white to-amber-50/40 border-8 border-double border-amber-600/30 text-center space-y-6 relative m-4 rounded-2xl">
+            <div id="printable-certificate" className="p-4 sm:p-10 bg-gradient-to-b from-amber-50/40 via-white to-amber-50/40 border-4 sm:border-8 border-double border-amber-600/30 text-center space-y-5 sm:space-y-6 relative m-2 sm:m-4 rounded-2xl">
               
               {/* Certificate Header */}
               <div className="space-y-1">
                 <div className="text-[10px] uppercase font-bold tracking-widest text-amber-800">
                   KLINIK CPNS • PUSAT SIMULASI CAT INDONESIA
                 </div>
-                <h2 className="text-xl sm:text-3xl font-black text-slate-900 tracking-tight font-serif uppercase">
+                <h2 className="text-lg sm:text-3xl font-black text-slate-900 tracking-tight font-serif uppercase">
                   SERTIFIKAT KELULUSAN SIMULASI
                 </h2>
                 <div className="w-24 h-1 bg-amber-500 mx-auto rounded-full"></div>
@@ -590,7 +590,7 @@ export default function ResultPage() {
               {/* Diberikan Kepada */}
               <div className="space-y-1 pt-2">
                 <div className="text-xs text-slate-500 italic">Diberikan secara resmi kepada:</div>
-                <div className="text-xl sm:text-2xl font-black text-blue-900 tracking-wide underline decoration-amber-500 decoration-2 underline-offset-4">
+                <div className="text-lg sm:text-2xl font-black text-blue-900 tracking-wide underline decoration-amber-500 decoration-2 underline-offset-4 break-words">
                   {studentName}
                 </div>
                 <div className="text-xs text-slate-600 pt-1">
@@ -599,18 +599,18 @@ export default function ResultPage() {
               </div>
 
               {/* Rincian Skor */}
-              <div className="bg-white border border-amber-300 rounded-2xl p-4 shadow-sm max-w-md mx-auto grid grid-cols-4 gap-2 text-center text-xs">
-                <div className="border-r border-slate-100">
+              <div className="bg-white border border-amber-300 rounded-2xl p-3 sm:p-4 shadow-sm max-w-md mx-auto grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-2 text-center text-xs">
+                <div className="sm:border-r border-slate-100">
                   <div className="text-[10px] font-bold text-slate-500">TWK</div>
                   <div className="text-base font-black text-slate-900">{hasil.twk}</div>
                   <div className="text-[9px] text-slate-400">Min 65</div>
                 </div>
-                <div className="border-r border-slate-100">
+                <div className="sm:border-r border-slate-100">
                   <div className="text-[10px] font-bold text-slate-500">TIU</div>
                   <div className="text-base font-black text-slate-900">{hasil.tiu}</div>
                   <div className="text-[9px] text-slate-400">Min 80</div>
                 </div>
-                <div className="border-r border-slate-100">
+                <div className="sm:border-r border-slate-100">
                   <div className="text-[10px] font-bold text-slate-500">TKP</div>
                   <div className="text-base font-black text-slate-900">{hasil.tkp}</div>
                   <div className="text-[9px] text-slate-400">Min 166</div>

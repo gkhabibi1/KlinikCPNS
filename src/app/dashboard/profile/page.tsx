@@ -201,7 +201,7 @@ export default function ProfilePage() {
 
   return (
     <MemberLayout>
-      <div className="max-w-4xl mx-auto p-6 md:p-8">
+      <div className="max-w-4xl mx-auto p-4 sm:p-6 md:p-8">
         <div className="mb-6">
           <h2 className="text-2xl font-bold text-slate-800">Profil Saya</h2>
           <p className="text-slate-500 text-sm mt-1">Lengkapi data diri Anda untuk informasi yang lebih baik.</p>

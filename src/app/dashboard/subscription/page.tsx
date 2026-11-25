@@ -122,7 +122,7 @@ export default function SubscriptionPage() {
 
   return (
     <MemberLayout>
-      <div className="p-6 md:p-8 max-w-6xl mx-auto space-y-6">
+      <div className="p-4 sm:p-6 md:p-8 max-w-6xl mx-auto space-y-6">
       {/* Header */}
       <div>
         <h1 className="text-2xl font-bold text-slate-800 mb-2">Beli Langganan</h1>

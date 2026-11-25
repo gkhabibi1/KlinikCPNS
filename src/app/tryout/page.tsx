@@ -46,20 +46,20 @@ export default function TryOutEngine() {
     };
 
     return (
-        <div className="flex h-screen bg-gray-100 font-sans">
+        <div className="flex flex-col lg:flex-row min-h-screen lg:h-screen bg-gray-100 font-sans">
 
             {/* KIRI: Area Soal */}
-            <div className="w-3/4 p-6 flex flex-col">
-                <div className="flex justify-between items-center bg-white p-4 rounded-lg shadow-sm border-t-4 border-blue-600 mb-4">
-                    <div className="text-lg font-bold text-gray-700">Soal No. {nomorAktif}</div>
-                    <div className="text-xl font-mono font-bold text-red-600 bg-red-100 px-4 py-1 rounded-full border border-red-300">
+            <div className="w-full lg:w-3/4 p-4 sm:p-6 flex flex-col">
+                <div className="flex flex-wrap justify-between items-center gap-2 bg-white p-3.5 sm:p-4 rounded-lg shadow-sm border-t-4 border-blue-600 mb-4">
+                    <div className="text-base sm:text-lg font-bold text-gray-700">Soal No. {nomorAktif}</div>
+                    <div className="text-sm sm:text-xl font-mono font-bold text-red-600 bg-red-100 px-3 sm:px-4 py-1 rounded-full border border-red-300">
                         Sisa Waktu: {formatWaktu(waktu)}
                     </div>
                 </div>
 
-                <div className="flex-grow bg-white p-8 rounded-lg shadow-sm text-gray-800 text-lg">
+                <div className="flex-grow bg-white p-4 sm:p-6 md:p-8 rounded-lg shadow-sm text-gray-800 text-base sm:text-lg">
                     {/* Ini masih data dummy, besok kita ganti dengan data dari Supabase */}
-                    <p className="mb-6">Berdasarkan UUD 1945, lembaga negara yang berwenang memberhentikan Presiden dan/atau Wakil Presiden dalam masa jabatannya menurut Undang-Undang Dasar adalah...</p>
+                    <p className="mb-6 leading-relaxed">Berdasarkan UUD 1945, lembaga negara yang berwenang memberhentikan Presiden dan/atau Wakil Presiden dalam masa jabatannya menurut Undang-Undang Dasar adalah...</p>
 
                     <div className="space-y-3">
                         {['MPR', 'DPR', 'Mahkamah Konstitusi', 'Mahkamah Agung', 'Komisi Yudisial'].map((opsi, index) => {
@@ -69,12 +69,12 @@ export default function TryOutEngine() {
                             return (
                                 <label
                                     key={index}
-                                    className={`flex items-center p-3 border rounded-lg cursor-pointer transition-colors ${isSelected ? 'bg-blue-100 border-blue-400' : 'hover:bg-gray-50'}`}
+                                    className={`flex items-start sm:items-center p-3 border rounded-lg cursor-pointer transition-colors text-sm sm:text-base ${isSelected ? 'bg-blue-100 border-blue-400' : 'hover:bg-gray-50'}`}
                                 >
                                     <input
                                         type="radio"
                                         name={`soal-${nomorAktif}`}
-                                        className="w-5 h-5 mr-4"
+                                        className="w-5 h-5 mr-3 sm:mr-4 mt-0.5 sm:mt-0 shrink-0"
                                         checked={isSelected}
                                         onChange={() => handlePilihJawaban(huruf)}
                                     />
@@ -86,25 +86,25 @@ export default function TryOutEngine() {
                 </div>
 
                 {/* Tombol Navigasi Bawah */}
-                <div className="flex justify-between mt-4">
+                <div className="grid grid-cols-3 gap-2 sm:flex sm:justify-between mt-4">
                     <button
                         onClick={() => setNomorAktif(Math.max(1, nomorAktif - 1))}
-                        className="px-6 py-2 bg-gray-500 text-white rounded hover:bg-gray-600"
+                        className="px-2 sm:px-6 py-2.5 bg-gray-500 text-white rounded text-xs sm:text-sm font-semibold hover:bg-gray-600 cursor-pointer"
                     >
                         SEBELUMNYA
                     </button>
 
                     <button
                         onClick={handleToggleRagu}
-                        className={`px-6 py-2 text-white rounded font-semibold ${ragu[nomorAktif] ? 'bg-yellow-600' : 'bg-yellow-400 hover:bg-yellow-500'}`}
+                        className={`px-2 sm:px-6 py-2.5 text-white rounded text-xs sm:text-sm font-semibold flex items-center justify-center cursor-pointer ${ragu[nomorAktif] ? 'bg-yellow-600' : 'bg-yellow-400 hover:bg-yellow-500'}`}
                     >
-                        <input type="checkbox" checked={ragu[nomorAktif] || false} readOnly className="mr-2" />
+                        <input type="checkbox" checked={ragu[nomorAktif] || false} readOnly className="mr-1.5 sm:mr-2" />
                         RAGU-RAGU
                     </button>
 
                     <button
                         onClick={() => setNomorAktif(Math.min(totalSoal, nomorAktif + 1))}
-                        className="px-6 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 font-semibold"
+                        className="px-2 sm:px-6 py-2.5 bg-blue-600 text-white rounded text-xs sm:text-sm hover:bg-blue-700 font-semibold cursor-pointer"
                     >
                         SELANJUTNYA
                     </button>
@@ -112,11 +112,11 @@ export default function TryOutEngine() {
             </div>
 
             {/* KANAN: Grid Nomor Soal */}
-            <div className="w-1/4 p-6 pl-0">
+            <div className="w-full lg:w-1/4 p-4 sm:p-6 lg:pl-0">
                 <div className="bg-white p-4 rounded-lg shadow-sm h-full flex flex-col">
                     <div className="text-center font-bold text-gray-700 mb-4 pb-2 border-b">Navigasi Soal</div>
 
-                    <div className="grid grid-cols-5 gap-2 overflow-y-auto pr-2 flex-grow content-start">
+                    <div className="grid grid-cols-5 sm:grid-cols-10 lg:grid-cols-5 gap-2 overflow-y-auto pr-1 flex-grow content-start max-h-64 lg:max-h-none">
                         {Array.from({ length: totalSoal }, (_, i) => i + 1).map((num) => (
                             <button
                                 key={num}

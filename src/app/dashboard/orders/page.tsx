@@ -187,7 +187,7 @@ export default function MemberOrdersPage() {
 
   return (
     <MemberLayout>
-      <div className="p-6 md:p-8 max-w-6xl mx-auto font-sans">
+      <div className="p-4 sm:p-6 md:p-8 max-w-6xl mx-auto font-sans">
         {/* Page Title */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
           <div>
@@ -248,7 +248,7 @@ export default function MemberOrdersPage() {
         ) : (
           <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
             <div className="overflow-x-auto">
-              <table className="w-full text-left text-sm text-slate-700">
+              <table className="w-full min-w-[680px] text-left text-sm text-slate-700">
                 <thead className="bg-slate-50 text-slate-600 font-semibold border-b border-slate-200 text-xs uppercase tracking-wider">
                   <tr>
                     <th className="py-4 px-6">ID Transaksi / Tanggal</th>

@@ -640,7 +640,7 @@ export default function TryoutPage() {
 
             {/* Grid Nomor */}
             <div className="p-4">
-              <div className="grid grid-cols-8 gap-2">
+              <div className="grid grid-cols-5 sm:grid-cols-8 gap-2">
                 {questions.map((_, idx) => {
                   const isAnswered = answers[idx] !== undefined;
                   const isMarked = markedQuestions[idx];

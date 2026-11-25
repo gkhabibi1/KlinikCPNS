@@ -396,10 +396,10 @@ export default function PaymentQRISPage() {
                 <img
                   src={qrDataUrl}
                   alt="QRIS Dinamis"
-                  className="w-64 h-64 sm:w-72 sm:h-72 object-contain rounded-lg"
+                  className="w-56 h-56 sm:w-72 sm:h-72 object-contain rounded-lg"
                 />
               ) : (
-                <div className="w-64 h-64 flex items-center justify-center text-slate-400 text-xs">
+                <div className="w-56 h-56 sm:w-64 sm:h-64 flex items-center justify-center text-slate-400 text-xs">
                   Memuat QR...
                 </div>
               )}
@@ -442,21 +442,21 @@ export default function PaymentQRISPage() {
           {/* Kolom Kanan: Rincian Nominal & Form Bukti Transfer */}
           <div className="lg:col-span-7 space-y-6">
             {/* Box Rincian Tagihan */}
-            <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl">
-              <div className="flex items-center justify-between border-b border-slate-800 pb-4 mb-4">
+            <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-6 shadow-xl">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-800 pb-4 mb-4">
                 <div>
                   <span className="text-xs text-slate-400">Order ID:</span>
-                  <div className="font-mono text-sm font-semibold text-slate-200 flex items-center gap-2">
-                    {orderId}
+                  <div className="font-mono text-xs sm:text-sm font-semibold text-slate-200 flex items-center gap-2 flex-wrap">
+                    <span className="break-all">{orderId}</span>
                     <button
                       onClick={() => handleCopy(orderId, 'orderId')}
-                      className="text-xs text-blue-400 hover:text-blue-300"
+                      className="text-xs text-blue-400 hover:text-blue-300 shrink-0"
                     >
                       {copiedOrderId ? '✓ Tersalin' : 'Salin'}
                     </button>
                   </div>
                 </div>
-                <div className="text-right">
+                <div className="text-left sm:text-right">
                   <span className="text-xs text-slate-400">Paket:</span>
                   <div className="text-sm font-bold text-white">
                     {packageData?.name || 'Paket Try Out'}
@@ -480,7 +480,7 @@ export default function PaymentQRISPage() {
               </div>
 
               {/* Total Wajib Transfer */}
-              <div className="mt-4 pt-4 border-t border-slate-800 bg-slate-950/60 -mx-6 -mb-6 p-6 rounded-b-2xl">
+              <div className="mt-4 pt-4 border-t border-slate-800 bg-slate-950/60 -mx-4 -mb-4 sm:-mx-6 sm:-mb-6 p-4 sm:p-6 rounded-b-2xl">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                   <div>
                     <span className="text-xs uppercase tracking-wider font-semibold text-slate-400 block">

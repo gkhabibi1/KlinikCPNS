@@ -292,7 +292,7 @@ function Hero() {
           </div>
 
           {/* floating "prescription" card — signature element preview */}
-          <div className="absolute -bottom-6 -left-6 md:-left-10 w-56 bg-white rounded-2xl border border-slate-100 shadow-xl shadow-slate-200/70 p-4">
+          <div className="absolute -bottom-4 left-2 sm:-bottom-6 sm:-left-6 md:-left-10 w-52 sm:w-56 bg-white rounded-2xl border border-slate-100 shadow-xl shadow-slate-200/70 p-3.5 sm:p-4">
             <div className="flex items-center gap-2 pb-2.5 mb-2.5 border-b border-dashed border-blue-200">
               <span className="w-6 h-6 rounded-md bg-blue-600 flex items-center justify-center text-white text-[10px] font-bold">
                 Rx
@@ -319,7 +319,7 @@ function Hero() {
             </ul>
           </div>
 
-          <div className="absolute -top-4 -right-3 md:-right-6 bg-blue-600 text-white rounded-2xl px-4 py-3 shadow-lg shadow-blue-200 rotate-3">
+          <div className="absolute -top-3 right-2 sm:-top-4 sm:-right-3 md:-right-6 bg-blue-600 text-white rounded-2xl px-3.5 py-2.5 sm:px-4 sm:py-3 shadow-lg shadow-blue-200 rotate-3">
             <p className="text-[10px] font-medium text-blue-100 uppercase tracking-wide">
               Rating Pengguna
             </p>

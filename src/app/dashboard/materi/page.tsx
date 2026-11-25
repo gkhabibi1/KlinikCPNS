@@ -20,7 +20,22 @@ import {
   Users,
   Maximize2,
   Minimize2,
-  RotateCcw
+  RotateCcw,
+  Lock,
+  Check,
+  CheckCircle2,
+  Lightbulb,
+  KeyRound,
+  ClipboardCheck,
+  X,
+  MessageSquare,
+  Image as ImageIcon,
+  Briefcase,
+  Globe,
+  Laptop,
+  ShieldCheck,
+  ArrowLeft,
+  CircleDot
 } from 'lucide-react';
 
 function TkpIllustration({ type }: { type: string }) {
@@ -538,35 +553,62 @@ export default function MateriPage() {
   });
 
   const content = (
-    <div className="min-h-screen text-[#172033] bg-[#f6f8fc] pb-16 font-sans antialiased">
+    <div className="min-h-screen overflow-x-hidden text-[#172033] bg-[#f8fafc] pb-20 font-sans antialiased">
       {/* GLOBAL STYLES FOR MODULE CONTENT */}
       <style jsx global>{`
+        .materi-content {
+          color: #334155;
+          font-size: 15.5px;
+          line-height: 1.82;
+          overflow-wrap: break-word;
+          word-wrap: break-word;
+        }
+        @media (min-width: 640px) {
+          .materi-content {
+            font-size: 16px;
+            line-height: 1.85;
+          }
+        }
         .materi-content p,
         .materi-content li {
-          text-align: justify;
-          text-justify: inter-word;
-          line-height: 1.75;
-          margin: 9px 0;
+          text-align: left;
+          line-height: 1.82;
+          margin: 12px 0;
           color: #334155;
-          font-size: 15px;
+          font-size: inherit;
         }
         .materi-content h2 {
-          font-size: 19px;
+          font-family: var(--font-heading), sans-serif;
+          font-size: 18px;
+          font-weight: 800;
+          color: #0f2d6b;
+          margin: 26px 0 12px;
+          border-left: 4px solid #2563eb;
+          padding-left: 12px;
+          line-height: 1.35;
+        }
+        @media (min-width: 640px) {
+          .materi-content h2 {
+            font-size: 20px;
+          }
+        }
+        .materi-content h3 {
+          font-family: var(--font-heading), sans-serif;
+          font-size: 16px;
           font-weight: 700;
-          color: #163b7a;
-          margin: 24px 0 10px;
-          border-left: 4px solid #155eef;
-          padding-left: 10px;
+          color: #1e293b;
+          margin: 20px 0 8px;
+          line-height: 1.4;
         }
         .materi-content ul {
-          padding-left: 22px;
+          padding-left: 20px;
           list-style-type: disc;
-          margin: 10px 0;
+          margin: 12px 0;
         }
         .materi-content ol {
-          padding-left: 22px;
+          padding-left: 20px;
           list-style-type: decimal;
-          margin: 10px 0;
+          margin: 12px 0;
         }
         .materi-content strong {
           color: #0f172a;
@@ -576,15 +618,38 @@ export default function MateriPage() {
           font-style: italic;
           color: #1e3a8a;
         }
+        .materi-content blockquote {
+          border-left: 3px solid #93c5fd;
+          background: #f8fbff;
+          padding: 12px 16px;
+          border-radius: 0 12px 12px 0;
+          margin: 16px 0;
+          color: #1e3a8a;
+        }
+        .materi-content table {
+          display: block;
+          width: 100%;
+          overflow-x: auto;
+          -webkit-overflow-scrolling: touch;
+          border-collapse: collapse;
+          margin: 16px 0;
+          font-size: 14px;
+        }
+        .materi-content pre,
+        .materi-content code {
+          overflow-x: auto;
+          max-width: 100%;
+          word-break: break-word;
+        }
       `}</style>
 
       {/* TOP NAVIGATION / SUBJECT TABS */}
-      <div className="bg-white/90 backdrop-blur-md border-b border-slate-200/80 sticky top-0 z-30">
-        <div className="max-w-[1120px] mx-auto px-4 py-3 flex flex-wrap items-center justify-between gap-3">
-          <div className="flex items-center gap-1.5 overflow-x-auto py-0.5 no-scrollbar">
+      <div className="bg-white/95 backdrop-blur-md border-b border-slate-200/80 sticky top-0 z-30">
+        <div className="max-w-[1120px] mx-auto px-3 sm:px-4 py-2.5 sm:py-3 flex flex-wrap items-center justify-between gap-2.5 sm:gap-3">
+          <div className="flex items-center gap-1.5 overflow-x-auto py-0.5 no-scrollbar w-full sm:w-auto">
             <button
               onClick={() => { setActiveSubject('twk'); setSearchQuery(''); }}
-              className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all cursor-pointer shrink-0 ${
+              className={`flex items-center gap-1.5 sm:gap-2 px-3 sm:px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all cursor-pointer shrink-0 ${
                 activeSubject === 'twk'
                   ? 'bg-blue-600 text-white shadow-xs'
                   : 'bg-slate-100 text-slate-600 hover:bg-slate-200/70'
@@ -596,7 +661,7 @@ export default function MateriPage() {
 
             <button
               onClick={() => { setActiveSubject('tiu'); setSearchQuery(''); }}
-              className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all cursor-pointer shrink-0 ${
+              className={`flex items-center gap-1.5 sm:gap-2 px-3 sm:px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all cursor-pointer shrink-0 ${
                 activeSubject === 'tiu'
                   ? 'bg-blue-600 text-white shadow-xs'
                   : 'bg-slate-100 text-slate-600 hover:bg-slate-200/70'
@@ -608,7 +673,7 @@ export default function MateriPage() {
 
             <button
               onClick={() => { setActiveSubject('tkp'); setSearchQuery(''); }}
-              className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all cursor-pointer shrink-0 ${
+              className={`flex items-center gap-1.5 sm:gap-2 px-3 sm:px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all cursor-pointer shrink-0 ${
                 activeSubject === 'tkp'
                   ? 'bg-blue-600 text-white shadow-xs'
                   : 'bg-slate-100 text-slate-600 hover:bg-slate-200/70'
@@ -620,7 +685,7 @@ export default function MateriPage() {
 
             <button
               onClick={() => { setActiveSubject('cheatsheet'); setSearchQuery(''); }}
-              className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all cursor-pointer shrink-0 ${
+              className={`flex items-center gap-1.5 sm:gap-2 px-3 sm:px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all cursor-pointer shrink-0 ${
                 activeSubject === 'cheatsheet'
                   ? 'bg-amber-500 text-white shadow-xs'
                   : 'bg-slate-100 text-slate-600 hover:bg-slate-200/70'
@@ -635,7 +700,7 @@ export default function MateriPage() {
             <div className="flex items-center gap-2 ml-auto">
               <button
                 onClick={() => setFocusMode(!focusMode)}
-                className={`text-xs px-3 py-1.5 rounded-xl border font-medium transition-colors flex items-center gap-1.5 cursor-pointer ${
+                className={`text-xs px-3 py-1.5 rounded-xl border font-semibold transition-colors flex items-center gap-1.5 cursor-pointer ${
                   focusMode
                     ? 'bg-blue-50 border-blue-200 text-blue-700'
                     : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
@@ -664,34 +729,36 @@ export default function MateriPage() {
       {activeSubject === 'twk' && (
         <>
           {/* HERO BANNER */}
-          <header className="bg-gradient-to-br from-[#082f86] via-[#155eef] to-[#6b9cff] text-white pt-12 pb-20 px-5">
+          <header className="bg-gradient-to-br from-[#082f86] via-[#155eef] to-[#6b9cff] text-white pt-8 pb-14 sm:pt-12 sm:pb-20 px-4 sm:px-5">
             <div className="max-w-[1120px] mx-auto">
-              <div className="text-[11px] font-black tracking-[0.16em] uppercase opacity-85 mb-2">
+              <div className="text-[11px] font-extrabold tracking-[0.16em] uppercase opacity-85 mb-2">
                 TWK CPNS • INTERACTIVE LEARNING
               </div>
-              <h1 className="text-3xl md:text-5xl lg:text-[54px] font-black leading-tight mb-3">
+              <h1 className="font-heading text-2xl sm:text-4xl lg:text-5xl font-extrabold leading-[1.18] tracking-tight mb-3">
                 Materi TWK, selangkah demi selangkah.
               </h1>
-              <p className="max-w-[760px] text-base md:text-[17px] opacity-90 leading-relaxed">
-                Struktur belajar dibuat berjenjang: pahami konsep → lihat detail → cek pemahaman di checkpoint → buka tahap berikutnya secara berurutan.
+              <p className="max-w-[700px] text-sm sm:text-base md:text-[17px] opacity-90 leading-relaxed">
+                Struktur belajar dibuat berjenjang: pahami konsep secara ringkas, tinjau poin inti, cek pemahaman di checkpoint, lalu buka tahap berikutnya secara berurutan.
               </p>
 
               {/* SEARCH BAR */}
-              <div className="mt-6 max-w-md">
+              <div className="mt-5 sm:mt-6 max-w-md">
                 <div className="relative">
+                  <Search className="w-4 h-4 text-white/75 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
                   <input
                     type="text"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     placeholder="Cari topik TWK (contoh: Pancasila, Bela Negara, EYD)..."
-                    className="w-full bg-white/15 backdrop-blur-md text-white placeholder-white/70 border border-white/30 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-white focus:bg-white/20 transition-all"
+                    className="w-full bg-white/15 backdrop-blur-md text-white placeholder-white/75 border border-white/30 rounded-xl pl-10 pr-9 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-white focus:bg-white/20 transition-all"
                   />
                   {searchQuery && (
                     <button
                       onClick={() => setSearchQuery('')}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-white/80 hover:text-white text-xs"
+                      aria-label="Hapus pencarian"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-white/80 hover:text-white cursor-pointer"
                     >
-                      ✕
+                      <X className="w-4 h-4" />
                     </button>
                   )}
                 </div>
@@ -700,28 +767,28 @@ export default function MateriPage() {
           </header>
 
           {/* STICKY / FLOATING PROGRESS DASHBOARD */}
-          <div className="max-w-[1120px] mx-auto -mt-8 mb-8 px-4">
-            <div className="bg-white border border-[#e4e7ec] rounded-2xl shadow-[0_12px_35px_rgba(16,24,40,0.07)] p-4 sm:p-5 flex flex-wrap items-center justify-between gap-4">
+          <div className="max-w-[1120px] mx-auto -mt-7 sm:-mt-8 mb-6 sm:mb-8 px-3 sm:px-4">
+            <div className="bg-white border border-[#e4e7ec] rounded-2xl shadow-[0_12px_35px_rgba(16,24,40,0.07)] p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3.5 sm:gap-4">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">
+                <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
                   <BookOpen className="w-5 h-5" strokeWidth={1.8} />
                 </div>
                 <div>
-                  <div className="text-xs font-bold text-slate-500 uppercase tracking-wider">Progress Belajar TWK</div>
+                  <div className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Progress Belajar TWK</div>
                   <div className="text-sm font-extrabold text-slate-900">
                     {twkCompletedCount} dari {TWK_MODULES.length} Tahap Selesai
                   </div>
                 </div>
               </div>
 
-              <div className="flex-1 min-w-[200px] flex items-center gap-4">
+              <div className="w-full sm:flex-1 sm:min-w-[200px] flex items-center gap-3">
                 <div className="flex-1 h-2.5 bg-[#e9eef7] rounded-full overflow-hidden">
                   <div
                     className="h-full bg-[#155eef] rounded-full transition-all duration-500 ease-out"
                     style={{ width: `${twkProgressPercent}%` }}
                   />
                 </div>
-                <span className="text-sm font-black text-[#155eef] min-w-[45px] text-right">
+                <span className="text-sm font-black text-[#155eef] min-w-[42px] text-right">
                   {twkProgressPercent}%
                 </span>
               </div>
@@ -741,17 +808,23 @@ export default function MateriPage() {
                       if (!isLocked) scrollToStage('twk', idx);
                     }}
                     disabled={isLocked}
-                    className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all flex items-center gap-1.5 ${
+                    className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all flex items-center gap-1.5 shrink-0 ${
                       isCompleted
                         ? 'bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100 cursor-pointer'
                         : isActive
                         ? 'bg-blue-600 text-white shadow-xs cursor-pointer'
                         : isLocked
-                        ? 'bg-slate-100 text-slate-400 border border-slate-200 cursor-not-allowed opacity-60'
+                        ? 'bg-slate-100 text-slate-400 border border-slate-200 cursor-not-allowed opacity-65'
                         : 'bg-white text-slate-700 border border-slate-200 hover:bg-slate-50 cursor-pointer'
                     }`}
                   >
-                    <span>{isCompleted ? '✓' : isLocked ? '🔒' : '•'}</span>
+                    {isCompleted ? (
+                      <Check className="w-3.5 h-3.5" strokeWidth={2.5} />
+                    ) : isLocked ? (
+                      <Lock className="w-3 h-3" strokeWidth={2.2} />
+                    ) : (
+                      <CircleDot className="w-3 h-3" strokeWidth={2.2} />
+                    )}
                     <span>T{idx + 1 < 10 ? `0${idx + 1}` : idx + 1}</span>
                   </button>
                 );
@@ -760,7 +833,7 @@ export default function MateriPage() {
           </div>
 
           {/* MAIN TWK MODULES LIST */}
-          <main className="max-w-[1120px] mx-auto px-4 space-y-8">
+          <main className="max-w-[1120px] mx-auto px-3 sm:px-4 space-y-6 sm:space-y-8">
             {filteredTwkModules.length === 0 ? (
               <div className="bg-white rounded-2xl border border-slate-200 p-12 text-center text-slate-500">
                 <p className="text-base font-semibold">Tidak ada tahap materi yang cocok dengan pencarian "{searchQuery}"</p>
@@ -782,59 +855,60 @@ export default function MateriPage() {
                   <section
                     key={module.id}
                     id={`twk-module-${stageIndex}`}
-                    className={`bg-white border border-[#e4e7ec] rounded-3xl shadow-[0_12px_35px_rgba(16,24,40,0.07)] p-6 sm:p-8 md:p-10 relative transition-all duration-300 ${
-                      isLocked ? 'opacity-70 overflow-hidden' : ''
+                    className={`bg-white border border-[#e4e7ec] rounded-2xl sm:rounded-3xl shadow-[0_8px_28px_rgba(16,24,40,0.05)] p-4 sm:p-7 md:p-9 relative transition-all duration-300 ${
+                      isLocked ? 'min-h-[260px] opacity-75 overflow-hidden' : ''
                     }`}
                   >
                     {/* LOCKED OVERLAY */}
                     {isLocked && (
-                      <div className="absolute inset-0 bg-[#f6f8fcdc] backdrop-blur-xs z-20 flex flex-col items-center justify-center p-6 text-center">
-                        <div className="w-14 h-14 rounded-2xl bg-white border border-slate-200 shadow-md flex items-center justify-center text-2xl mb-3">
-                          🔒
+                      <div className="absolute inset-0 bg-[#f8fafce6] backdrop-blur-xs z-20 flex flex-col items-center justify-center p-5 text-center">
+                        <div className="w-12 h-12 rounded-2xl bg-white border border-slate-200 shadow-sm flex items-center justify-center text-slate-500 mb-3">
+                          <Lock className="w-5 h-5" />
                         </div>
-                        <h3 className="text-lg font-bold text-slate-800 mb-1">
+                        <h3 className="font-heading text-base sm:text-lg font-bold text-slate-800 mb-1">
                           {module.stageNumber} Terkunci
                         </h3>
-                        <p className="text-sm text-slate-500 max-w-md mb-4">
+                        <p className="text-xs sm:text-sm text-slate-500 max-w-md mb-4 leading-relaxed">
                           Selesaikan dan jawab semua soal Checkpoint pada <strong>Tahap {stageIndex}</strong> dengan benar untuk membuka materi ini.
                         </p>
                         <button
                           onClick={() => scrollToStage('twk', stageIndex - 1)}
-                          className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition-all shadow-xs cursor-pointer"
+                          className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition-all shadow-xs cursor-pointer inline-flex items-center gap-1.5"
                         >
-                          ← Buka Tahap Sebelumnya
+                          <ArrowLeft className="w-3.5 h-3.5" />
+                          <span>Buka Tahap Sebelumnya</span>
                         </button>
                       </div>
                     )}
 
                     {/* MODULE HEADER */}
-                    <div className="flex items-center justify-between text-[#155eef] font-black text-xs tracking-[0.12em] mb-2">
+                    <div className="flex flex-wrap items-center justify-between gap-2 text-[#155eef] font-extrabold text-xs tracking-[0.12em] mb-2">
                       <span className="uppercase">{module.stageNumber}</span>
                       {isCompleted ? (
-                        <span className="text-[11px] bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-full px-2.5 py-0.5 font-bold flex items-center gap-1">
-                          <span>✓</span> SELESAI
+                        <span className="text-[11px] bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-full px-2.5 py-0.5 font-bold inline-flex items-center gap-1">
+                          <Check className="w-3 h-3" strokeWidth={2.5} /> SELESAI
                         </span>
                       ) : isLocked ? (
-                        <span className="text-[11px] bg-slate-100 text-slate-500 rounded-full px-2.5 py-0.5 font-bold">
-                          🔒 TERKUNCI
+                        <span className="text-[11px] bg-slate-100 text-slate-500 rounded-full px-2.5 py-0.5 font-bold inline-flex items-center gap-1">
+                          <Lock className="w-3 h-3" /> TERKUNCI
                         </span>
                       ) : (
-                        <span className="text-[11px] bg-blue-50 text-blue-700 rounded-full px-2.5 py-0.5 font-bold">
-                          📖 AKTIF
+                        <span className="text-[11px] bg-blue-50 text-blue-700 rounded-full px-2.5 py-0.5 font-bold inline-flex items-center gap-1">
+                          <BookOpen className="w-3 h-3" /> AKTIF
                         </span>
                       )}
                     </div>
 
-                    <h2 className="text-2xl md:text-3xl font-black text-[#0b3aa4] leading-snug mb-6">
+                    <h2 className="font-heading text-xl sm:text-2xl md:text-3xl font-extrabold text-[#0b3aa4] leading-snug mb-5 sm:mb-6">
                       {module.title}
                     </h2>
 
                     {/* LEARNING GRID: CONTENT & STICKY ASIDE */}
-                    <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1.7fr)_minmax(260px,0.7fr)] gap-8">
+                    <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1.7fr)_minmax(260px,0.75fr)] gap-6 lg:gap-8">
                       {/* LEFT: READING CONTENT */}
-                      <div>
-                        <div className="text-[10px] font-black tracking-[0.13em] text-[#155eef] uppercase mb-2">
-                          PELAJARI
+                      <div className="min-w-0 max-w-[70ch]">
+                        <div className="text-[11px] font-extrabold tracking-[0.13em] text-[#155eef] uppercase mb-2">
+                          PELAJARI KONSEP
                         </div>
                         <div
                           className="materi-content"
@@ -843,15 +917,15 @@ export default function MateriPage() {
                       </div>
 
                       {/* RIGHT: ASIDE SUMMARY */}
-                      <div>
-                        <aside className="bg-[#f8fbff] border border-[#dbe5f5] rounded-2xl p-5 lg:sticky lg:top-20">
-                          <div className="text-[10px] font-black tracking-[0.13em] text-[#155eef] uppercase mb-3 flex items-center gap-1.5">
-                            <span>💡</span>
+                      <div className="min-w-0">
+                        <aside className="bg-[#f8fbff] border border-[#dbe5f5] rounded-2xl p-4 sm:p-5 lg:sticky lg:top-20">
+                          <div className="text-[11px] font-extrabold tracking-[0.12em] text-[#155eef] uppercase mb-3 flex items-center gap-1.5">
+                            <Lightbulb className="w-4 h-4 shrink-0" />
                             <span>INTI YANG PERLU DIINGAT</span>
                           </div>
-                          <ul className="space-y-3 pl-4 text-xs md:text-sm text-[#344054] leading-relaxed list-disc">
+                          <ul className="space-y-2.5 pl-4 text-xs sm:text-sm text-[#344054] leading-relaxed list-disc">
                             {module.keys.map((keyPoint, kIdx) => (
-                              <li key={kIdx} className="text-justify">
+                              <li key={kIdx} className="text-left">
                                 {keyPoint}
                               </li>
                             ))}
@@ -866,14 +940,14 @@ export default function MateriPage() {
                     )}
 
                     {/* CHECKPOINT SECTION */}
-                    <div className="mt-10 bg-[#eef5ff] border border-[#dbe5f5] rounded-2xl p-6 md:p-8 relative z-10">
-                      <div className="text-[10px] font-black tracking-[0.13em] text-[#155eef] uppercase mb-1">
+                    <div className="mt-8 sm:mt-10 bg-[#eef5ff] border border-[#dbe5f5] rounded-2xl p-4 sm:p-6 md:p-8 relative z-10">
+                      <div className="text-[11px] font-extrabold tracking-[0.13em] text-[#155eef] uppercase mb-1">
                         CHECKPOINT
                       </div>
-                      <h3 className="text-xl font-bold text-[#0b3aa4] mb-1">
+                      <h3 className="font-heading text-lg sm:text-xl font-bold text-[#0b3aa4] mb-1">
                         Uji pemahaman sebelum lanjut
                       </h3>
-                      <p className="text-xs md:text-sm text-[#667085] mb-6">
+                      <p className="text-xs sm:text-sm text-[#475467] mb-5 sm:mb-6 leading-relaxed">
                         Jawab ketiga soal berikut. Materi tahap berikutnya baru terbuka setelah seluruh soal dijawab dengan benar.
                       </p>
 
@@ -946,13 +1020,14 @@ export default function MateriPage() {
                       </div>
 
                       {/* ACTION BUTTON & RESULT FEEDBACK */}
-                      <div className="mt-6 flex flex-col sm:flex-row sm:items-center gap-4">
+                      <div className="mt-6 flex flex-col sm:flex-row sm:items-center gap-3.5 sm:gap-4">
                         <button
                           type="button"
                           onClick={() => checkTwkAnswers(stageIndex)}
-                          className="bg-[#155eef] hover:bg-[#0b3aa4] text-white font-extrabold px-6 py-3 rounded-xl text-sm transition-all shadow-sm cursor-pointer flex items-center justify-center gap-2"
+                          className="w-full sm:w-auto bg-[#155eef] hover:bg-[#0b3aa4] text-white font-extrabold px-6 py-3 rounded-xl text-sm transition-all shadow-sm cursor-pointer flex items-center justify-center gap-2"
                         >
-                          <span>🔍 Periksa Jawaban</span>
+                          <CheckCircle2 className="w-4 h-4" />
+                          <span>Periksa Jawaban</span>
                         </button>
 
                         {result && (
@@ -978,50 +1053,61 @@ export default function MateriPage() {
       {activeSubject === 'tiu' && (
         <>
           {/* HERO BANNER */}
-          <header className="bg-gradient-to-br from-[#0c2340] via-[#1769ff] to-[#60a5fa] text-white pt-12 pb-20 px-5">
+          <header className="bg-gradient-to-br from-[#0c2340] via-[#1769ff] to-[#60a5fa] text-white pt-8 pb-14 sm:pt-12 sm:pb-20 px-4 sm:px-5">
             <div className="max-w-[1120px] mx-auto">
-              <div className="text-[11px] font-black tracking-[0.16em] uppercase opacity-85 mb-2">
+              <div className="text-[11px] font-extrabold tracking-[0.16em] uppercase opacity-85 mb-2">
                 TIU CPNS • INTERACTIVE LEARNING
               </div>
-              <h1 className="text-3xl md:text-5xl lg:text-[54px] font-black leading-tight mb-3">
+              <h1 className="font-heading text-2xl sm:text-4xl lg:text-5xl font-extrabold leading-[1.18] tracking-tight mb-3">
                 Belajar TIU dengan Sistem Unlock.
               </h1>
-              <p className="max-w-[760px] text-base md:text-[17px] opacity-90 leading-relaxed">
-                Kuasai 3 pilar utama: Verbal, Numerik, dan Figural. Setiap tahap dilengkapi konsep terarah, rumus & pola kunci, ilustrasi visual, serta uji checkpoint untuk membuka tahap berikutnya.
+              <p className="max-w-[700px] text-sm sm:text-base md:text-[17px] opacity-90 leading-relaxed">
+                Kuasai 3 pilar utama: Verbal, Numerik, dan Figural. Setiap tahap dilengkapi konsep terarah, rumus &amp; pola kunci, ilustrasi visual, serta uji checkpoint untuk membuka tahap berikutnya.
               </p>
 
               {/* THREE PILLAR MAP */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mt-6 max-w-2xl">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 sm:gap-3 mt-5 sm:mt-6 max-w-2xl">
                 <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-3.5 text-left">
-                  <div className="text-xs font-extrabold text-blue-200 uppercase tracking-wider">🗣️ Verbal (3 Tahap)</div>
+                  <div className="text-xs font-extrabold text-blue-200 uppercase tracking-wider flex items-center gap-1.5">
+                    <MessageSquare className="w-3.5 h-3.5" />
+                    <span>Verbal (3 Tahap)</span>
+                  </div>
                   <div className="text-xs text-white/90 mt-1 font-medium">Analogi • Silogisme • Analitis</div>
                 </div>
                 <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-3.5 text-left">
-                  <div className="text-xs font-extrabold text-blue-200 uppercase tracking-wider">🔢 Numerik (6 Tahap)</div>
+                  <div className="text-xs font-extrabold text-blue-200 uppercase tracking-wider flex items-center gap-1.5">
+                    <Calculator className="w-3.5 h-3.5" />
+                    <span>Numerik (6 Tahap)</span>
+                  </div>
                   <div className="text-xs text-white/90 mt-1 font-medium">Pecahan • Deret • Perbandingan • Tabel</div>
                 </div>
                 <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-3.5 text-left">
-                  <div className="text-xs font-extrabold text-blue-200 uppercase tracking-wider">🖼️ Figural (3 Tahap)</div>
+                  <div className="text-xs font-extrabold text-blue-200 uppercase tracking-wider flex items-center gap-1.5">
+                    <ImageIcon className="w-3.5 h-3.5" />
+                    <span>Figural (3 Tahap)</span>
+                  </div>
                   <div className="text-xs text-white/90 mt-1 font-medium">Analogi Gambar • Seri • Ketaksamaan</div>
                 </div>
               </div>
 
               {/* SEARCH BAR */}
-              <div className="mt-6 max-w-md">
+              <div className="mt-5 sm:mt-6 max-w-md">
                 <div className="relative">
+                  <Search className="w-4 h-4 text-white/75 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
                   <input
                     type="text"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     placeholder="Cari materi TIU (contoh: Silogisme, Pecahan, Deret, Figural)..."
-                    className="w-full bg-white/15 backdrop-blur-md text-white placeholder-white/70 border border-white/30 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-white focus:bg-white/20 transition-all"
+                    className="w-full bg-white/15 backdrop-blur-md text-white placeholder-white/75 border border-white/30 rounded-xl pl-10 pr-9 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-white focus:bg-white/20 transition-all"
                   />
                   {searchQuery && (
                     <button
                       onClick={() => setSearchQuery('')}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-white/80 hover:text-white text-xs cursor-pointer"
+                      aria-label="Hapus pencarian"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-white/80 hover:text-white cursor-pointer"
                     >
-                      ✕
+                      <X className="w-4 h-4" />
                     </button>
                   )}
                 </div>
@@ -1030,28 +1116,28 @@ export default function MateriPage() {
           </header>
 
           {/* STICKY / FLOATING PROGRESS DASHBOARD */}
-          <div className="max-w-[1120px] mx-auto -mt-8 mb-8 px-4">
-            <div className="bg-white border border-[#e4e7ec] rounded-2xl shadow-[0_12px_35px_rgba(16,24,40,0.07)] p-4 sm:p-5 flex flex-wrap items-center justify-between gap-4">
+          <div className="max-w-[1120px] mx-auto -mt-7 sm:-mt-8 mb-6 sm:mb-8 px-3 sm:px-4">
+            <div className="bg-white border border-[#e4e7ec] rounded-2xl shadow-[0_12px_35px_rgba(16,24,40,0.07)] p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3.5 sm:gap-4">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center font-bold text-base">
-                  🧮
+                <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
+                  <Calculator className="w-5 h-5" strokeWidth={1.8} />
                 </div>
                 <div>
-                  <div className="text-xs font-bold text-slate-500 uppercase tracking-wider">Progress Belajar TIU</div>
+                  <div className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Progress Belajar TIU</div>
                   <div className="text-sm font-extrabold text-slate-900">
                     {tiuCompletedCount} dari {TIU_MODULES.length} Subbab Selesai
                   </div>
                 </div>
               </div>
 
-              <div className="flex-1 min-w-[200px] flex items-center gap-4">
+              <div className="w-full sm:flex-1 sm:min-w-[200px] flex items-center gap-3">
                 <div className="flex-1 h-2.5 bg-[#e9eef7] rounded-full overflow-hidden">
                   <div
                     className="h-full bg-[#1769ff] rounded-full transition-all duration-500 ease-out"
                     style={{ width: `${tiuProgressPercent}%` }}
                   />
                 </div>
-                <span className="text-sm font-black text-[#1769ff] min-w-[45px] text-right">
+                <span className="text-sm font-black text-[#1769ff] min-w-[42px] text-right">
                   {tiuProgressPercent}%
                 </span>
               </div>
@@ -1071,17 +1157,23 @@ export default function MateriPage() {
                       if (!isLocked) scrollToStage('tiu', idx);
                     }}
                     disabled={isLocked}
-                    className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all flex items-center gap-1.5 ${
+                    className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all flex items-center gap-1.5 shrink-0 ${
                       isCompleted
                         ? 'bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100 cursor-pointer'
                         : isActive
                         ? 'bg-blue-600 text-white shadow-xs cursor-pointer'
                         : isLocked
-                        ? 'bg-slate-100 text-slate-400 border border-slate-200 cursor-not-allowed opacity-60'
+                        ? 'bg-slate-100 text-slate-400 border border-slate-200 cursor-not-allowed opacity-65'
                         : 'bg-white text-slate-700 border border-slate-200 hover:bg-slate-50 cursor-pointer'
                     }`}
                   >
-                    <span>{isCompleted ? '✓' : isLocked ? '🔒' : '•'}</span>
+                    {isCompleted ? (
+                      <Check className="w-3.5 h-3.5" strokeWidth={2.5} />
+                    ) : isLocked ? (
+                      <Lock className="w-3 h-3" strokeWidth={2.2} />
+                    ) : (
+                      <CircleDot className="w-3 h-3" strokeWidth={2.2} />
+                    )}
                     <span>T{idx + 1 < 10 ? `0${idx + 1}` : idx + 1} ({m.categoryTag.substring(0, 3)})</span>
                   </button>
                 );
@@ -1090,7 +1182,7 @@ export default function MateriPage() {
           </div>
 
           {/* MAIN TIU MODULES LIST */}
-          <main className="max-w-[1120px] mx-auto px-4 space-y-8">
+          <main className="max-w-[1120px] mx-auto px-3 sm:px-4 space-y-6 sm:space-y-8">
             {filteredTiuModules.length === 0 ? (
               <div className="bg-white rounded-2xl border border-slate-200 p-12 text-center text-slate-500">
                 <p className="text-base font-semibold">Tidak ada materi TIU yang cocok dengan pencarian "{searchQuery}"</p>
@@ -1111,74 +1203,75 @@ export default function MateriPage() {
                   <section
                     key={module.id}
                     id={`tiu-module-${stageIndex}`}
-                    className={`bg-white border border-[#e4e7ec] rounded-3xl shadow-[0_12px_35px_rgba(16,24,40,0.07)] p-6 sm:p-8 md:p-10 relative transition-all duration-300 ${
-                      isLocked ? 'opacity-70 overflow-hidden' : ''
+                    className={`bg-white border border-[#e4e7ec] rounded-2xl sm:rounded-3xl shadow-[0_8px_28px_rgba(16,24,40,0.05)] p-4 sm:p-7 md:p-9 relative transition-all duration-300 ${
+                      isLocked ? 'min-h-[260px] opacity-75 overflow-hidden' : ''
                     }`}
                   >
                     {/* LOCKED OVERLAY */}
                     {isLocked && (
-                      <div className="absolute inset-0 bg-[#f6f8fcdc] backdrop-blur-xs z-20 flex flex-col items-center justify-center p-6 text-center">
-                        <div className="w-14 h-14 rounded-2xl bg-white border border-slate-200 shadow-md flex items-center justify-center text-2xl mb-3">
-                          🔒
+                      <div className="absolute inset-0 bg-[#f8fafce6] backdrop-blur-xs z-20 flex flex-col items-center justify-center p-5 text-center">
+                        <div className="w-12 h-12 rounded-2xl bg-white border border-slate-200 shadow-sm flex items-center justify-center text-slate-500 mb-3">
+                          <Lock className="w-5 h-5" />
                         </div>
-                        <h3 className="text-lg font-bold text-slate-800 mb-1">
+                        <h3 className="font-heading text-base sm:text-lg font-bold text-slate-800 mb-1">
                           {module.stageNumber} ({module.title}) Terkunci
                         </h3>
-                        <p className="text-sm text-slate-500 max-w-md mb-4">
+                        <p className="text-xs sm:text-sm text-slate-500 max-w-md mb-4 leading-relaxed">
                           Selesaikan dan jawab semua soal Checkpoint pada <strong>Tahap {stageIndex}</strong> dengan benar untuk membuka materi ini.
                         </p>
                         <button
                           onClick={() => scrollToStage('tiu', stageIndex - 1)}
-                          className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition-all shadow-xs cursor-pointer"
+                          className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition-all shadow-xs cursor-pointer inline-flex items-center gap-1.5"
                         >
-                          ← Buka Tahap Sebelumnya
+                          <ArrowLeft className="w-3.5 h-3.5" />
+                          <span>Buka Tahap Sebelumnya</span>
                         </button>
                       </div>
                     )}
 
                     {/* MODULE HEADER */}
-                    <div className="flex items-center justify-between text-[#1769ff] font-black text-xs tracking-[0.12em] mb-2">
-                      <div className="flex items-center gap-2">
+                    <div className="flex flex-wrap items-center justify-between gap-2 text-[#1769ff] font-extrabold text-xs tracking-[0.12em] mb-2">
+                      <div className="flex items-center gap-2 flex-wrap">
                         <span className="uppercase">{module.stageNumber}</span>
                         <span className="text-[10px] bg-blue-100/80 text-blue-800 px-2 py-0.5 rounded-md font-extrabold tracking-wider">
                           {module.categoryTag}
                         </span>
                       </div>
                       {isCompleted ? (
-                        <span className="text-[11px] bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-full px-2.5 py-0.5 font-bold flex items-center gap-1">
-                          <span>✓</span> SELESAI
+                        <span className="text-[11px] bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-full px-2.5 py-0.5 font-bold inline-flex items-center gap-1">
+                          <Check className="w-3 h-3" strokeWidth={2.5} /> SELESAI
                         </span>
                       ) : isLocked ? (
-                        <span className="text-[11px] bg-slate-100 text-slate-500 rounded-full px-2.5 py-0.5 font-bold">
-                          🔒 TERKUNCI
+                        <span className="text-[11px] bg-slate-100 text-slate-500 rounded-full px-2.5 py-0.5 font-bold inline-flex items-center gap-1">
+                          <Lock className="w-3 h-3" /> TERKUNCI
                         </span>
                       ) : (
-                        <span className="text-[11px] bg-blue-50 text-blue-700 rounded-full px-2.5 py-0.5 font-bold">
-                          📖 AKTIF
+                        <span className="text-[11px] bg-blue-50 text-blue-700 rounded-full px-2.5 py-0.5 font-bold inline-flex items-center gap-1">
+                          <BookOpen className="w-3 h-3" /> AKTIF
                         </span>
                       )}
                     </div>
 
-                    <h2 className="text-2xl md:text-3xl font-black text-[#102542] leading-snug mb-1">
+                    <h2 className="font-heading text-xl sm:text-2xl md:text-3xl font-extrabold text-[#102542] leading-snug mb-1.5">
                       {module.title}
                     </h2>
-                    <p className="text-sm text-slate-500 mb-6 font-medium">
+                    <p className="text-xs sm:text-sm text-slate-500 mb-5 sm:mb-6 font-medium leading-relaxed">
                       {module.description}
                     </p>
 
                     {/* VISUAL DIAGRAM BOX */}
                     {module.visual && (
-                      <div className="mb-8 p-4 rounded-2xl bg-[#f0f6ff] border border-[#d0e2ff] text-[#1769ff] font-black text-center text-lg md:text-xl tracking-wide shadow-xs">
+                      <div className="mb-6 sm:mb-8 p-3.5 sm:p-4 rounded-2xl bg-[#f0f6ff] border border-[#d0e2ff] text-[#1769ff] font-bold text-center text-sm sm:text-lg md:text-xl tracking-wide shadow-xs overflow-x-auto break-words">
                         {module.visual}
                       </div>
                     )}
 
                     {/* LEARNING GRID: CONTENT & FORMULA/ASIDE */}
-                    <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1.7fr)_minmax(280px,0.8fr)] gap-8">
+                    <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1.7fr)_minmax(280px,0.8fr)] gap-6 lg:gap-8">
                       {/* LEFT: READING CONTENT */}
-                      <div>
-                        <div className="text-[10px] font-black tracking-[0.13em] text-[#1769ff] uppercase mb-2">
-                          PELAJARI KONSEP & METODE
+                      <div className="min-w-0 max-w-[70ch]">
+                        <div className="text-[11px] font-extrabold tracking-[0.13em] text-[#1769ff] uppercase mb-2">
+                          PELAJARI KONSEP &amp; METODE
                         </div>
                         <div
                           className="materi-content"
@@ -1187,29 +1280,29 @@ export default function MateriPage() {
                       </div>
 
                       {/* RIGHT: FORMULA & ASIDE TAKEAWAYS */}
-                      <div className="space-y-4">
+                      <div className="space-y-4 min-w-0">
                         {/* FORMULA BOX */}
                         {module.formula && (
-                          <div className="bg-[#102542] text-white rounded-2xl p-5 shadow-sm text-center">
+                          <div className="bg-[#102542] text-white rounded-2xl p-4 sm:p-5 shadow-sm text-center overflow-x-auto">
                             <div className="text-[10px] font-black tracking-[0.15em] text-[#93c5fd] uppercase mb-2">
                               {module.formulaTitle || 'RUMUS / POLA KUNCI'}
                             </div>
                             <div
-                              className="font-mono text-sm md:text-base font-bold text-white leading-relaxed"
+                              className="font-mono text-xs sm:text-sm md:text-base font-bold text-white leading-relaxed break-words"
                               dangerouslySetInnerHTML={{ __html: module.formula }}
                             />
                           </div>
                         )}
 
                         {/* KEY TAKEAWAYS */}
-                        <aside className="bg-[#f8fbff] border border-[#dbe5f5] rounded-2xl p-5 lg:sticky lg:top-20">
-                          <div className="text-[10px] font-black tracking-[0.13em] text-[#1769ff] uppercase mb-3 flex items-center gap-1.5">
-                            <span>💡</span>
-                            <span>TRIK CEPAT & INTI PENTING</span>
+                        <aside className="bg-[#f8fbff] border border-[#dbe5f5] rounded-2xl p-4 sm:p-5 lg:sticky lg:top-20">
+                          <div className="text-[11px] font-extrabold tracking-[0.12em] text-[#1769ff] uppercase mb-3 flex items-center gap-1.5">
+                            <Lightbulb className="w-4 h-4 shrink-0" />
+                            <span>TRIK CEPAT &amp; INTI PENTING</span>
                           </div>
-                          <ul className="space-y-3 pl-4 text-xs md:text-sm text-[#344054] leading-relaxed list-disc">
+                          <ul className="space-y-2.5 pl-4 text-xs sm:text-sm text-[#344054] leading-relaxed list-disc">
                             {module.keys.map((keyPoint, kIdx) => (
-                              <li key={kIdx} className="text-justify">
+                              <li key={kIdx} className="text-left">
                                 {keyPoint}
                               </li>
                             ))}
@@ -1224,14 +1317,14 @@ export default function MateriPage() {
                     )}
 
                     {/* CHECKPOINT SECTION */}
-                    <div className="mt-10 bg-[#f0f6ff] border border-[#cfe2fe] rounded-2xl p-6 md:p-8 relative z-10">
-                      <div className="text-[10px] font-black tracking-[0.13em] text-[#1769ff] uppercase mb-1">
+                    <div className="mt-8 sm:mt-10 bg-[#f0f6ff] border border-[#cfe2fe] rounded-2xl p-4 sm:p-6 md:p-8 relative z-10">
+                      <div className="text-[11px] font-extrabold tracking-[0.13em] text-[#1769ff] uppercase mb-1">
                         CHECKPOINT
                       </div>
-                      <h3 className="text-xl font-bold text-[#102542] mb-1">
+                      <h3 className="font-heading text-lg sm:text-xl font-bold text-[#102542] mb-1">
                         Uji pemahaman sebelum lanjut
                       </h3>
-                      <p className="text-xs md:text-sm text-[#64748b] mb-6">
+                      <p className="text-xs sm:text-sm text-[#64748b] mb-5 sm:mb-6 leading-relaxed">
                         Jawab ketiga soal berikut dengan benar untuk membuka subbab materi selanjutnya.
                       </p>
 
@@ -1304,13 +1397,14 @@ export default function MateriPage() {
                       </div>
 
                       {/* ACTION BUTTON & RESULT FEEDBACK */}
-                      <div className="mt-6 flex flex-col sm:flex-row sm:items-center gap-4">
+                      <div className="mt-6 flex flex-col sm:flex-row sm:items-center gap-3.5 sm:gap-4">
                         <button
                           type="button"
                           onClick={() => checkTiuAnswers(stageIndex)}
-                          className="bg-[#1769ff] hover:bg-[#0f4ebd] text-white font-extrabold px-6 py-3 rounded-xl text-sm transition-all shadow-sm cursor-pointer flex items-center justify-center gap-2"
+                          className="w-full sm:w-auto bg-[#1769ff] hover:bg-[#0f4ebd] text-white font-extrabold px-6 py-3 rounded-xl text-sm transition-all shadow-sm cursor-pointer flex items-center justify-center gap-2"
                         >
-                          <span>🔍 Periksa Jawaban</span>
+                          <CheckCircle2 className="w-4 h-4" />
+                          <span>Periksa Jawaban</span>
                         </button>
 
                         {result && (
@@ -1336,68 +1430,88 @@ export default function MateriPage() {
       {activeSubject === 'tkp' && (
         <>
           {/* HERO BANNER */}
-          <header className="bg-gradient-to-br from-[#0f172a] via-[#1769e0] to-[#60a5fa] text-white pt-12 pb-20 px-5">
+          <header className="bg-gradient-to-br from-[#0f172a] via-[#1769e0] to-[#60a5fa] text-white pt-8 pb-14 sm:pt-12 sm:pb-20 px-4 sm:px-5">
             <div className="max-w-[1120px] mx-auto">
-              <div className="text-[11px] font-black tracking-[0.16em] uppercase opacity-85 mb-2">
+              <div className="text-[11px] font-extrabold tracking-[0.16em] uppercase opacity-85 mb-2">
                 TKP CPNS • INTERACTIVE LEARNING
               </div>
-              <h1 className="text-3xl md:text-5xl lg:text-[54px] font-black leading-tight mb-3">
+              <h1 className="font-heading text-2xl sm:text-4xl lg:text-5xl font-extrabold leading-[1.18] tracking-tight mb-3">
                 Belajar TKP dengan Sistem Unlock.
               </h1>
-              <p className="max-w-[760px] text-base md:text-[17px] opacity-90 leading-relaxed">
-                Kuasai 6 pilar karakteristik kepribadian: Profesionalisme, Pelayanan Publik, Jejaring Kerja, Sosiokultural, TIK, dan Anti Radikalisme. Pahami esensi dilema moral/dinas, pola kunci skenario, dan tuntaskan checkpoint wajib lulus untuk membuka tahap berikutnya.
+              <p className="max-w-[700px] text-sm sm:text-base md:text-[17px] opacity-90 leading-relaxed">
+                Kuasai 6 pilar karakteristik kepribadian: Profesionalisme, Pelayanan Publik, Jejaring Kerja, Sosiokultural, TIK, dan Anti Radikalisme. Pahami esensi dilema moral/dinas, pola kunci skenario, dan tuntaskan checkpoint untuk membuka tahap berikutnya.
               </p>
 
               {/* 6 PILLAR MAP */}
-              <div className="mt-8 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+              <div className="mt-6 sm:mt-8 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5 sm:gap-3">
                 <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-3 text-left">
-                  <div className="text-[11px] font-extrabold text-blue-200 uppercase tracking-wider">💼 Tahap 1</div>
+                  <div className="text-[11px] font-extrabold text-blue-200 uppercase tracking-wider flex items-center gap-1">
+                    <Briefcase className="w-3.5 h-3.5" />
+                    <span>Tahap 1</span>
+                  </div>
                   <div className="text-xs text-white font-bold mt-1">Profesionalisme</div>
-                  <div className="text-[11px] text-white/80 mt-0.5">Prioritas & Tugas</div>
+                  <div className="text-[11px] text-white/80 mt-0.5">Prioritas &amp; Tugas</div>
                 </div>
                 <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-3 text-left">
-                  <div className="text-[11px] font-extrabold text-blue-200 uppercase tracking-wider">🏛️ Tahap 2</div>
+                  <div className="text-[11px] font-extrabold text-blue-200 uppercase tracking-wider flex items-center gap-1">
+                    <Landmark className="w-3.5 h-3.5" />
+                    <span>Tahap 2</span>
+                  </div>
                   <div className="text-xs text-white font-bold mt-1">Pelayanan Publik</div>
-                  <div className="text-[11px] text-white/80 mt-0.5">Adil & SOP</div>
+                  <div className="text-[11px] text-white/80 mt-0.5">Adil &amp; SOP</div>
                 </div>
                 <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-3 text-left">
-                  <div className="text-[11px] font-extrabold text-blue-200 uppercase tracking-wider">🤝 Tahap 3</div>
+                  <div className="text-[11px] font-extrabold text-blue-200 uppercase tracking-wider flex items-center gap-1">
+                    <Users className="w-3.5 h-3.5" />
+                    <span>Tahap 3</span>
+                  </div>
                   <div className="text-xs text-white font-bold mt-1">Jejaring Kerja</div>
                   <div className="text-[11px] text-white/80 mt-0.5">Kolaborasi Tim</div>
                 </div>
                 <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-3 text-left">
-                  <div className="text-[11px] font-extrabold text-blue-200 uppercase tracking-wider">🌏 Tahap 4</div>
+                  <div className="text-[11px] font-extrabold text-blue-200 uppercase tracking-wider flex items-center gap-1">
+                    <Globe className="w-3.5 h-3.5" />
+                    <span>Tahap 4</span>
+                  </div>
                   <div className="text-xs text-white font-bold mt-1">Sosiokultural</div>
-                  <div className="text-[11px] text-white/80 mt-0.5">Empati & Ragam</div>
+                  <div className="text-[11px] text-white/80 mt-0.5">Empati &amp; Ragam</div>
                 </div>
                 <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-3 text-left">
-                  <div className="text-[11px] font-extrabold text-blue-200 uppercase tracking-wider">💻 Tahap 5</div>
+                  <div className="text-[11px] font-extrabold text-blue-200 uppercase tracking-wider flex items-center gap-1">
+                    <Laptop className="w-3.5 h-3.5" />
+                    <span>Tahap 5</span>
+                  </div>
                   <div className="text-xs text-white font-bold mt-1">TIK Digital</div>
-                  <div className="text-[11px] text-white/80 mt-0.5">Manfaat & Risiko</div>
+                  <div className="text-[11px] text-white/80 mt-0.5">Manfaat &amp; Risiko</div>
                 </div>
                 <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-3 text-left">
-                  <div className="text-[11px] font-extrabold text-blue-200 uppercase tracking-wider">🕊️ Tahap 6</div>
+                  <div className="text-[11px] font-extrabold text-blue-200 uppercase tracking-wider flex items-center gap-1">
+                    <ShieldCheck className="w-3.5 h-3.5" />
+                    <span>Tahap 6</span>
+                  </div>
                   <div className="text-xs text-white font-bold mt-1">Anti Radikalisme</div>
-                  <div className="text-[11px] text-white/80 mt-0.5">Persatuan & Damai</div>
+                  <div className="text-[11px] text-white/80 mt-0.5">Persatuan &amp; Damai</div>
                 </div>
               </div>
 
               {/* SEARCH BAR */}
-              <div className="mt-6 max-w-md">
+              <div className="mt-5 sm:mt-6 max-w-md">
                 <div className="relative">
+                  <Search className="w-4 h-4 text-white/75 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
                   <input
                     type="text"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     placeholder="Cari materi TKP (contoh: Profesionalisme, Pelayanan, SARA, TIK)..."
-                    className="w-full bg-white/15 backdrop-blur-md text-white placeholder-white/70 border border-white/30 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-white focus:bg-white/20 transition-all"
+                    className="w-full bg-white/15 backdrop-blur-md text-white placeholder-white/75 border border-white/30 rounded-xl pl-10 pr-9 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-white focus:bg-white/20 transition-all"
                   />
                   {searchQuery && (
                     <button
                       onClick={() => setSearchQuery('')}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-white/80 hover:text-white text-xs cursor-pointer"
+                      aria-label="Hapus pencarian"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-white/80 hover:text-white cursor-pointer"
                     >
-                      ✕
+                      <X className="w-4 h-4" />
                     </button>
                   )}
                 </div>
@@ -1406,28 +1520,28 @@ export default function MateriPage() {
           </header>
 
           {/* STICKY / FLOATING PROGRESS DASHBOARD */}
-          <div className="max-w-[1120px] mx-auto -mt-8 mb-8 px-4">
-            <div className="bg-white border border-[#e4e7ec] rounded-2xl shadow-[0_12px_35px_rgba(16,24,40,0.07)] p-4 sm:p-5 flex flex-wrap items-center justify-between gap-4">
+          <div className="max-w-[1120px] mx-auto -mt-7 sm:-mt-8 mb-6 sm:mb-8 px-3 sm:px-4">
+            <div className="bg-white border border-[#e4e7ec] rounded-2xl shadow-[0_12px_35px_rgba(16,24,40,0.07)] p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3.5 sm:gap-4">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center font-bold text-base">
-                  👥
+                <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
+                  <Users className="w-5 h-5" strokeWidth={1.8} />
                 </div>
                 <div>
-                  <div className="text-xs font-bold text-slate-500 uppercase tracking-wider">Progress Belajar TKP</div>
+                  <div className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Progress Belajar TKP</div>
                   <div className="text-sm font-extrabold text-slate-900">
                     {tkpCompletedCount} dari {TKP_MODULES.length} Subbab Selesai
                   </div>
                 </div>
               </div>
 
-              <div className="flex-1 min-w-[200px] flex items-center gap-4">
+              <div className="w-full sm:flex-1 sm:min-w-[200px] flex items-center gap-3">
                 <div className="flex-1 h-2.5 bg-[#e9eef7] rounded-full overflow-hidden">
                   <div
                     className="h-full bg-[#1769e0] rounded-full transition-all duration-500 ease-out"
                     style={{ width: `${tkpProgressPercent}%` }}
                   />
                 </div>
-                <span className="text-sm font-black text-[#1769e0] min-w-[45px] text-right">
+                <span className="text-sm font-black text-[#1769e0] min-w-[42px] text-right">
                   {tkpProgressPercent}%
                 </span>
               </div>
@@ -1455,7 +1569,13 @@ export default function MateriPage() {
                         : 'bg-white text-slate-700 border border-slate-300 hover:bg-slate-50'
                     }`}
                   >
-                    <span>{isCompleted ? '✓' : isLocked ? '🔒' : `T0${idx + 1}`}</span>
+                    {isCompleted ? (
+                      <Check className="w-3.5 h-3.5" strokeWidth={2.5} />
+                    ) : isLocked ? (
+                      <Lock className="w-3 h-3" strokeWidth={2.2} />
+                    ) : (
+                      <span>T0{idx + 1}</span>
+                    )}
                     <span>{m.title}</span>
                   </button>
                 );
@@ -1464,7 +1584,7 @@ export default function MateriPage() {
           </div>
 
           {/* MAIN TKP MODULES LIST */}
-          <main className="max-w-[1120px] mx-auto px-4 space-y-12">
+          <main className="max-w-[1120px] mx-auto px-3 sm:px-4 space-y-8 sm:space-y-10">
             {filteredTkpModules.length === 0 ? (
               <div className="text-center py-16 bg-white border border-slate-200 rounded-2xl">
                 <p className="text-slate-500 text-sm">Tidak ada materi TKP yang cocok dengan kata kunci &quot;{searchQuery}&quot;.</p>
@@ -1487,18 +1607,18 @@ export default function MateriPage() {
                     <section
                       key={m.id}
                       id={`tkp-module-${stageIndex}`}
-                      className="bg-white/70 border border-dashed border-slate-300 rounded-3xl p-6 md:p-8 text-center"
+                      className="bg-white/75 border border-dashed border-slate-300 rounded-2xl sm:rounded-3xl p-5 sm:p-8 text-center"
                     >
-                      <div className="w-12 h-12 rounded-2xl bg-slate-100 text-slate-400 flex items-center justify-center text-xl mx-auto mb-3">
-                        🔒
+                      <div className="w-12 h-12 rounded-2xl bg-slate-100 text-slate-400 flex items-center justify-center mx-auto mb-3">
+                        <Lock className="w-5 h-5" />
                       </div>
                       <div className="text-xs font-bold uppercase tracking-wider text-slate-400">
                         {m.stageNumber} • {m.categoryTag}
                       </div>
-                      <h2 className="text-xl md:text-2xl font-black text-slate-500 mt-1 mb-2">
+                      <h2 className="font-heading text-lg sm:text-2xl font-extrabold text-slate-500 mt-1 mb-2">
                         {m.title}
                       </h2>
-                      <p className="text-slate-400 text-sm max-w-md mx-auto">
+                      <p className="text-slate-400 text-xs sm:text-sm max-w-md mx-auto leading-relaxed">
                         Selesaikan checkpoint dan ujian pemahaman di tahap sebelumnya untuk membuka materi ini.
                       </p>
                     </section>
@@ -1509,10 +1629,10 @@ export default function MateriPage() {
                   <section
                     key={m.id}
                     id={`tkp-module-${stageIndex}`}
-                    className="bg-white border border-[#dbe5f2] rounded-3xl overflow-hidden shadow-[0_12px_35px_rgba(20,55,100,0.06)] transition-all"
+                    className="bg-white border border-[#dbe5f2] rounded-2xl sm:rounded-3xl overflow-hidden shadow-[0_8px_28px_rgba(20,55,100,0.05)] transition-all"
                   >
                     {/* STAGE HEADER */}
-                    <div className="p-6 md:p-8 border-b border-[#eef3fb] bg-gradient-to-r from-blue-50/40 via-transparent to-transparent flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div className="p-4 sm:p-6 md:p-8 border-b border-[#eef3fb] bg-gradient-to-r from-blue-50/40 via-transparent to-transparent flex flex-col md:flex-row md:items-center justify-between gap-4">
                       <div>
                         <div className="flex items-center gap-2 mb-2 flex-wrap">
                           <span className="text-[11px] font-black uppercase tracking-wider text-[#1769e0] bg-[#eef5ff] px-2.5 py-1 rounded-lg">
@@ -1522,8 +1642,8 @@ export default function MateriPage() {
                             {m.categoryTag}
                           </span>
                           {isCompleted ? (
-                            <span className="text-[11px] font-bold text-emerald-700 bg-emerald-100 px-2.5 py-1 rounded-lg flex items-center gap-1">
-                              <span>✓</span> Lulus Checkpoint
+                            <span className="text-[11px] font-bold text-emerald-700 bg-emerald-100 px-2.5 py-1 rounded-lg inline-flex items-center gap-1">
+                              <Check className="w-3 h-3" strokeWidth={2.5} /> Lulus Checkpoint
                             </span>
                           ) : (
                             <span className="text-[11px] font-bold text-blue-700 bg-blue-100 px-2.5 py-1 rounded-lg">
@@ -1531,13 +1651,13 @@ export default function MateriPage() {
                             </span>
                           )}
                         </div>
-                        <h2 className="text-2xl md:text-3xl font-black text-slate-900 leading-tight">
+                        <h2 className="font-heading text-xl sm:text-2xl md:text-3xl font-extrabold text-slate-900 leading-tight">
                           {m.title}
                         </h2>
-                        <p className="text-slate-500 text-xs md:text-sm font-semibold mt-1">
+                        <p className="text-slate-500 text-xs sm:text-sm font-semibold mt-1">
                           {m.subtitle}
                         </p>
-                        <p className="text-slate-600 text-sm md:text-base mt-2 max-w-2xl leading-relaxed text-justify">
+                        <p className="text-slate-600 text-sm sm:text-base mt-2.5 max-w-2xl leading-relaxed text-left">
                           {m.intro}
                         </p>
                         
@@ -1560,26 +1680,27 @@ export default function MateriPage() {
                           const cp = document.getElementById(`tkp-cp-${stageIndex}`);
                           if (cp) cp.scrollIntoView({ behavior: 'smooth' });
                         }}
-                        className="self-start md:self-center shrink-0 px-4 py-2 bg-slate-100 hover:bg-blue-50 text-slate-700 hover:text-blue-700 text-xs font-bold rounded-xl transition-all border border-slate-200 cursor-pointer flex items-center gap-1.5"
+                        className="self-start md:self-center shrink-0 px-4 py-2 bg-slate-100 hover:bg-blue-50 text-slate-700 hover:text-blue-700 text-xs font-bold rounded-xl transition-all border border-slate-200 cursor-pointer inline-flex items-center gap-1.5"
                       >
-                        <span>📝 Langsung ke Checkpoint</span>
+                        <ClipboardCheck className="w-3.5 h-3.5" />
+                        <span>Langsung ke Checkpoint</span>
                       </button>
                     </div>
 
                     {/* INTERACTIVE VISUAL / ILLUSTRATION */}
-                    <div className="p-5 md:p-6 bg-[#f8fbff] border-b border-[#eef3fb]">
+                    <div className="p-4 sm:p-6 bg-[#f8fbff] border-b border-[#eef3fb]">
                       <div className="text-[11px] font-black uppercase tracking-wider text-slate-400 mb-2 text-center">
-                        ILUSTRASI & POLA SIKAP TKP
+                        ILUSTRASI &amp; POLA SIKAP TKP
                       </div>
-                      <div className="bg-white rounded-2xl p-4 md:p-6 border border-[#dbe5f2] shadow-xs max-w-2xl mx-auto flex items-center justify-center">
+                      <div className="bg-white rounded-2xl p-3 sm:p-5 border border-[#dbe5f2] shadow-xs max-w-2xl mx-auto flex items-center justify-center">
                         <TkpIllustration type={m.illustrationType} />
                       </div>
                     </div>
 
                     {/* TWO-COLUMN LAYOUT: CONTENT + KEY TAKEAWAY */}
-                    <div className="p-6 md:p-8 grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    <div className="p-4 sm:p-6 md:p-8 grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
                       {/* COLUMN 1: MATERIAL CONTENT */}
-                      <div className="lg:col-span-2">
+                      <div className="lg:col-span-2 min-w-0 max-w-[70ch]">
                         <div
                           className="materi-content"
                           dangerouslySetInnerHTML={{ __html: m.content }}
@@ -1587,15 +1708,15 @@ export default function MateriPage() {
                       </div>
 
                       {/* COLUMN 2: KEY TAKEAWAYS ASIDE */}
-                      <div className="space-y-4">
-                        <div className="bg-gradient-to-br from-blue-50/70 to-indigo-50/40 border border-blue-200/80 rounded-2xl p-5 shadow-xs">
-                          <div className="flex items-center gap-2 text-xs font-black uppercase tracking-wider text-[#1769e0] mb-3">
-                            <span>🔑</span>
-                            <span>Poin Kunci & Pola Sikap</span>
+                      <div className="space-y-4 min-w-0">
+                        <div className="bg-gradient-to-br from-blue-50/70 to-indigo-50/40 border border-blue-200/80 rounded-2xl p-4 sm:p-5 shadow-xs">
+                          <div className="flex items-center gap-2 text-xs font-extrabold uppercase tracking-wider text-[#1769e0] mb-3">
+                            <KeyRound className="w-4 h-4 shrink-0" />
+                            <span>Poin Kunci &amp; Pola Sikap</span>
                           </div>
-                          <ul className="space-y-3">
+                          <ul className="space-y-2.5">
                             {m.keys.map((k, kIdx) => (
-                              <li key={kIdx} className="text-xs md:text-sm text-slate-700 flex items-start gap-2 leading-relaxed text-justify">
+                              <li key={kIdx} className="text-xs sm:text-sm text-slate-700 flex items-start gap-2 leading-relaxed text-left">
                                 <span className="text-blue-600 font-bold shrink-0 mt-0.5">•</span>
                                 <span>{k}</span>
                               </li>
@@ -1603,8 +1724,11 @@ export default function MateriPage() {
                           </ul>
                         </div>
 
-                        <div className="bg-amber-50/60 border border-amber-200/70 rounded-2xl p-4 text-xs text-amber-900 leading-relaxed text-justify">
-                          <strong className="block font-bold text-amber-950 mb-1">💡 Tips Penilaian TKP CPNS</strong>
+                        <div className="bg-amber-50/60 border border-amber-200/70 rounded-2xl p-4 text-xs text-amber-900 leading-relaxed text-left">
+                          <div className="flex items-center gap-1.5 font-bold text-amber-950 mb-1">
+                            <Lightbulb className="w-4 h-4 text-amber-600 shrink-0" />
+                            <span>Tips Penilaian TKP CPNS</span>
+                          </div>
                           Soal TKP memiliki skala skor 1 sampai 5. Sikap yang mengedepankan integritas dinas, kepatuhan prosedur, empati proporsional, dan resolusi damai konsisten meraih poin 5 (skor tertinggi).
                         </div>
                       </div>
@@ -1612,7 +1736,7 @@ export default function MateriPage() {
 
                     {/* TUTOR AI INTERAKTIF */}
                     {!isLocked && (
-                      <div className="px-6 md:px-8">
+                      <div className="px-4 sm:px-6 md:px-8">
                         <ModuleAiTutor moduleTitle={m.title} subject="tkp" />
                       </div>
                     )}
@@ -1620,14 +1744,14 @@ export default function MateriPage() {
                     {/* CHECKPOINT QUIZ CARD */}
                     <div
                       id={`tkp-cp-${stageIndex}`}
-                      className="m-6 md:m-8 p-6 md:p-8 bg-[#f8fbff] border-2 border-[#e5edf8] rounded-2xl"
+                      className="mx-3 my-4 sm:m-6 md:m-8 p-4 sm:p-6 md:p-8 bg-[#f8fbff] border-2 border-[#e5edf8] rounded-2xl"
                     >
-                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-4 border-b border-slate-200 mb-6">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-4 border-b border-slate-200 mb-5 sm:mb-6">
                         <div>
                           <div className="text-[11px] font-black uppercase tracking-wider text-[#1769e0]">
                             CHECKPOINT EVALUASI
                           </div>
-                          <h3 className="text-lg md:text-xl font-black text-slate-900 mt-0.5">
+                          <h3 className="font-heading text-lg sm:text-xl font-extrabold text-slate-900 mt-0.5">
                             Uji Pemahaman: {m.title}
                           </h3>
                         </div>
@@ -1636,11 +1760,11 @@ export default function MateriPage() {
                         </div>
                       </div>
 
-                      <p className="text-xs md:text-sm text-slate-600 mb-6 text-justify">
+                      <p className="text-xs sm:text-sm text-slate-600 mb-5 sm:mb-6 text-left leading-relaxed">
                         Jawab semua soal di bawah ini. Untuk membuka subbab berikutnya secara otomatis, Anda harus meraih <strong>skor sempurna ({m.questions.length}/{m.questions.length})</strong>.
                       </p>
 
-                      <div className="space-y-6">
+                      <div className="space-y-5 sm:space-y-6">
                         {m.questions.map((q, qIdx) => {
                           const qKey = `m${stageIndex}q${qIdx}`;
                           const selectedVal = tkpUserAnswers[qKey];
@@ -1649,14 +1773,14 @@ export default function MateriPage() {
                           return (
                             <div
                               key={qIdx}
-                              className="p-5 bg-white border border-[#e4e7ec] rounded-2xl shadow-xs"
+                              className="p-4 sm:p-5 bg-white border border-[#e4e7ec] rounded-2xl shadow-xs"
                             >
                               <div className="flex items-center gap-2 mb-2">
                                 <span className="text-[10px] font-black tracking-wider text-[#1769e0] bg-[#eef5ff] px-2 py-0.5 rounded-md">
                                   {q.tag}
                                 </span>
                               </div>
-                              <div className="font-bold text-slate-800 text-sm md:text-base mb-4 leading-relaxed text-justify">
+                              <div className="font-bold text-slate-800 text-sm sm:text-base mb-4 leading-relaxed text-left">
                                 {q.text}
                               </div>
 
@@ -1668,7 +1792,7 @@ export default function MateriPage() {
                                     <label
                                       key={opt.value}
                                       onClick={() => handleSelectOption('tkp', stageIndex, qIdx, opt.value)}
-                                      className={`flex items-start gap-3 p-3 rounded-xl border text-xs md:text-sm cursor-pointer transition-all ${
+                                      className={`flex items-start gap-2.5 sm:gap-3 p-3 rounded-xl border text-xs sm:text-sm cursor-pointer transition-all ${
                                         isSelected
                                           ? 'border-blue-500 bg-blue-50/80 font-semibold text-blue-900 shadow-xs'
                                           : 'border-[#e4e7ec] hover:border-[#9dbcfb] hover:bg-[#f8fbff] text-slate-700'
@@ -1680,12 +1804,12 @@ export default function MateriPage() {
                                         value={opt.value}
                                         checked={isSelected}
                                         onChange={() => {}}
-                                        className="mt-0.5 text-blue-600 focus:ring-blue-500 cursor-pointer"
+                                        className="mt-0.5 text-blue-600 focus:ring-blue-500 cursor-pointer shrink-0"
                                       />
                                       <span className="font-black text-[#1769e0] min-w-[14px]">
                                         {opt.value}
                                       </span>
-                                      <span className="leading-relaxed text-justify">{opt.text}</span>
+                                      <span className="leading-relaxed text-left">{opt.text}</span>
                                     </label>
                                   );
                                 })}
@@ -1693,7 +1817,7 @@ export default function MateriPage() {
 
                               {/* EXPLANATION */}
                               {isSubmitted && selectedVal && (
-                                <div className="mt-4 p-3.5 bg-[#f8fafc] border border-slate-200/70 text-[#475467] rounded-xl text-xs md:text-sm leading-relaxed text-justify">
+                                <div className="mt-4 p-3.5 bg-[#f8fafc] border border-slate-200/70 text-[#475467] rounded-xl text-xs sm:text-sm leading-relaxed text-left">
                                   <strong className="text-slate-800">Pembahasan: </strong>
                                   {q.explanation}
                                 </div>
@@ -1704,13 +1828,14 @@ export default function MateriPage() {
                       </div>
 
                       {/* ACTION BUTTON & RESULT FEEDBACK */}
-                      <div className="mt-6 flex flex-col sm:flex-row sm:items-center gap-4">
+                      <div className="mt-6 flex flex-col sm:flex-row sm:items-center gap-3.5 sm:gap-4">
                         <button
                           type="button"
                           onClick={() => checkTkpAnswers(stageIndex)}
-                          className="bg-[#1769e0] hover:bg-[#0f4fb8] text-white font-extrabold px-6 py-3 rounded-xl text-sm transition-all shadow-sm cursor-pointer flex items-center justify-center gap-2"
+                          className="w-full sm:w-auto bg-[#1769e0] hover:bg-[#0f4fb8] text-white font-extrabold px-6 py-3 rounded-xl text-sm transition-all shadow-sm cursor-pointer flex items-center justify-center gap-2"
                         >
-                          <span>🔍 Periksa Jawaban</span>
+                          <CheckCircle2 className="w-4 h-4" />
+                          <span>Periksa Jawaban</span>
                         </button>
 
                         {result && (
@@ -1736,17 +1861,17 @@ export default function MateriPage() {
       {activeSubject === 'cheatsheet' && (
         <>
           {/* HERO BANNER */}
-          <header className="bg-gradient-to-br from-[#1e1b4b] via-[#312e81] to-[#4338ca] text-white pt-12 pb-16 px-5 relative overflow-hidden">
+          <header className="bg-gradient-to-br from-[#1e1b4b] via-[#312e81] to-[#4338ca] text-white pt-8 pb-12 sm:pt-12 sm:pb-16 px-4 sm:px-5 relative overflow-hidden">
             <div className="absolute top-0 right-0 w-80 h-80 bg-amber-400/10 rounded-full blur-3xl pointer-events-none" />
-            <div className="max-w-[1120px] mx-auto relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+            <div className="max-w-[1120px] mx-auto relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-5 sm:gap-6">
               <div>
                 <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-400/20 text-amber-300 border border-amber-400/30 text-xs font-bold mb-3">
-                  <Zap className="w-3.5 h-3.5 fill-amber-300" /> Kompilasi Rumus Cepat & Kata Kunci SKD
+                  <Zap className="w-3.5 h-3.5 fill-amber-300" /> Kompilasi Rumus Cepat &amp; Kata Kunci SKD
                 </div>
-                <h1 className="text-3xl md:text-5xl font-black leading-tight mb-2">
-                  Rumus Sakti & Cheat Sheet
+                <h1 className="font-heading text-2xl sm:text-4xl md:text-5xl font-extrabold leading-tight tracking-tight mb-2">
+                  Rumus Sakti &amp; Cheat Sheet
                 </h1>
-                <p className="text-sm md:text-base text-indigo-100 max-w-2xl leading-relaxed">
+                <p className="text-sm sm:text-base text-indigo-100 max-w-2xl leading-relaxed">
                   Kumpulan rumus jalan pintas TIU, peta pasal krusial TWK, dan formula kata kunci jawaban skor 5 TKP yang wajib dikuasai sebelum masuk ruang ujian CAT BKN.
                 </p>
               </div>
@@ -1756,7 +1881,7 @@ export default function MateriPage() {
                 <button
                   type="button"
                   onClick={() => window.print()}
-                  className="px-5 py-3 rounded-2xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-black text-xs md:text-sm shadow-lg shadow-amber-400/20 transition-all flex items-center gap-2 cursor-pointer active:scale-95"
+                  className="px-4 sm:px-5 py-2.5 sm:py-3 rounded-2xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-black text-xs sm:text-sm shadow-lg shadow-amber-400/20 transition-all flex items-center gap-2 cursor-pointer active:scale-95"
                 >
                   <Printer className="w-4 h-4" />
                   <span>Cetak / Simpan PDF Cheat Sheet</span>
@@ -1766,36 +1891,39 @@ export default function MateriPage() {
           </header>
 
           {/* MAIN CHEAT SHEET CONTAINER */}
-          <main className="max-w-[1120px] mx-auto px-4 -mt-8 relative z-20 space-y-6">
+          <main className="max-w-[1120px] mx-auto px-3 sm:px-4 -mt-7 sm:-mt-8 relative z-20 space-y-5 sm:space-y-6">
             
             {/* FILTER BAR & SEARCH */}
-            <div className="bg-white border border-slate-200 rounded-3xl p-3 md:p-4 shadow-sm flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+            <div className="bg-white border border-slate-200 rounded-2xl sm:rounded-3xl p-3 md:p-4 shadow-sm flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
               {/* Category Pills */}
               <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar">
                 {[
-                  { id: 'all', label: 'Semua Rumus & Kunci', icon: '⚡' },
-                  { id: 'tiu', label: 'TIU (Hitung & Logika)', icon: '🧮' },
-                  { id: 'tkp', label: 'TKP (Kata Kunci Skor 5)', icon: '🤝' },
-                  { id: 'twk', label: 'TWK (Pasal & Sejarah)', icon: '🏛️' },
+                  { id: 'all', label: 'Semua Rumus & Kunci' },
+                  { id: 'tiu', label: 'TIU (Hitung & Logika)' },
+                  { id: 'tkp', label: 'TKP (Kata Kunci Skor 5)' },
+                  { id: 'twk', label: 'TWK (Pasal & Sejarah)' },
                 ].map((c) => (
                   <button
                     key={c.id}
                     type="button"
                     onClick={() => setCheatSheetCategory(c.id as any)}
-                    className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition cursor-pointer ${
+                    className={`flex items-center gap-1.5 px-3 sm:px-3.5 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition cursor-pointer ${
                       cheatSheetCategory === c.id
                         ? 'bg-indigo-900 text-white shadow-xs'
                         : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                     }`}
                   >
-                    <span>{c.icon}</span>
+                    {c.id === 'all' && <Zap className="w-3.5 h-3.5" />}
+                    {c.id === 'tiu' && <Calculator className="w-3.5 h-3.5" />}
+                    {c.id === 'tkp' && <Users className="w-3.5 h-3.5" />}
+                    {c.id === 'twk' && <Landmark className="w-3.5 h-3.5" />}
                     <span>{c.label}</span>
                   </button>
                 ))}
               </div>
 
               {/* Search Box */}
-              <div className="relative min-w-[220px]">
+              <div className="relative w-full sm:w-auto sm:min-w-[240px]">
                 <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
                 <input
                   type="text"
@@ -1808,15 +1936,15 @@ export default function MateriPage() {
             </div>
 
             {/* LIST OF CHEAT SHEET CARDS */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-5 printable-document">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-5 printable-document">
               {filteredCheatSheets.map((item) => (
                 <div 
                   key={item.id}
-                  className="bg-white border border-slate-200/90 rounded-3xl p-6 shadow-sm hover:shadow-md transition-shadow flex flex-col justify-between break-inside-avoid"
+                  className="bg-white border border-slate-200/90 rounded-2xl sm:rounded-3xl p-4 sm:p-6 shadow-sm hover:shadow-md transition-shadow flex flex-col justify-between break-inside-avoid"
                 >
                   <div>
                     {/* Header Card */}
-                    <div className="flex items-center justify-between gap-2 mb-2">
+                    <div className="flex items-center justify-between gap-2 mb-2 flex-wrap">
                       <span className={`text-[10px] font-black uppercase px-2.5 py-0.5 rounded-full border ${
                         item.category === 'tiu'
                           ? 'bg-blue-50 text-blue-700 border-blue-200'
@@ -1831,23 +1959,26 @@ export default function MateriPage() {
                       </span>
                     </div>
 
-                    <h3 className="text-lg font-black text-slate-900 leading-snug mb-1.5">
+                    <h3 className="font-heading text-base sm:text-lg font-extrabold text-slate-900 leading-snug mb-1.5">
                       {item.title}
                     </h3>
-                    <p className="text-xs text-slate-600 leading-relaxed mb-4">
+                    <p className="text-xs sm:text-sm text-slate-600 leading-relaxed mb-4">
                       {item.summary}
                     </p>
 
                     {/* Formula / Key Box */}
-                    <div className="bg-slate-950 text-emerald-300 font-mono text-xs rounded-2xl p-4 leading-relaxed whitespace-pre-wrap shadow-inner border border-slate-800">
+                    <div className="bg-slate-950 text-emerald-300 font-mono text-xs rounded-2xl p-3.5 sm:p-4 leading-relaxed whitespace-pre-wrap shadow-inner border border-slate-800 overflow-x-auto">
                       {item.keyFormula}
                     </div>
                   </div>
 
                   {/* Example / Trick */}
                   {item.exampleOrTrick && (
-                    <div className="mt-4 pt-3 bg-amber-50/60 -mx-6 -mb-6 p-4 rounded-b-3xl border-t border-amber-100/70 text-xs text-amber-950 font-medium leading-relaxed">
-                      <strong className="text-amber-900 block font-bold mb-0.5">💡 Trik & Contoh CAT:</strong>
+                    <div className="mt-4 pt-3 bg-amber-50/60 -mx-4 -mb-4 sm:-mx-6 sm:-mb-6 p-4 rounded-b-2xl sm:rounded-b-3xl border-t border-amber-100/70 text-xs text-amber-950 font-medium leading-relaxed">
+                      <strong className="text-amber-900 flex items-center gap-1.5 font-bold mb-1">
+                        <Lightbulb className="w-3.5 h-3.5 text-amber-600 shrink-0" />
+                        <span>Trik &amp; Contoh CAT:</span>
+                      </strong>
                       <span className="whitespace-pre-wrap">{item.exampleOrTrick}</span>
                     </div>
                   )}

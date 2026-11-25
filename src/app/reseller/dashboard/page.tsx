@@ -168,11 +168,11 @@ export default function ResellerDashboard() {
   return (
     <div className="min-h-screen bg-slate-50">
       {/* Header */}
-      <header className="bg-white border-b border-slate-200 px-6 py-4">
-        <div className="max-w-6xl mx-auto flex items-center justify-between">
+      <header className="bg-white border-b border-slate-200 px-4 sm:px-6 py-4">
+        <div className="max-w-6xl mx-auto flex flex-wrap items-center justify-between gap-3">
           <div>
-            <h1 className="text-xl font-bold text-slate-800">Dashboard Reseller</h1>
-            <p className="text-sm text-slate-500">
+            <h1 className="text-lg sm:text-xl font-bold text-slate-800">Dashboard Reseller</h1>
+            <p className="text-xs sm:text-sm text-slate-500">
               Kode: <span className="font-mono font-bold text-purple-600">{reseller?.reseller_code}</span>
             </p>
           </div>
@@ -180,13 +180,13 @@ export default function ResellerDashboard() {
             <Link 
               href={`/r/${reseller?.reseller_code}`} 
               target="_blank"
-              className="text-sm text-purple-600 hover:underline"
+              className="text-xs sm:text-sm text-purple-600 hover:underline whitespace-nowrap"
             >
               Lihat Home Page →
             </Link>
             <button
               onClick={handleLogout}
-              className="text-sm text-red-600 hover:underline"
+              className="text-xs sm:text-sm text-red-600 hover:underline cursor-pointer"
             >
               Logout
             </button>
@@ -194,19 +194,19 @@ export default function ResellerDashboard() {
         </div>
       </header>
 
-      <div className="max-w-6xl mx-auto px-6 py-8">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 py-5 sm:py-8">
         {/* Tab Navigation */}
-        <div className="flex gap-2 mb-6 border-b border-slate-200">
+        <div className="flex gap-2 mb-6 border-b border-slate-200 overflow-x-auto no-scrollbar">
           {[
-            { id: 'overview', label: '📊 Overview' },
-            { id: 'generate', label: '🎁 Generate Voucher' },
-            { id: 'vouchers', label: '📋 Daftar Voucher' },
-            { id: 'settings', label: '⚙️ Pengaturan' }
+            { id: 'overview', label: 'Overview' },
+            { id: 'generate', label: 'Generate Voucher' },
+            { id: 'vouchers', label: 'Daftar Voucher' },
+            { id: 'settings', label: 'Pengaturan' }
           ].map(tab => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id as any)}
-              className={`px-4 py-3 text-sm font-medium border-b-2 transition-colors ${
+              className={`px-3.5 sm:px-4 py-3 text-xs sm:text-sm font-medium border-b-2 whitespace-nowrap transition-colors shrink-0 cursor-pointer ${
                 activeTab === tab.id
                   ? 'border-purple-600 text-purple-600'
                   : 'border-transparent text-slate-500 hover:text-slate-700'
@@ -360,7 +360,7 @@ export default function ResellerDashboard() {
               <h3 className="font-bold text-slate-800">📋 Daftar Voucher yang Sudah Digenerate</h3>
             </div>
             <div className="overflow-x-auto">
-              <table className="w-full">
+              <table className="w-full min-w-[600px]">
                 <thead className="bg-slate-50">
                   <tr>
                     <th className="p-4 text-left text-xs font-semibold text-slate-600">Kode</th>
