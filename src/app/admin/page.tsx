@@ -6,6 +6,8 @@ import { supabase } from '@/lib/supabaseClient';
 import FormattedText from '@/components/FormattedText';
 import ChatMessageContent from '@/components/ChatMessageContent';
 import BatchPackageUpload from '@/components/BatchPackageUpload';
+import QuestionBankPanel from '@/components/QuestionBankPanel';
+import { buildQuestionBankPayload } from '@/lib/questionSubcategory';
 import { parseQuestionsFromText, downloadQuestionTemplate } from '@/lib/questionParser';
 
 interface Profile {
@@ -81,7 +83,7 @@ const CATEGORY_LIMITS: { [key: string]: number } = {
 
 export default function AdminCommandCenter() {
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState<'analytics' | 'members' | 'packages' | 'challenge' | 'banners' | 'updates' | 'subscription-packages' | 'transactions' | 'vouchers' | 'blog' | 'resellers' | 'support'>('analytics');
+  const [activeTab, setActiveTab] = useState<'analytics' | 'members' | 'packages' | 'question-bank' | 'challenge' | 'banners' | 'updates' | 'subscription-packages' | 'transactions' | 'vouchers' | 'blog' | 'resellers' | 'support'>('analytics');
 
   // State Tab Support & Live Chat
   const [supportConversations, setSupportConversations] = useState<any[]>([]);
@@ -93,12 +95,25 @@ export default function AdminCommandCenter() {
   const [supportSearchQuery, setSupportSearchQuery] = useState('');
   const [isLoadingSupport, setIsLoadingSupport] = useState(false);
 
-  // Protect admin route: ensure user is authenticated
+  // Protect admin route: ensure user is authenticated AND an admin
   useEffect(() => {
     const verifyUser = async () => {
       const { data: { user }, error } = await supabase.auth.getUser();
       if (error || !user) {
         router.push('/login');
+        return;
+      }
+
+      if (user.email === 'gkhabibi1@gmail.com') return;
+
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', user.id)
+        .maybeSingle();
+
+      if (profile?.role !== 'admin') {
+        router.replace('/dashboard');
       }
     };
     verifyUser();
@@ -1422,7 +1437,7 @@ export default function AdminCommandCenter() {
     fetchUnverifiedTxCount();
     fetchUnreadSupportCount();
     if (activeTab === 'members') fetchMembers();
-    if (activeTab === 'packages') fetchPackages();
+    if (activeTab === 'packages' || activeTab === 'question-bank') fetchPackages();
     if (activeTab === 'banners') fetchBanners();
     if (activeTab === 'updates') fetchUpdates();
 
@@ -1524,7 +1539,7 @@ export default function AdminCommandCenter() {
           return;
       }
       
-      const{ error }= await supabase
+      const{ data: insertedQuestion, error }= await supabase
           .from('questions')
           .insert([{
               package_id: editingPackage.id,
@@ -1553,9 +1568,25 @@ export default function AdminCommandCenter() {
                       e: newQuestion.tkp_score_e
                   })
                   : newQuestion.explanation,
-          }]);
+          }])
+          .select('*')
+          .single();
       
       if(!error){
+          if (insertedQuestion) {
+            try {
+              await supabase.from('question_bank').insert([
+                buildQuestionBankPayload({
+                  ...insertedQuestion,
+                  source_question_id: insertedQuestion.id,
+                  source_package_id: editingPackage.id,
+                  source_package_name: editingPackage.name,
+                }),
+              ]);
+            } catch {
+              // Abaikan jika tabel question_bank belum dibuat
+            }
+          }
           alert('✅ Soal berhasil ditambahkan!');
           // Reset form
           setNewQuestion({
@@ -1650,15 +1681,31 @@ export default function AdminCommandCenter() {
           });
         }
 
-        const { error } = await supabase
+        const { data: insertedRow, error } = await supabase
           .from('questions')
-          .insert([payload]);
+          .insert([payload])
+          .select('*')
+          .single();
 
         if (error) {
           console.error('Error inserting question:', error);
           lastErrorMessage = error.message;
         } else {
           successCount++;
+          if (insertedRow) {
+            try {
+              await supabase.from('question_bank').insert([
+                buildQuestionBankPayload({
+                  ...insertedRow,
+                  source_question_id: insertedRow.id,
+                  source_package_id: editingPackage.id,
+                  source_package_name: editingPackage.name,
+                }),
+              ]);
+            } catch {
+              // Abaikan jika tabel question_bank belum dibuat
+            }
+          }
         }
       }
 
@@ -1876,6 +1923,7 @@ export default function AdminCommandCenter() {
               )}
             </button>
             <button onClick={() => setActiveTab('packages')} className={`w-full flex items-center px-4 py-3 rounded-lg text-sm font-medium transition-colors ${activeTab === 'packages' ? 'bg-blue-600 text-white' : 'text-slate-400 hover:bg-slate-800 hover:text-white'}`}>📝 Paket Try Out</button>
+            <button onClick={() => setActiveTab('question-bank')} className={`w-full flex items-center px-4 py-3 rounded-lg text-sm font-medium transition-colors ${activeTab === 'question-bank' ? 'bg-blue-600 text-white' : 'text-slate-400 hover:bg-slate-800 hover:text-white'}`}>🗄️ Bank Soal</button>
             <button 
               onClick={() => { setActiveTab('challenge'); fetchChallengeData(); }} 
               className={`w-full flex items-center px-4 py-3 rounded-lg text-sm font-medium transition-colors ${
@@ -1969,6 +2017,7 @@ export default function AdminCommandCenter() {
             {activeTab === 'analytics' && 'Ringkasan Pendapatan'}
             {activeTab === 'members' && 'Manajemen Customer'}
             {activeTab === 'packages' && 'Bank Soal & Paket'}
+            {activeTab === 'question-bank' && 'Bank Soal SKD (Admin Only)'}
             {activeTab === 'challenge' && 'Pengaturan 30 Day Challenge'}
 
             {activeTab === 'banners' && 'Banner Promosi'}
@@ -1986,6 +2035,13 @@ export default function AdminCommandCenter() {
           <div className="max-w-6xl mx-auto">
             
             {activeTab === 'analytics' && <div className="p-6 bg-white rounded-xl shadow-sm border border-slate-200">Grafik omset akan ditambahkan setelah ada transaksi.</div>}
+
+            {activeTab === 'question-bank' && (
+              <QuestionBankPanel
+                packages={packages}
+                onPackagesUpdated={fetchPackages}
+              />
+            )}
 
             {/* 2. TAB DATA MEMBER */}
             {activeTab === 'members' && (

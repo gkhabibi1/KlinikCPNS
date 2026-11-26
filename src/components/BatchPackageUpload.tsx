@@ -7,6 +7,7 @@ import {
   parseQuestionsFromText,
   downloadQuestionTemplate
 } from '@/lib/questionParser';
+import { buildQuestionBankPayload } from '@/lib/questionSubcategory';
 import FormattedText from '@/components/FormattedText';
 import {
   Upload,
@@ -408,9 +409,28 @@ export default function BatchPackageUpload({
         const chunkSize = 50;
         for (let c = 0; c < questionPayloads.length; c += chunkSize) {
           const chunk = questionPayloads.slice(c, c + chunkSize);
-          const { error: qError } = await supabase.from('questions').insert(chunk);
+          const { data: insertedQuestions, error: qError } = await supabase
+            .from('questions')
+            .insert(chunk)
+            .select('*');
           if (qError) {
             throw new Error(`Gagal insert soal (${c + 1}-${c + chunk.length}): ${qError.message}`);
+          }
+
+          if (insertedQuestions && insertedQuestions.length > 0) {
+            try {
+              const bankPayloads = insertedQuestions.map((iq: any) =>
+                buildQuestionBankPayload({
+                  ...iq,
+                  source_question_id: iq.id,
+                  source_package_id: createdPkg.id,
+                  source_package_name: item.name.trim(),
+                })
+              );
+              await supabase.from('question_bank').insert(bankPayloads);
+            } catch {
+              // Abaikan jika tabel question_bank belum dibuat
+            }
           }
         }
 
