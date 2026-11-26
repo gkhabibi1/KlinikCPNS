@@ -33,6 +33,19 @@ export interface ResellerOrder {
   paid_at?: string;
 }
 
+export interface ResellerCheckoutConfig {
+  whatsapp_admin: string;
+  hero_title: string;
+  hero_subtitle: string;
+}
+
+const DEFAULT_CHECKOUT_CONFIG: ResellerCheckoutConfig = {
+  whatsapp_admin: '6285199655534',
+  hero_title: 'Gabung Jadi Reseller KlinikCPNS',
+  hero_subtitle:
+    'Pilih paket reseller di bawah ini dan selesaikan pembayaran tanpa perlu login terlebih dahulu. Setelah pembayaran diverifikasi Admin, akses login dashboard reseller akan langsung dikirimkan ke WhatsApp & Email Anda.',
+};
+
 const DEFAULT_RESELLER_PACKAGES: ResellerPackage[] = [
   {
     id: 'rsl-starter',
@@ -99,6 +112,10 @@ export async function GET(request: Request) {
       'reseller_packages',
       DEFAULT_RESELLER_PACKAGES
     );
+    const config = await readSettingJson<ResellerCheckoutConfig>(
+      'reseller_checkout_config',
+      DEFAULT_CHECKOUT_CONFIG
+    );
 
     if (orderId) {
       const orders = await readSettingJson<ResellerOrder[]>('reseller_orders', []);
@@ -106,7 +123,7 @@ export async function GET(request: Request) {
       if (!found) {
         return NextResponse.json({ error: 'Order tidak ditemukan' }, { status: 404 });
       }
-      return NextResponse.json({ order: found });
+      return NextResponse.json({ order: found, config });
     }
 
     const orders = await readSettingJson<ResellerOrder[]>('reseller_orders', []);
@@ -114,6 +131,7 @@ export async function GET(request: Request) {
     return NextResponse.json({
       packages: includeInactive ? packages : packages.filter((p) => p.is_active),
       orders,
+      config,
     });
   } catch (err: any) {
     return NextResponse.json(
@@ -132,6 +150,17 @@ export async function POST(request: Request) {
       const incoming = Array.isArray(body.packages) ? body.packages : [];
       await writeSettingJson('reseller_packages', incoming);
       return NextResponse.json({ success: true, packages: incoming });
+    }
+
+    // Admin menyimpan pengaturan teks & WA halaman checkout reseller
+    if (body.action === 'save_config') {
+      const nextConfig: ResellerCheckoutConfig = {
+        whatsapp_admin: String(body.config?.whatsapp_admin || '6285199655534').replace(/[^0-9]/g, ''),
+        hero_title: String(body.config?.hero_title || DEFAULT_CHECKOUT_CONFIG.hero_title),
+        hero_subtitle: String(body.config?.hero_subtitle || DEFAULT_CHECKOUT_CONFIG.hero_subtitle),
+      };
+      await writeSettingJson('reseller_checkout_config', nextConfig);
+      return NextResponse.json({ success: true, config: nextConfig });
     }
 
     // Guest calon reseller membuat order tanpa login

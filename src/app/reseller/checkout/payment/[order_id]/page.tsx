@@ -18,6 +18,7 @@ export default function ResellerPaymentPage() {
   const orderId = params.order_id as string;
 
   const [order, setOrder] = useState<any>(null);
+  const [whatsappAdmin, setWhatsappAdmin] = useState<string>('6285199655534');
   const [qrDataUrl, setQrDataUrl] = useState<string>('');
   const [isLoading, setIsLoading] = useState(true);
   const [copiedNominal, setCopiedNominal] = useState(false);
@@ -41,6 +42,9 @@ export default function ResellerPaymentPage() {
           return;
         }
         setOrder(data.order);
+        if (data.config?.whatsapp_admin) {
+          setWhatsappAdmin(data.config.whatsapp_admin);
+        }
         if (data.order.payment_proof_url) {
           setPreviewUrl(data.order.payment_proof_url);
           setUploadSuccess(true);
@@ -279,7 +283,7 @@ export default function ResellerPaymentPage() {
             </div>
 
             <a
-              href={`https://wa.me/6285199655534?text=${waText}`}
+              href={`https://wa.me/${whatsappAdmin}?text=${waText}`}
               target="_blank"
               rel="noopener noreferrer"
               className="w-full inline-flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm py-3 px-4 rounded-xl transition"

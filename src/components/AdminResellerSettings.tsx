@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 
 export interface AdminResellerPackage {
   id: string;
@@ -27,6 +27,12 @@ export interface AdminResellerOrder {
   created_at: string;
 }
 
+interface ResellerCheckoutConfig {
+  whatsapp_admin: string;
+  hero_title: string;
+  hero_subtitle: string;
+}
+
 interface AdminResellerSettingsProps {
   onApproveToCreateReseller: (prefill: {
     full_name: string;
@@ -41,8 +47,18 @@ export default function AdminResellerSettings({
 }: AdminResellerSettingsProps) {
   const [packages, setPackages] = useState<AdminResellerPackage[]>([]);
   const [orders, setOrders] = useState<AdminResellerOrder[]>([]);
+  const [config, setConfig] = useState<ResellerCheckoutConfig>({
+    whatsapp_admin: '6285199655534',
+    hero_title: 'Gabung Jadi Reseller KlinikCPNS',
+    hero_subtitle:
+      'Pilih paket reseller di bawah ini dan selesaikan pembayaran tanpa perlu login terlebih dahulu. Setelah pembayaran diverifikasi Admin, akses login dashboard reseller akan langsung dikirimkan ke WhatsApp & Email Anda.',
+  });
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [isSavingConfig, setIsSavingConfig] = useState(false);
+  const [copiedKey, setCopiedKey] = useState<string | null>(null);
+  const [origin, setOrigin] = useState<string>('https://klinikcpns.com');
+  const pkgFormRef = useRef<HTMLFormElement>(null);
 
   // Form tambah/edit paket
   const [editingPkgId, setEditingPkgId] = useState<string | null>(null);
@@ -55,6 +71,12 @@ export default function AdminResellerSettings({
     is_active: true,
   });
 
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      setOrigin(window.location.origin);
+    }
+  }, []);
+
   const loadData = async () => {
     try {
       setIsLoading(true);
@@ -62,6 +84,7 @@ export default function AdminResellerSettings({
       const data = await res.json();
       if (data.packages) setPackages(data.packages);
       if (data.orders) setOrders(data.orders);
+      if (data.config) setConfig(data.config);
     } catch (err) {
       console.error('Failed to load reseller settings:', err);
     } finally {
@@ -72,6 +95,12 @@ export default function AdminResellerSettings({
   useEffect(() => {
     loadData();
   }, []);
+
+  const handleCopyLink = (key: string, url: string) => {
+    navigator.clipboard.writeText(url);
+    setCopiedKey(key);
+    setTimeout(() => setCopiedKey(null), 1800);
+  };
 
   const persistPackages = async (nextPackages: AdminResellerPackage[]) => {
     setIsSaving(true);
@@ -90,10 +119,30 @@ export default function AdminResellerSettings({
     }
   };
 
+  const handleSaveConfig = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSavingConfig(true);
+    try {
+      const res = await fetch('/api/reseller/orders', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'save_config', config }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Gagal menyimpan konfigurasi');
+      if (data.config) setConfig(data.config);
+      alert('✅ Pengaturan teks & WhatsApp Checkout Reseller tersimpan!');
+    } catch (err: any) {
+      alert(err.message || 'Gagal menyimpan pengaturan');
+    } finally {
+      setIsSavingConfig(false);
+    }
+  };
+
   const handleSavePackage = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!pkgForm.name.trim() || pkgForm.price < 0 || pkgForm.token_amount < 1) {
-      alert('Nama paket, harga, dan jumlah token (min. 1) wajib valid.');
+      alert('Nama paket, nominal harga, dan jumlah token (min. 1) wajib valid.');
       return;
     }
 
@@ -127,7 +176,7 @@ export default function AdminResellerSettings({
       badge: '',
       is_active: true,
     });
-    alert('✅ Pengaturan paket reseller berhasil disimpan!');
+    alert('✅ Pengaturan paket & nominal reseller berhasil disimpan!');
   };
 
   const handleEditPackage = (pkg: AdminResellerPackage) => {
@@ -140,6 +189,7 @@ export default function AdminResellerSettings({
       badge: pkg.badge || '',
       is_active: pkg.is_active,
     });
+    pkgFormRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
   };
 
   const handleDeletePackage = async (id: string) => {
@@ -170,6 +220,33 @@ export default function AdminResellerSettings({
     }
   };
 
+  const importantLinks = [
+    {
+      key: 'checkout',
+      title: 'Link Checkout Pendaftaran Reseller (Tanpa Login)',
+      desc: 'Bagikan ke calon reseller agar mereka bisa pilih paket & bayar QRIS.',
+      path: '/reseller/checkout',
+    },
+    {
+      key: 'login',
+      title: 'Link Login Reseller',
+      desc: 'Kirimkan link ini ke reseller setelah Anda membuatkan akunnya.',
+      path: '/reseller-login',
+    },
+    {
+      key: 'dashboard',
+      title: 'Link Dashboard Reseller',
+      desc: 'Tempat reseller generate voucher pelanggan & ganti password.',
+      path: '/reseller/dashboard',
+    },
+    {
+      key: 'referral',
+      title: 'Format Link Toko / Referral Reseller',
+      desc: 'Ganti KODE dengan kode 5 huruf masing-masing reseller.',
+      path: '/r/KODE',
+    },
+  ];
+
   if (isLoading) {
     return (
       <div className="bg-white rounded-xl border border-slate-200 p-6 text-sm text-slate-500">
@@ -180,23 +257,66 @@ export default function AdminResellerSettings({
 
   return (
     <div className="space-y-6">
-      {/* Bagian 1: Pengaturan Paket & Harga Checkout Reseller */}
+      {/* Bagian 0: Direktori Link Penting Reseller (Supaya Admin Tidak Lupa) */}
+      <div className="bg-purple-50/70 border border-purple-200 rounded-xl p-5 sm:p-6">
+        <div className="mb-4">
+          <h3 className="text-base sm:text-lg font-bold text-purple-950">
+            Link-Link Penting Program Reseller
+          </h3>
+          <p className="text-xs sm:text-sm text-purple-800/80">
+            Semua URL penting untuk calon reseller dan reseller aktif tersimpan di sini agar mudah disalin kapan saja.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          {importantLinks.map((item) => {
+            const fullUrl = `${origin}${item.path}`;
+            return (
+              <div
+                key={item.key}
+                className="bg-white border border-purple-100 rounded-xl p-3.5 flex flex-col justify-between gap-2.5"
+              >
+                <div>
+                  <p className="text-xs font-bold text-slate-900">{item.title}</p>
+                  <p className="text-[11px] text-slate-500 mt-0.5">{item.desc}</p>
+                  <p className="mt-1.5 font-mono text-xs text-purple-700 bg-purple-50 px-2.5 py-1 rounded-md truncate">
+                    {fullUrl}
+                  </p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => handleCopyLink(item.key, fullUrl)}
+                    className="text-xs font-semibold bg-purple-600 hover:bg-purple-700 text-white px-3 py-1.5 rounded-lg transition cursor-pointer"
+                  >
+                    {copiedKey === item.key ? '✓ Tersalin' : 'Salin Link'}
+                  </button>
+                  {item.key !== 'referral' && (
+                    <a
+                      href={item.path}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-xs font-semibold text-purple-700 bg-purple-50 hover:bg-purple-100 px-3 py-1.5 rounded-lg transition"
+                    >
+                      Buka Halaman ↗
+                    </a>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Bagian 1: Pengaturan Paket & Nominal Harga Checkout Reseller */}
       <div className="bg-white rounded-xl border border-slate-200 p-6 space-y-5">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
             <h3 className="text-lg font-bold text-slate-800">
-              Paket &amp; Harga Checkout Reseller
+              Paket &amp; Nominal Harga Checkout Reseller
             </h3>
             <p className="text-xs sm:text-sm text-slate-500">
-              Atur paket &amp; harga yang tampil di halaman checkout publik reseller:{' '}
-              <a
-                href="/reseller/checkout"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-purple-600 font-semibold hover:underline"
-              >
-                /reseller/checkout ↗
-              </a>
+              Klik <strong>Edit Nominal &amp; Paket</strong> pada kartu di bawah untuk mengubah harga, jumlah token, atau nama paket.
             </p>
           </div>
         </div>
@@ -237,9 +357,9 @@ export default function AdminResellerSettings({
                 <button
                   type="button"
                   onClick={() => handleEditPackage(pkg)}
-                  className="text-xs font-semibold text-blue-600 hover:underline cursor-pointer"
+                  className="text-xs font-semibold text-blue-700 bg-blue-50 hover:bg-blue-100 px-2.5 py-1 rounded-md cursor-pointer"
                 >
-                  Edit
+                  Edit Nominal &amp; Paket
                 </button>
                 <button
                   type="button"
@@ -260,54 +380,77 @@ export default function AdminResellerSettings({
           ))}
         </div>
 
-        {/* Form Tambah / Edit Paket Reseller */}
+        {/* Form Tambah / Edit Nominal & Paket Reseller */}
         <form
+          ref={pkgFormRef}
           onSubmit={handleSavePackage}
           className="bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-3"
         >
           <p className="text-xs font-bold uppercase tracking-wider text-slate-600">
-            {editingPkgId ? 'Edit Paket Reseller' : '+ Tambah Paket Reseller Baru'}
+            {editingPkgId
+              ? 'Edit Nominal & Detail Paket Reseller'
+              : '+ Tambah Paket Reseller Baru'}
           </p>
           <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
-            <input
-              type="text"
-              placeholder="Nama Paket (mis. Paket Starter)"
-              value={pkgForm.name}
-              onChange={(e) => setPkgForm({ ...pkgForm, name: e.target.value })}
-              className="border border-slate-300 rounded-lg px-3 py-2 text-sm bg-white"
-              required
-            />
-            <input
-              type="number"
-              placeholder="Harga (Rp)"
-              value={pkgForm.price || ''}
-              onChange={(e) =>
-                setPkgForm({ ...pkgForm, price: parseInt(e.target.value, 10) || 0 })
-              }
-              className="border border-slate-300 rounded-lg px-3 py-2 text-sm bg-white"
-              required
-            />
-            <input
-              type="number"
-              placeholder="Jumlah Token"
-              min={1}
-              value={pkgForm.token_amount || ''}
-              onChange={(e) =>
-                setPkgForm({
-                  ...pkgForm,
-                  token_amount: parseInt(e.target.value, 10) || 1,
-                })
-              }
-              className="border border-slate-300 rounded-lg px-3 py-2 text-sm bg-white"
-              required
-            />
-            <input
-              type="text"
-              placeholder="Badge (opsional, mis. Terlaris)"
-              value={pkgForm.badge}
-              onChange={(e) => setPkgForm({ ...pkgForm, badge: e.target.value })}
-              className="border border-slate-300 rounded-lg px-3 py-2 text-sm bg-white"
-            />
+            <div>
+              <label className="block text-[11px] font-semibold text-slate-600 mb-1">
+                Nama Paket
+              </label>
+              <input
+                type="text"
+                placeholder="Mis. Paket Starter"
+                value={pkgForm.name}
+                onChange={(e) => setPkgForm({ ...pkgForm, name: e.target.value })}
+                className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm bg-white"
+                required
+              />
+            </div>
+            <div>
+              <label className="block text-[11px] font-semibold text-slate-600 mb-1">
+                Nominal Harga (Rp)
+              </label>
+              <input
+                type="number"
+                placeholder="350000"
+                value={pkgForm.price || ''}
+                onChange={(e) =>
+                  setPkgForm({ ...pkgForm, price: parseInt(e.target.value, 10) || 0 })
+                }
+                className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm bg-white"
+                required
+              />
+            </div>
+            <div>
+              <label className="block text-[11px] font-semibold text-slate-600 mb-1">
+                Jumlah Token
+              </label>
+              <input
+                type="number"
+                placeholder="10"
+                min={1}
+                value={pkgForm.token_amount || ''}
+                onChange={(e) =>
+                  setPkgForm({
+                    ...pkgForm,
+                    token_amount: parseInt(e.target.value, 10) || 1,
+                  })
+                }
+                className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm bg-white"
+                required
+              />
+            </div>
+            <div>
+              <label className="block text-[11px] font-semibold text-slate-600 mb-1">
+                Badge Label (Opsional)
+              </label>
+              <input
+                type="text"
+                placeholder="Mis. Paling Laris"
+                value={pkgForm.badge}
+                onChange={(e) => setPkgForm({ ...pkgForm, badge: e.target.value })}
+                className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm bg-white"
+              />
+            </div>
           </div>
           <div className="flex flex-col sm:flex-row gap-3">
             <input
@@ -351,6 +494,65 @@ export default function AdminResellerSettings({
                   : 'Tambah Paket'}
               </button>
             </div>
+          </div>
+        </form>
+
+        {/* Pengaturan Teks & Nomor WA Halaman Checkout Reseller */}
+        <form
+          onSubmit={handleSaveConfig}
+          className="bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-3"
+        >
+          <p className="text-xs font-bold uppercase tracking-wider text-slate-600">
+            Pengaturan Tampilan &amp; Nomor WA Checkout Reseller
+          </p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label className="block text-[11px] font-semibold text-slate-600 mb-1">
+                Judul Halaman Checkout Reseller
+              </label>
+              <input
+                type="text"
+                value={config.hero_title}
+                onChange={(e) => setConfig({ ...config, hero_title: e.target.value })}
+                className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm bg-white"
+              />
+            </div>
+            <div>
+              <label className="block text-[11px] font-semibold text-slate-600 mb-1">
+                No. WhatsApp Konfirmasi Admin (format 628xxx)
+              </label>
+              <input
+                type="text"
+                value={config.whatsapp_admin}
+                onChange={(e) =>
+                  setConfig({ ...config, whatsapp_admin: e.target.value })
+                }
+                className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm bg-white"
+                placeholder="6285199655534"
+              />
+            </div>
+          </div>
+          <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-end">
+            <div className="flex-1">
+              <label className="block text-[11px] font-semibold text-slate-600 mb-1">
+                Subjudul / Penjelasan Singkat di Checkout Reseller
+              </label>
+              <input
+                type="text"
+                value={config.hero_subtitle}
+                onChange={(e) =>
+                  setConfig({ ...config, hero_subtitle: e.target.value })
+                }
+                className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm bg-white"
+              />
+            </div>
+            <button
+              type="submit"
+              disabled={isSavingConfig}
+              className="px-5 py-2 text-sm font-semibold bg-slate-900 hover:bg-slate-800 text-white rounded-lg cursor-pointer shrink-0"
+            >
+              {isSavingConfig ? 'Menyimpan...' : 'Simpan Teks & WA'}
+            </button>
           </div>
         </form>
       </div>

@@ -26,6 +26,11 @@ interface ResellerPackage {
 export default function ResellerCheckoutPage() {
   const [packages, setPackages] = useState<ResellerPackage[]>([]);
   const [selectedPackageId, setSelectedPackageId] = useState<string>('');
+  const [config, setConfig] = useState({
+    hero_title: 'Gabung Jadi Reseller KlinikCPNS',
+    hero_subtitle:
+      'Pilih paket reseller di bawah ini dan selesaikan pembayaran tanpa perlu login terlebih dahulu. Setelah pembayaran diverifikasi Admin, akses login dashboard reseller akan langsung dikirimkan ke WhatsApp & Email Anda.',
+  });
   const [isLoading, setIsLoading] = useState(true);
   const [isProcessing, setIsProcessing] = useState(false);
 
@@ -45,6 +50,9 @@ export default function ResellerCheckoutPage() {
         if (data?.packages && data.packages.length > 0) {
           setPackages(data.packages);
           setSelectedPackageId(data.packages[0].id);
+        }
+        if (data?.config) {
+          setConfig((prev) => ({ ...prev, ...data.config }));
         }
       } catch (err) {
         console.error('Error loading reseller packages:', err);
@@ -136,10 +144,10 @@ export default function ResellerCheckoutPage() {
             Program Kemitraan KlinikCPNS
           </span>
           <h1 className="font-heading text-2xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">
-            Gabung Jadi Reseller KlinikCPNS
+            {config.hero_title}
           </h1>
           <p className="mt-2 text-sm sm:text-base text-slate-600 max-w-2xl leading-relaxed">
-            Pilih paket reseller di bawah ini dan selesaikan pembayaran tanpa perlu login terlebih dahulu. Setelah pembayaran diverifikasi Admin, akses login dashboard reseller akan langsung dikirimkan ke WhatsApp &amp; Email Anda.
+            {config.hero_subtitle}
           </p>
         </div>
 
