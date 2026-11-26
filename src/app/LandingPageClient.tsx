@@ -87,8 +87,8 @@ function Header({ activeTab, onSwitchTab }: HeaderProps) {
     { id: "beranda", label: "Beranda", icon: Home },
     { id: "keunggulan", label: "Keunggulan & Fitur", icon: Sparkles },
     { id: "panduan", label: "Panduan 2026", icon: BookOpen, isGuide: true },
-    { id: "harga", label: "Harga & Perbandingan", icon: Scale },
-    { id: "testimoni", label: "Testimoni & FAQ", icon: MessageSquareQuote },
+    { id: "harga", label: "Harga", icon: Scale },
+    { id: "testimoni", label: "FAQ", icon: MessageSquareQuote },
   ];
 
   return (
@@ -975,14 +975,14 @@ function Footer({ onSwitchTab }: { onSwitchTab: (tab: PlatformTab) => void }) {
             onClick={() => onSwitchTab("harga")}
             className="hover:text-white transition-colors cursor-pointer"
           >
-            Harga &amp; Perbandingan
+            Harga
           </button>
           <button
             type="button"
             onClick={() => onSwitchTab("testimoni")}
             className="hover:text-white transition-colors cursor-pointer"
           >
-            Testimoni &amp; FAQ
+            FAQ
           </button>
           <Link href="/blog" className="hover:text-white transition-colors">
             Blog
