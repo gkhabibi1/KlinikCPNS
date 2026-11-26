@@ -2,6 +2,8 @@ import { createClient } from '@/lib/supabase-server';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { Metadata } from 'next';
+import PlatformHeader from '@/components/PlatformHeader';
+import { ArrowLeft, Calendar, ChevronRight, User } from 'lucide-react';
 
 interface PageProps {
   params: Promise<{ slug: string }>;
@@ -37,7 +39,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 export default async function BlogPostPage({ params }: PageProps) {
   const { slug } = await params;
   const supabase = createClient();
-  
+
   const { data: post } = await supabase
     .from('blog_posts')
     .select('*')
@@ -57,80 +59,96 @@ export default async function BlogPostPage({ params }: PageProps) {
 
   return (
     <div className="min-h-screen bg-white">
-      {/* Navbar */}
-      <nav className="border-b border-slate-100 bg-white/90 backdrop-blur sticky top-0 z-50">
-        <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
-          <Link href="/" className="flex items-center">
-            <img
-              src="https://ik.imagekit.io/e2yna5qg8/Logo%20Klinik%20CPNS.png"
-              alt="Logo Klinik CPNS"
-              className="h-9 md:h-10 w-auto object-contain"
-            />
-          </Link>
-          <div className="flex items-center gap-6">
-            <Link href="/blog" className="text-sm font-medium text-slate-600 hover:text-slate-900">Blog</Link>
-            <Link href="/login" className="text-sm font-medium text-slate-600 hover:text-slate-900">Masuk</Link>
-          </div>
-        </div>
-      </nav>
+      <PlatformHeader activeTab="blog" />
 
       {/* Article */}
-      <article className="max-w-3xl mx-auto px-6 py-12">
+      <article className="max-w-3xl mx-auto px-4 sm:px-6 py-7 sm:py-12">
+        {/* Breadcrumb */}
+        <nav
+          aria-label="Breadcrumb"
+          className="flex items-center gap-1.5 text-xs text-slate-500 mb-5 overflow-x-auto no-scrollbar whitespace-nowrap"
+        >
+          <Link href="/" className="hover:text-blue-600 transition-colors">
+            Beranda
+          </Link>
+          <ChevronRight className="w-3.5 h-3.5 shrink-0" />
+          <Link href="/blog" className="hover:text-blue-600 transition-colors">
+            Blog
+          </Link>
+          {post.category && (
+            <>
+              <ChevronRight className="w-3.5 h-3.5 shrink-0" />
+              <span className="text-slate-700 font-medium">{post.category}</span>
+            </>
+          )}
+        </nav>
+
         {/* Header */}
-        <div className="mb-8">
-          <div className="flex items-center gap-3 mb-4">
-            <span className={`text-xs font-bold px-3 py-1 rounded-full ${
-              post.category === 'CPNS' ? 'bg-blue-100 text-blue-700' :
-              post.category === 'P3K' ? 'bg-green-100 text-green-700' :
-              post.category === 'Tips' ? 'bg-amber-100 text-amber-700' :
-              'bg-slate-100 text-slate-700'
-            }`}>
+        <header className="mb-6 sm:mb-8">
+          <div className="flex flex-wrap items-center gap-2.5 mb-3 sm:mb-4">
+            <span
+              className={`text-xs font-bold px-3 py-1 rounded-full ${
+                post.category === 'CPNS'
+                  ? 'bg-blue-100 text-blue-700'
+                  : post.category === 'P3K'
+                  ? 'bg-green-100 text-green-700'
+                  : post.category === 'Tips'
+                  ? 'bg-amber-100 text-amber-700'
+                  : 'bg-slate-100 text-slate-700'
+              }`}
+            >
               {post.category}
             </span>
-            <span className="text-sm text-slate-500">
-              {new Date(post.published_at || post.created_at).toLocaleDateString('id-ID', {
-                day: 'numeric',
-                month: 'long',
-                year: 'numeric'
-              })}
+            <span className="inline-flex items-center gap-1.5 text-xs sm:text-sm text-slate-500">
+              <Calendar className="w-3.5 h-3.5" />
+              {new Date(post.published_at || post.created_at).toLocaleDateString(
+                'id-ID',
+                {
+                  day: 'numeric',
+                  month: 'long',
+                  year: 'numeric',
+                }
+              )}
             </span>
           </div>
-          
-          <h1 className="text-3xl md:text-4xl font-bold text-slate-800 mb-4">
+
+          <h1 className="font-heading text-2xl sm:text-3xl md:text-4xl font-extrabold text-slate-900 leading-[1.2] tracking-tight mb-3 sm:mb-4">
             {post.title}
           </h1>
-          
+
           {post.author_name && (
-            <p className="text-slate-600">
-              Oleh: <span className="font-medium">{post.author_name}</span>
+            <p className="inline-flex items-center gap-1.5 text-xs sm:text-sm text-slate-600">
+              <User className="w-3.5 h-3.5 text-slate-400" />
+              Oleh: <span className="font-semibold text-slate-800">{post.author_name}</span>
             </p>
           )}
-        </div>
+        </header>
 
         {/* Featured Image */}
         {post.featured_image && (
-          <div className="aspect-video bg-slate-100 rounded-xl overflow-hidden mb-8">
-            <img 
-              src={post.featured_image} 
+          <div className="aspect-[16/9] bg-slate-100 rounded-2xl overflow-hidden mb-7 sm:mb-8 border border-slate-100">
+            <img
+              src={post.featured_image}
               alt={post.title}
               className="w-full h-full object-cover"
             />
           </div>
         )}
 
-        {/* Content */}
-        <div 
-          className="prose prose-lg max-w-none prose-blue"
+        {/* Content - Optimized for Smartphone Readability */}
+        <div
+          className="prose prose-sm sm:prose-base md:prose-lg max-w-none prose-blue prose-headings:font-heading prose-headings:tracking-tight prose-p:leading-[1.8] prose-p:text-slate-700 prose-img:rounded-2xl prose-a:break-words overflow-x-hidden break-words"
           dangerouslySetInnerHTML={{ __html: post.content }}
         />
 
         {/* Back to Blog */}
-        <div className="mt-12 pt-8 border-t border-slate-200">
-          <Link 
-            href="/blog" 
-            className="text-blue-600 hover:text-blue-700 font-medium"
+        <div className="mt-10 sm:mt-12 pt-6 sm:pt-8 border-t border-slate-200 flex items-center justify-between">
+          <Link
+            href="/blog"
+            className="inline-flex items-center gap-2 text-sm font-semibold text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 px-4 py-2.5 rounded-full transition-colors"
           >
-            ← Kembali ke Daftar Artikel
+            <ArrowLeft className="w-4 h-4" />
+            <span>Kembali ke Daftar Artikel</span>
           </Link>
         </div>
       </article>
