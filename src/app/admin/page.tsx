@@ -7,6 +7,7 @@ import FormattedText from '@/components/FormattedText';
 import ChatMessageContent from '@/components/ChatMessageContent';
 import BatchPackageUpload from '@/components/BatchPackageUpload';
 import QuestionBankPanel from '@/components/QuestionBankPanel';
+import AdminResellerSettings from '@/components/AdminResellerSettings';
 import { buildQuestionBankPayload } from '@/lib/questionSubcategory';
 import { parseQuestionsFromText, downloadQuestionTemplate } from '@/lib/questionParser';
 
@@ -4734,6 +4735,21 @@ export default function AdminCommandCenter() {
                     Tambah Reseller
                   </button>
                 </div>
+
+                {/* Pengaturan Paket Reseller & Order Masuk */}
+                <AdminResellerSettings
+                  onApproveToCreateReseller={(prefill) => {
+                    setEditingReseller(null);
+                    setResellerForm({
+                      email: prefill.email,
+                      password: '',
+                      full_name: prefill.full_name,
+                      reseller_code: '',
+                      token_balance: prefill.token_balance,
+                    });
+                    setShowResellerModal(true);
+                  }}
+                />
 
                 {/* List Reseller */}
                 <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">

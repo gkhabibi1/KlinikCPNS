@@ -24,6 +24,9 @@ export default function ResellerDashboard() {
 
   // Form settings
   const [checkoutLink, setCheckoutLink] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [isUpdatingPassword, setIsUpdatingPassword] = useState(false);
 
   useEffect(() => {
     checkAuth();
@@ -149,6 +152,30 @@ export default function ResellerDashboard() {
     } else {
       setReseller({...reseller, checkout_link: checkoutLink});
       alert('✅ Link checkout berhasil diupdate!');
+    }
+  };
+
+  const handleChangePassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (newPassword.length < 6) {
+      alert('Password baru minimal 6 karakter.');
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      alert('Konfirmasi password tidak cocok.');
+      return;
+    }
+    setIsUpdatingPassword(true);
+    try {
+      const { error } = await supabase.auth.updateUser({ password: newPassword });
+      if (error) throw error;
+      setNewPassword('');
+      setConfirmPassword('');
+      alert('✅ Password berhasil diperbarui!');
+    } catch (err: any) {
+      alert('Gagal mengganti password: ' + (err.message || 'Terjadi kesalahan'));
+    } finally {
+      setIsUpdatingPassword(false);
     }
   };
 
@@ -450,6 +477,45 @@ export default function ResellerDashboard() {
                   >
                     Simpan Link
                   </button>
+                </div>
+
+                <div className="pt-4 border-t">
+                  <h4 className="font-semibold text-slate-800 mb-3">🔐 Ganti Password Akun</h4>
+                  <form onSubmit={handleChangePassword} className="space-y-3">
+                    <div>
+                      <label className="block text-xs font-medium text-slate-700 mb-1">
+                        Password Baru (min. 6 karakter)
+                      </label>
+                      <input
+                        type="password"
+                        value={newPassword}
+                        onChange={(e) => setNewPassword(e.target.value)}
+                        className="w-full border border-slate-300 rounded-lg p-2.5 text-sm"
+                        placeholder="Masukkan password baru"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-slate-700 mb-1">
+                        Konfirmasi Password Baru
+                      </label>
+                      <input
+                        type="password"
+                        value={confirmPassword}
+                        onChange={(e) => setConfirmPassword(e.target.value)}
+                        className="w-full border border-slate-300 rounded-lg p-2.5 text-sm"
+                        placeholder="Ulangi password baru"
+                        required
+                      />
+                    </div>
+                    <button
+                      type="submit"
+                      disabled={isUpdatingPassword}
+                      className="bg-slate-900 hover:bg-slate-800 disabled:opacity-60 text-white px-4 py-2 rounded-lg text-sm font-medium cursor-pointer"
+                    >
+                      {isUpdatingPassword ? 'Menyimpan...' : 'Update Password'}
+                    </button>
+                  </form>
                 </div>
 
                 <div className="pt-4 border-t">

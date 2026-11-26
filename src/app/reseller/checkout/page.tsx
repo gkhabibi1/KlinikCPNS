@@ -1,143 +1,89 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { createClient } from '@/lib/supabase-client';
 import {
-  ArrowLeft,
   ArrowRight,
   CheckCircle2,
   Coins,
-  Minus,
+  KeyRound,
   Package,
-  Plus,
   ShieldCheck,
   Sparkles,
+  UserCheck,
 } from 'lucide-react';
 
-const supabase = createClient();
-
-interface SubscriptionPackage {
+interface ResellerPackage {
   id: string;
   name: string;
-  description?: string;
-  duration_months: number;
   price: number;
-  reseller_price?: number | null;
-  discount_label?: string | null;
-  subscription_benefits?: Array<{ id: string; benefit_text: string }>;
+  token_amount: number;
+  description: string;
+  badge?: string;
+  is_active: boolean;
 }
 
-const DEFAULT_RESELLER_DISCOUNT_PERCENT = 20;
-
 export default function ResellerCheckoutPage() {
-  const router = useRouter();
-  const [user, setUser] = useState<any>(null);
-  const [reseller, setReseller] = useState<any>(null);
-  const [packages, setPackages] = useState<SubscriptionPackage[]>([]);
+  const [packages, setPackages] = useState<ResellerPackage[]>([]);
   const [selectedPackageId, setSelectedPackageId] = useState<string>('');
-  const [quantity, setQuantity] = useState<number>(10);
-  const [phone, setPhone] = useState<string>('');
   const [isLoading, setIsLoading] = useState(true);
   const [isProcessing, setIsProcessing] = useState(false);
 
+  const [form, setForm] = useState({
+    full_name: '',
+    email: '',
+    phone_number: '',
+    notes: '',
+  });
+
   useEffect(() => {
-    const init = async () => {
+    const fetchPackages = async () => {
       try {
         setIsLoading(true);
-        const {
-          data: { user: currentUser },
-        } = await supabase.auth.getUser();
-
-        if (!currentUser) {
-          router.push('/reseller-login');
-          return;
-        }
-
-        const { data: resellerData } = await supabase
-          .from('resellers')
-          .select('*')
-          .eq('user_id', currentUser.id)
-          .single();
-
-        if (!resellerData) {
-          router.push('/reseller-login');
-          return;
-        }
-
-        setUser(currentUser);
-        setReseller(resellerData);
-        setPhone(resellerData.phone_number || '');
-
-        const { data: pkgData } = await supabase
-          .from('subscription_packages')
-          .select('*, subscription_benefits(*)')
-          .eq('is_active', true)
-          .order('display_order');
-
-        if (pkgData && pkgData.length > 0) {
-          setPackages(pkgData);
-          setSelectedPackageId(pkgData[0].id);
+        const res = await fetch('/api/reseller/orders');
+        const data = await res.json();
+        if (data?.packages && data.packages.length > 0) {
+          setPackages(data.packages);
+          setSelectedPackageId(data.packages[0].id);
         }
       } catch (err) {
-        console.error('Error loading reseller checkout:', err);
+        console.error('Error loading reseller packages:', err);
       } finally {
         setIsLoading(false);
       }
     };
-
-    init();
-  }, [router]);
+    fetchPackages();
+  }, []);
 
   const selectedPackage = packages.find((p) => p.id === selectedPackageId) || null;
 
-  // Gunakan reseller_price jika disetting di Admin, jika tidak pakai diskon default 20%
-  const getUnitResellerPrice = (pkg: SubscriptionPackage) => {
-    if (typeof pkg.reseller_price === 'number' && pkg.reseller_price > 0) {
-      return pkg.reseller_price;
-    }
-    return Math.round((pkg.price || 0) * (1 - DEFAULT_RESELLER_DISCOUNT_PERCENT / 100));
-  };
-
-  const unitNormalPrice = selectedPackage?.price || 0;
-  const unitResellerPrice = selectedPackage ? getUnitResellerPrice(selectedPackage) : 0;
-  const totalNormal = unitNormalPrice * quantity;
-  const totalPayable = unitResellerPrice * quantity;
-  const totalSavings = Math.max(0, totalNormal - totalPayable);
-
-  const handleCreateOrder = async () => {
-    if (!user || !reseller || !selectedPackage) return;
-
-    if (quantity < 1 || quantity > 500) {
-      alert('Jumlah paket harus antara 1 sampai 500.');
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedPackage) {
+      alert('Pilih paket reseller terlebih dahulu.');
       return;
     }
-
-    if (!phone.trim()) {
-      alert('Nomor WhatsApp aktif wajib diisi untuk konfirmasi pesanan.');
+    if (!form.full_name.trim() || !form.email.trim() || !form.phone_number.trim()) {
+      alert('Nama lengkap, email, dan nomor WhatsApp wajib diisi.');
       return;
     }
 
     setIsProcessing(true);
     try {
-      const response = await fetch('/api/payment/create-qris', {
+      const res = await fetch('/api/reseller/orders', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          user_id: user.id,
           package_id: selectedPackage.id,
-          duration: selectedPackage.duration_months || 1,
-          base_amount: totalPayable,
-          customer_name: `[RESELLER ${reseller.reseller_code}] ${reseller.full_name} (${quantity}x Token - ${selectedPackage.name})`,
-          customer_email: reseller.email || user.email,
-          customer_phone: phone.trim(),
-          voucher_code_id: null,
+          full_name: form.full_name,
+          email: form.email,
+          phone_number: form.phone_number,
+          notes: form.notes,
         }),
       });
 
-      const data = await response.json();
-      if (!response.ok || !data.success) {
+      const data = await res.json();
+      if (!res.ok || !data.success) {
         throw new Error(data.error || 'Gagal membuat pesanan reseller');
       }
 
@@ -157,72 +103,78 @@ export default function ResellerCheckoutPage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-slate-50 flex flex-col">
       {/* Header */}
       <header className="bg-white border-b border-slate-200 px-4 sm:px-6 py-4 sticky top-0 z-30">
         <div className="max-w-6xl mx-auto flex items-center justify-between gap-3">
+          <Link href="/" className="flex items-center gap-2.5 shrink-0">
+            <img
+              src="https://ik.imagekit.io/e2yna5qg8/Logo%20Klinik%20CPNS.png"
+              alt="Klinik CPNS"
+              className="h-8 sm:h-9 w-auto object-contain"
+            />
+          </Link>
           <div className="flex items-center gap-3">
+            <span className="hidden sm:inline-flex items-center gap-1.5 text-xs font-semibold text-purple-700 bg-purple-50 border border-purple-200 px-3 py-1.5 rounded-full">
+              <Sparkles className="w-3.5 h-3.5" />
+              Pendaftaran &amp; Checkout Reseller
+            </span>
             <Link
-              href="/reseller/dashboard"
-              className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-semibold text-slate-600 hover:text-purple-700 bg-slate-100 hover:bg-purple-50 px-3 py-1.5 rounded-full transition-colors"
+              href="/reseller-login"
+              className="text-xs sm:text-sm font-semibold text-slate-700 hover:text-purple-700 bg-slate-100 hover:bg-purple-50 px-3.5 py-2 rounded-full transition-colors"
             >
-              <ArrowLeft className="w-4 h-4" />
-              <span>Dashboard</span>
+              Sudah punya akun? Login
             </Link>
-            <div>
-              <h1 className="text-base sm:text-lg font-bold text-slate-900">
-                Checkout Paket Reseller
-              </h1>
-              <p className="text-xs text-slate-500">
-                Kode: <span className="font-mono font-bold text-purple-600">{reseller?.reseller_code}</span> · Sisa Token:{' '}
-                <span className="font-bold text-slate-800">{reseller?.token_balance ?? 0}</span>
-              </p>
-            </div>
           </div>
-          <span className="hidden sm:inline-flex items-center gap-1.5 text-xs font-semibold text-purple-700 bg-purple-50 border border-purple-200 px-3 py-1.5 rounded-full">
-            <Sparkles className="w-3.5 h-3.5" />
-            Harga Khusus Reseller
-          </span>
         </div>
       </header>
 
-      <main className="max-w-6xl mx-auto px-4 sm:px-6 py-6 sm:py-10">
+      <main className="flex-1 max-w-6xl w-full mx-auto px-4 sm:px-6 py-7 sm:py-12">
+        {/* Intro Banner */}
+        <div className="mb-7 sm:mb-9">
+          <span className="inline-flex items-center gap-1.5 text-xs font-bold text-purple-700 bg-purple-100/80 px-3 py-1 rounded-full mb-2.5">
+            Program Kemitraan KlinikCPNS
+          </span>
+          <h1 className="font-heading text-2xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">
+            Gabung Jadi Reseller KlinikCPNS
+          </h1>
+          <p className="mt-2 text-sm sm:text-base text-slate-600 max-w-2xl leading-relaxed">
+            Pilih paket reseller di bawah ini dan selesaikan pembayaran tanpa perlu login terlebih dahulu. Setelah pembayaran diverifikasi Admin, akses login dashboard reseller akan langsung dikirimkan ke WhatsApp &amp; Email Anda.
+          </p>
+        </div>
+
         {packages.length === 0 ? (
           <div className="bg-white rounded-2xl border border-slate-200 p-8 text-center">
             <Package className="w-10 h-10 text-slate-400 mx-auto mb-3" />
             <h2 className="text-lg font-bold text-slate-800 mb-1">
-              Belum Ada Paket Aktif
+              Paket Reseller Belum Tersedia
             </h2>
             <p className="text-sm text-slate-500">
-              Admin belum mengaktifkan paket langganan. Silakan hubungi admin terlebih dahulu.
+              Admin belum mengaktifkan paket reseller. Silakan hubungi Admin via WhatsApp.
             </p>
           </div>
         ) : (
-          <div className="grid lg:grid-cols-12 gap-6 lg:gap-8 items-start">
-            {/* Kolom Kiri: Pilih Paket & Jumlah */}
+          <form onSubmit={handleSubmit} className="grid lg:grid-cols-12 gap-6 lg:gap-8 items-start">
+            {/* Kolom Kiri: Pilih Paket & Data Diri */}
             <div className="lg:col-span-7 space-y-6">
-              {/* 1. Pilih Paket dari Admin */}
+              {/* 1. Pilihan Paket Reseller dari Admin */}
               <section className="bg-white rounded-2xl border border-slate-200 p-5 sm:p-6 shadow-2xs">
                 <div className="mb-4">
                   <span className="text-[11px] font-bold uppercase tracking-wider text-purple-600">
                     Langkah 1
                   </span>
                   <h2 className="text-lg font-bold text-slate-900">
-                    Pilih Paket yang Ingin Diorder
+                    Pilih Paket Reseller
                   </h2>
-                  <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
-                    Daftar paket berikut sinkron langsung dengan pengaturan paket di panel Admin.
-                  </p>
                 </div>
 
                 <div className="space-y-3">
                   {packages.map((pkg) => {
                     const isSelected = pkg.id === selectedPackageId;
-                    const resellerUnit = getUnitResellerPrice(pkg);
-                    const durationLabel =
-                      pkg.duration_months === 999
-                        ? 'Lifetime'
-                        : `${pkg.duration_months} Bulan`;
+                    const pricePerToken =
+                      pkg.token_amount > 0
+                        ? Math.round(pkg.price / pkg.token_amount)
+                        : pkg.price;
 
                     return (
                       <button
@@ -237,152 +189,118 @@ export default function ResellerCheckoutPage() {
                       >
                         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                           <div>
-                            <div className="flex items-center gap-2">
+                            <div className="flex flex-wrap items-center gap-2">
                               <span className="font-bold text-slate-900 text-sm sm:text-base">
                                 {pkg.name}
                               </span>
-                              <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-slate-100 text-slate-700">
-                                {durationLabel}
+                              {pkg.badge && (
+                                <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-purple-100 text-purple-700">
+                                  {pkg.badge}
+                                </span>
+                              )}
+                            </div>
+                            <p className="text-xs text-slate-600 mt-1">
+                              {pkg.description}
+                            </p>
+                            <div className="mt-2 inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-lg">
+                              <Coins className="w-3.5 h-3.5" />
+                              <span>
+                                Dapat {pkg.token_amount} Token Voucher (~Rp{' '}
+                                {pricePerToken.toLocaleString('id-ID')}/voucher)
                               </span>
                             </div>
-                            {pkg.description && (
-                              <p className="text-xs text-slate-500 mt-1 line-clamp-2">
-                                {pkg.description}
-                              </p>
-                            )}
                           </div>
 
-                          <div className="sm:text-right shrink-0">
-                            <p className="text-xs text-slate-400 line-through">
+                          <div className="sm:text-right shrink-0 pt-1 sm:pt-0">
+                            <p className="text-xl font-extrabold text-purple-700">
                               Rp {pkg.price?.toLocaleString('id-ID')}
-                            </p>
-                            <p className="text-base sm:text-lg font-extrabold text-purple-700">
-                              Rp {resellerUnit.toLocaleString('id-ID')}
-                              <span className="text-xs font-medium text-slate-500">
-                                /voucher
-                              </span>
                             </p>
                           </div>
                         </div>
-
-                        {pkg.subscription_benefits && pkg.subscription_benefits.length > 0 && (
-                          <div className="mt-3 pt-2.5 border-t border-slate-100 flex flex-wrap gap-x-4 gap-y-1">
-                            {pkg.subscription_benefits.slice(0, 3).map((b) => (
-                              <span
-                                key={b.id}
-                                className="inline-flex items-center gap-1 text-[11px] text-slate-600"
-                              >
-                                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
-                                {b.benefit_text}
-                              </span>
-                            ))}
-                          </div>
-                        )}
                       </button>
                     );
                   })}
                 </div>
               </section>
 
-              {/* 2. Jumlah Token / Voucher & Kontak */}
-              <section className="bg-white rounded-2xl border border-slate-200 p-5 sm:p-6 shadow-2xs space-y-5">
+              {/* 2. Data Calon Reseller */}
+              <section className="bg-white rounded-2xl border border-slate-200 p-5 sm:p-6 shadow-2xs space-y-4">
                 <div>
                   <span className="text-[11px] font-bold uppercase tracking-wider text-purple-600">
                     Langkah 2
                   </span>
                   <h2 className="text-lg font-bold text-slate-900">
-                    Jumlah Token / Voucher &amp; Konfirmasi
+                    Data Diri Calon Reseller
                   </h2>
+                  <p className="text-xs text-slate-500 mt-0.5">
+                    Email &amp; WhatsApp ini akan digunakan Admin untuk mengirimkan akun login reseller Anda.
+                  </p>
                 </div>
 
                 <div>
-                  <label className="block text-xs sm:text-sm font-semibold text-slate-700 mb-2">
-                    Jumlah Order (1 Token = 1 Kode Voucher)
+                  <label className="block text-xs sm:text-sm font-semibold text-slate-700 mb-1.5">
+                    Nama Lengkap *
                   </label>
-                  <div className="flex flex-wrap items-center gap-3">
-                    <div className="inline-flex items-center border border-slate-300 rounded-xl overflow-hidden bg-white">
-                      <button
-                        type="button"
-                        onClick={() => setQuantity((q) => Math.max(1, q - 1))}
-                        className="px-3.5 py-2.5 text-slate-600 hover:bg-slate-100 transition cursor-pointer"
-                        aria-label="Kurangi jumlah"
-                      >
-                        <Minus className="w-4 h-4" />
-                      </button>
-                      <input
-                        type="number"
-                        min={1}
-                        max={500}
-                        value={quantity}
-                        onChange={(e) => {
-                          const val = parseInt(e.target.value, 10);
-                          setQuantity(isNaN(val) ? 1 : Math.max(1, Math.min(500, val)));
-                        }}
-                        className="w-16 text-center font-bold text-slate-900 text-sm focus:outline-none"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setQuantity((q) => Math.min(500, q + 1))}
-                        className="px-3.5 py-2.5 text-slate-600 hover:bg-slate-100 transition cursor-pointer"
-                        aria-label="Tambah jumlah"
-                      >
-                        <Plus className="w-4 h-4" />
-                      </button>
-                    </div>
+                  <input
+                    type="text"
+                    required
+                    value={form.full_name}
+                    onChange={(e) => setForm({ ...form, full_name: e.target.value })}
+                    placeholder="Contoh: Budi Santoso"
+                    className="w-full px-4 py-2.5 text-sm border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500"
+                  />
+                </div>
 
-                    <div className="flex flex-wrap gap-1.5">
-                      {[5, 10, 25, 50, 100].map((preset) => (
-                        <button
-                          key={preset}
-                          type="button"
-                          onClick={() => setQuantity(preset)}
-                          className={`px-3 py-1.5 rounded-full text-xs font-semibold transition cursor-pointer ${
-                            quantity === preset
-                              ? 'bg-purple-600 text-white'
-                              : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-                          }`}
-                        >
-                          {preset}x
-                        </button>
-                      ))}
-                    </div>
+                <div className="grid sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs sm:text-sm font-semibold text-slate-700 mb-1.5">
+                      Email untuk Login Reseller *
+                    </label>
+                    <input
+                      type="email"
+                      required
+                      value={form.email}
+                      onChange={(e) => setForm({ ...form, email: e.target.value })}
+                      placeholder="budi@email.com"
+                      className="w-full px-4 py-2.5 text-sm border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs sm:text-sm font-semibold text-slate-700 mb-1.5">
+                      Nomor WhatsApp Aktif *
+                    </label>
+                    <input
+                      type="tel"
+                      required
+                      value={form.phone_number}
+                      onChange={(e) => setForm({ ...form, phone_number: e.target.value })}
+                      placeholder="081234567890"
+                      className="w-full px-4 py-2.5 text-sm border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500"
+                    />
                   </div>
                 </div>
 
                 <div>
                   <label className="block text-xs sm:text-sm font-semibold text-slate-700 mb-1.5">
-                    Nomor WhatsApp Reseller
+                    Catatan / Domisili (Opsional)
                   </label>
                   <input
-                    type="tel"
-                    value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
-                    placeholder="Contoh: 081234567890"
+                    type="text"
+                    value={form.notes}
+                    onChange={(e) => setForm({ ...form, notes: e.target.value })}
+                    placeholder="Contoh: Komunitas CPNS Bandung"
                     className="w-full px-4 py-2.5 text-sm border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500"
                   />
-                  <p className="text-[11px] text-slate-500 mt-1">
-                    Digunakan untuk konfirmasi status order &amp; penambahan saldo token.
-                  </p>
                 </div>
               </section>
             </div>
 
-            {/* Kolom Kanan: Ringkasan Order */}
-            <aside className="lg:col-span-5 lg:sticky lg:top-24">
+            {/* Kolom Kanan: Ringkasan & Alur Aktivasi */}
+            <aside className="lg:col-span-5 lg:sticky lg:top-24 space-y-4">
               <div className="bg-white rounded-2xl border border-slate-200 p-5 sm:p-6 shadow-sm space-y-5">
-                <div className="flex items-center gap-2.5 pb-4 border-b border-slate-100">
-                  <div className="w-9 h-9 rounded-xl bg-purple-100 text-purple-700 flex items-center justify-center">
-                    <Coins className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <h3 className="font-bold text-slate-900 text-base">
-                      Ringkasan Order Reseller
-                    </h3>
-                    <p className="text-xs text-slate-500">
-                      Atas nama {reseller?.full_name}
-                    </p>
-                  </div>
-                </div>
+                <h3 className="font-bold text-slate-900 text-base pb-3 border-b border-slate-100">
+                  Ringkasan Order Reseller
+                </h3>
 
                 {selectedPackage && (
                   <div className="space-y-2.5 text-sm">
@@ -393,34 +311,23 @@ export default function ResellerCheckoutPage() {
                       </span>
                     </div>
                     <div className="flex justify-between text-slate-600">
-                      <span>Jumlah Token</span>
-                      <span className="font-semibold text-slate-900">
-                        {quantity} Token ({quantity} Voucher)
+                      <span>Stok Token Didapat</span>
+                      <span className="font-semibold text-emerald-700">
+                        {selectedPackage.token_amount} Token Voucher
                       </span>
-                    </div>
-                    <div className="flex justify-between text-slate-600">
-                      <span>Harga Normal</span>
-                      <span className="line-through text-slate-400">
-                        Rp {totalNormal.toLocaleString('id-ID')}
-                      </span>
-                    </div>
-                    <div className="flex justify-between text-emerald-600 font-medium">
-                      <span>Potongan Reseller</span>
-                      <span>- Rp {totalSavings.toLocaleString('id-ID')}</span>
                     </div>
                     <div className="pt-3 border-t border-slate-200 flex items-baseline justify-between">
                       <span className="font-bold text-slate-900">Total Bayar</span>
                       <span className="text-2xl font-extrabold text-purple-700">
-                        Rp {totalPayable.toLocaleString('id-ID')}
+                        Rp {selectedPackage.price?.toLocaleString('id-ID')}
                       </span>
                     </div>
                   </div>
                 )}
 
                 <button
-                  type="button"
+                  type="submit"
                   disabled={isProcessing || !selectedPackage}
-                  onClick={handleCreateOrder}
                   className="w-full inline-flex items-center justify-center gap-2 bg-purple-600 hover:bg-purple-700 disabled:opacity-60 text-white font-bold text-sm py-3.5 px-6 rounded-xl shadow-md shadow-purple-600/20 transition cursor-pointer"
                 >
                   <span>
@@ -429,15 +336,28 @@ export default function ResellerCheckoutPage() {
                   <ArrowRight className="w-4 h-4" />
                 </button>
 
-                <div className="bg-slate-50 rounded-xl p-3.5 flex items-start gap-2.5 text-xs text-slate-600">
-                  <ShieldCheck className="w-4 h-4 text-purple-600 shrink-0 mt-0.5" />
-                  <p className="leading-relaxed">
-                    Setelah melakukan pembayaran QRIS dan verifikasi, token akan masuk ke akun reseller Anda dan langsung siap digunakan untuk generate kode voucher.
+                <div className="bg-purple-50/70 border border-purple-100 rounded-xl p-4 space-y-2.5">
+                  <p className="text-xs font-bold text-purple-900">
+                    Alur Setelah Pembayaran:
                   </p>
+                  <ul className="space-y-2 text-xs text-slate-700">
+                    <li className="flex items-start gap-2">
+                      <ShieldCheck className="w-4 h-4 text-purple-600 shrink-0 mt-0.5" />
+                      <span>Bayar via QRIS &amp; upload bukti transfer.</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <UserCheck className="w-4 h-4 text-purple-600 shrink-0 mt-0.5" />
+                      <span>Admin membuatkan akun Reseller Anda beserta saldo tokennya.</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <KeyRound className="w-4 h-4 text-purple-600 shrink-0 mt-0.5" />
+                      <span>Login di /reseller-login, ganti password Anda, dan mulai daftarkan pelanggan!</span>
+                    </li>
+                  </ul>
                 </div>
               </div>
             </aside>
-          </div>
+          </form>
         )}
       </main>
     </div>
