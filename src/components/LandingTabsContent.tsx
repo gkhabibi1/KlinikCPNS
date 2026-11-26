@@ -847,18 +847,21 @@ export function TestimoniFaqTab({
     {
       name: "Dian A.",
       role: "Lolos di Kementerian Keuangan",
+      photo: "/testimonials/testimonial-dian.svg",
       quote:
         "Karena rutin latihan try out di KlinikCPNS tiap hari, pas ujian asli rasanya kayak udah pernah ngerjain sebelumnya. Nggak grogi sama sekali.",
     },
     {
       name: "Rangga P.",
       role: "Lolos di Pemkab, Formasi Guru",
+      photo: "/testimonials/testimonial-rangga.svg",
       quote:
         "30 Days Challenge KlinikCPNS bener-bener bantu saya konsisten. Biasanya males belajar, sekarang jadi ada targetnya tiap hari.",
     },
     {
       name: "Sri W.",
       role: "Lolos di Kemenkes",
+      photo: "/testimonials/testimonial-sri.svg",
       quote:
         "Pembahasan soal di KlinikCPNS detail banget, jadi saya ngerti pola soal CAT bukan cuma nebak jawaban. Worth it banget.",
     },
@@ -910,9 +913,11 @@ export function TestimoniFaqTab({
               className="bg-white rounded-3xl border border-slate-100 p-6 flex flex-col shadow-sm"
             >
               <div className="flex items-center gap-3 mb-4">
-                <div className="w-12 h-12 rounded-full bg-blue-600 text-white flex items-center justify-center font-extrabold text-base shrink-0">
-                  {t.name.slice(0, 2).toUpperCase()}
-                </div>
+                <img
+                  src={t.photo}
+                  alt={t.name}
+                  className="w-12 h-12 rounded-full object-cover shrink-0 border-2 border-blue-100 bg-blue-50"
+                />
                 <div>
                   <p className="font-bold text-slate-900 text-sm">{t.name}</p>
                   <p className="text-xs text-slate-500">{t.role}</p>

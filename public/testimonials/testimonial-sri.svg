@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200">
+  <!-- Background -->
+  <rect width="200" height="200" fill="#F0FFFE" rx="100"/>
+  <!-- Body / White medical coat -->
+  <rect x="28" y="148" width="144" height="58" fill="#E8F5E9"/>
+  <ellipse cx="100" cy="198" rx="72" ry="40" fill="#E8F5E9"/>
+  <!-- Coat lapels -->
+  <polygon points="88,140 100,158 76,165 72,148" fill="white"/>
+  <polygon points="112,140 100,158 124,165 128,148" fill="white"/>
+  <!-- Green uniform top (Kemenkes) -->
+  <rect x="72" y="140" width="56" height="20" fill="#2E7D32"/>
+  <!-- Stethoscope hint -->
+  <path d="M85,155 Q78,165 80,175 Q82,180 86,180" stroke="#9E9E9E" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+  <circle cx="86" cy="181" r="4" fill="#757575"/>
+  <!-- Neck -->
+  <rect x="89" y="126" width="22" height="22" fill="#D4A77A"/>
+  <!-- Head -->
+  <ellipse cx="100" cy="108" rx="38" ry="40" fill="#D4A77A"/>
+  <!-- Hair (dark, bun/tied back) -->
+  <ellipse cx="100" cy="75" rx="38" ry="20" fill="#2D1B00"/>
+  <path d="M62,95 Q60,70 100,65 Q140,70 138,95 Q128,78 100,76 Q72,78 62,95 Z" fill="#2D1B00"/>
+  <!-- Hair bun right top -->
+  <ellipse cx="130" cy="78" rx="12" ry="10" fill="#2D1B00"/>
+  <!-- Ear left -->
+  <ellipse cx="62" cy="112" rx="6" ry="8" fill="#D4A77A"/>
+  <!-- Ear right -->
+  <ellipse cx="138" cy="112" rx="6" ry="8" fill="#D4A77A"/>
+  <!-- Small earring -->
+  <circle cx="138" cy="116" r="2.5" fill="#FFD700"/>
+  <circle cx="62" cy="116" r="2.5" fill="#FFD700"/>
+  <!-- Eyes -->
+  <ellipse cx="88" cy="108" rx="4.5" ry="4" fill="#2D1B00"/>
+  <ellipse cx="112" cy="108" rx="4.5" ry="4" fill="#2D1B00"/>
+  <!-- Eye shine -->
+  <circle cx="90" cy="106.5" r="1.2" fill="white"/>
+  <circle cx="114" cy="106.5" r="1.2" fill="white"/>
+  <!-- Eyebrows -->
+  <path d="M82,101 Q88,98.5 94,101" stroke="#2D1B00" stroke-width="2" fill="none" stroke-linecap="round"/>
+  <path d="M106,101 Q112,98.5 118,101" stroke="#2D1B00" stroke-width="2" fill="none" stroke-linecap="round"/>
+  <!-- Nose -->
+  <ellipse cx="100" cy="116" rx="3" ry="2" fill="#B8835A"/>
+  <!-- Warm smile -->
+  <path d="M89,124 Q100,133 111,124" stroke="#B8835A" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+  <!-- Cheeks blush -->
+  <ellipse cx="79" cy="120" rx="8" ry="5" fill="#E8A0A0" opacity="0.4"/>
+  <ellipse cx="121" cy="120" rx="8" ry="5" fill="#E8A0A0" opacity="0.4"/>
+</svg>

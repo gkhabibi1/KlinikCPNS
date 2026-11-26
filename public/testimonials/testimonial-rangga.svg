@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200">
+  <!-- Background -->
+  <rect width="200" height="200" fill="#F0FDF4" rx="100"/>
+  <!-- Body / Batik shirt (warm brown) -->
+  <rect x="30" y="150" width="140" height="55" fill="#92400E"/>
+  <ellipse cx="100" cy="195" rx="70" ry="40" fill="#92400E"/>
+  <!-- Batik pattern on shirt -->
+  <circle cx="65" cy="168" r="4" fill="#B45309" opacity="0.6"/>
+  <circle cx="80" cy="175" r="3" fill="#B45309" opacity="0.6"/>
+  <circle cx="120" cy="168" r="4" fill="#B45309" opacity="0.6"/>
+  <circle cx="135" cy="175" r="3" fill="#B45309" opacity="0.6"/>
+  <!-- Collar (shirt, white inside) -->
+  <polygon points="88,138 100,150 112,138 115,152 85,152" fill="#FEF3C7"/>
+  <!-- Neck -->
+  <rect x="89" y="128" width="22" height="22" fill="#C4874A"/>
+  <!-- Head -->
+  <ellipse cx="100" cy="108" rx="40" ry="42" fill="#C4874A"/>
+  <!-- Hair (dark, short) -->
+  <path d="M60,100 Q62,65 100,62 Q138,65 140,100 Q130,75 100,73 Q70,75 60,100 Z" fill="#2D1B00"/>
+  <!-- Ear left -->
+  <ellipse cx="61" cy="112" rx="7" ry="9" fill="#C4874A"/>
+  <!-- Ear right -->
+  <ellipse cx="139" cy="112" rx="7" ry="9" fill="#C4874A"/>
+  <!-- Eyes -->
+  <ellipse cx="87" cy="108" rx="5" ry="4.5" fill="#2D1B00"/>
+  <ellipse cx="113" cy="108" rx="5" ry="4.5" fill="#2D1B00"/>
+  <!-- Eye whites -->
+  <ellipse cx="87" cy="108" rx="5" ry="4.5" fill="white" opacity="0.15"/>
+  <!-- Eye shine -->
+  <circle cx="89" cy="106" r="1.5" fill="white"/>
+  <circle cx="115" cy="106" r="1.5" fill="white"/>
+  <!-- Eyebrows (thicker, masculine) -->
+  <path d="M80,100 Q87,97 94,100" stroke="#2D1B00" stroke-width="2.8" fill="none" stroke-linecap="round"/>
+  <path d="M106,100 Q113,97 120,100" stroke="#2D1B00" stroke-width="2.8" fill="none" stroke-linecap="round"/>
+  <!-- Nose -->
+  <path d="M97,115 Q100,120 103,115" stroke="#A0652A" stroke-width="2" fill="none" stroke-linecap="round"/>
+  <ellipse cx="95" cy="118" rx="2.5" ry="1.8" fill="#A0652A" opacity="0.5"/>
+  <ellipse cx="105" cy="118" rx="2.5" ry="1.8" fill="#A0652A" opacity="0.5"/>
+  <!-- Smile (friendly) -->
+  <path d="M88,127 Q100,136 112,127" stroke="#A0652A" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+  <!-- Slight stubble hint -->
+  <ellipse cx="100" cy="134" rx="12" ry="5" fill="#A0652A" opacity="0.15"/>
+</svg>
