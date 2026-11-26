@@ -177,6 +177,12 @@ export default function ResellerDashboard() {
             </p>
           </div>
           <div className="flex items-center gap-3">
+            <Link
+              href="/reseller/checkout"
+              className="text-xs sm:text-sm font-semibold bg-purple-600 hover:bg-purple-700 text-white px-3.5 py-1.5 rounded-full transition-colors whitespace-nowrap"
+            >
+              + Order Paket
+            </Link>
             <Link 
               href={`/r/${reseller?.reseller_code}`} 
               target="_blank"
@@ -231,6 +237,12 @@ export default function ResellerDashboard() {
                   {reseller.token_balance}
                 </div>
                 <div className="text-xs text-slate-500 mt-1">1 token = 1 voucher</div>
+                <Link
+                  href="/reseller/checkout"
+                  className="inline-block mt-3 text-xs font-semibold text-purple-700 bg-purple-50 hover:bg-purple-100 px-3 py-1.5 rounded-lg transition-colors"
+                >
+                  Order / Top-Up Token →
+                </Link>
               </div>
               <div className="bg-white rounded-xl border border-slate-200 p-6">
                 <div className="text-sm text-slate-500 mb-1">Total Voucher Dibuat</div>
