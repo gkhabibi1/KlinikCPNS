@@ -34,6 +34,7 @@ interface ResellerCheckoutConfig {
 }
 
 interface AdminResellerSettingsProps {
+  mode: 'orders' | 'settings';
   onApproveToCreateReseller: (prefill: {
     full_name: string;
     email: string;
@@ -43,6 +44,7 @@ interface AdminResellerSettingsProps {
 }
 
 export default function AdminResellerSettings({
+  mode,
   onApproveToCreateReseller,
 }: AdminResellerSettingsProps) {
   const [packages, setPackages] = useState<AdminResellerPackage[]>([]);
@@ -257,7 +259,9 @@ export default function AdminResellerSettings({
 
   return (
     <div className="space-y-6">
-      {/* Bagian 0: Direktori Link Penting Reseller (Supaya Admin Tidak Lupa) */}
+      {mode === 'settings' && (
+        <>
+          {/* Bagian 0: Direktori Link Penting Reseller (Supaya Admin Tidak Lupa) */}
       <div className="bg-purple-50/70 border border-purple-200 rounded-xl p-5 sm:p-6">
         <div className="mb-4">
           <h3 className="text-base sm:text-lg font-bold text-purple-950">
@@ -556,8 +560,12 @@ export default function AdminResellerSettings({
           </div>
         </form>
       </div>
+        </>
+      )}
 
-      {/* Bagian 2: Order Masuk dari /reseller/checkout */}
+      {mode === 'orders' && (
+        <>
+          {/* Bagian 2: Order Masuk dari /reseller/checkout */}
       <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
         <div className="p-5 border-b border-slate-200 flex items-center justify-between">
           <div>
@@ -690,6 +698,8 @@ export default function AdminResellerSettings({
           </table>
         </div>
       </div>
+        </>
+      )}
     </div>
   );
 }

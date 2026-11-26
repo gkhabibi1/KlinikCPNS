@@ -234,6 +234,7 @@ export default function AdminCommandCenter() {
 
   // State untuk Reseller (REVISI)
   const [resellers, setResellers] = useState<any[]>([]);
+  const [resellerSubTab, setResellerSubTab] = useState<'list' | 'orders' | 'settings'>('list');
   const [showResellerModal, setShowResellerModal] = useState(false);
   const [editingReseller, setEditingReseller] = useState<any>(null);
   const [resellerForm, setResellerForm] = useState({
@@ -4736,22 +4737,64 @@ export default function AdminCommandCenter() {
                   </button>
                 </div>
 
-                {/* Pengaturan Paket Reseller & Order Masuk */}
-                <AdminResellerSettings
-                  onApproveToCreateReseller={(prefill) => {
-                    setEditingReseller(null);
-                    setResellerForm({
-                      email: prefill.email,
-                      password: '',
-                      full_name: prefill.full_name,
-                      reseller_code: '',
-                      token_balance: prefill.token_balance,
-                    });
-                    setShowResellerModal(true);
-                  }}
-                />
+                {/* Sub-Tab Manajemen Reseller */}
+                <div className="flex flex-wrap gap-2 border-b border-slate-200 pb-3">
+                  {[
+                    { id: 'list', label: 'Daftar Reseller & Token' },
+                    { id: 'orders', label: 'Orderan Reseller Masuk' },
+                    { id: 'settings', label: 'Pengaturan Paket & Link' },
+                  ].map((tab) => (
+                    <button
+                      key={tab.id}
+                      type="button"
+                      onClick={() => setResellerSubTab(tab.id as 'list' | 'orders' | 'settings')}
+                      className={`px-4 py-2 rounded-lg text-sm font-semibold transition cursor-pointer ${
+                        resellerSubTab === tab.id
+                          ? 'bg-purple-600 text-white shadow-xs'
+                          : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
+                      }`}
+                    >
+                      {tab.label}
+                    </button>
+                  ))}
+                </div>
+
+                {resellerSubTab === 'orders' && (
+                  <AdminResellerSettings
+                    mode="orders"
+                    onApproveToCreateReseller={(prefill) => {
+                      setEditingReseller(null);
+                      setResellerForm({
+                        email: prefill.email,
+                        password: '',
+                        full_name: prefill.full_name,
+                        reseller_code: '',
+                        token_balance: prefill.token_balance,
+                      });
+                      setShowResellerModal(true);
+                    }}
+                  />
+                )}
+
+                {resellerSubTab === 'settings' && (
+                  <AdminResellerSettings
+                    mode="settings"
+                    onApproveToCreateReseller={(prefill) => {
+                      setEditingReseller(null);
+                      setResellerForm({
+                        email: prefill.email,
+                        password: '',
+                        full_name: prefill.full_name,
+                        reseller_code: '',
+                        token_balance: prefill.token_balance,
+                      });
+                      setShowResellerModal(true);
+                    }}
+                  />
+                )}
 
                 {/* List Reseller */}
+                {resellerSubTab === 'list' && (
                 <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
                   <table className="w-full">
                     <thead className="bg-slate-50 border-b border-slate-200">
@@ -4845,6 +4888,7 @@ export default function AdminCommandCenter() {
                     </tbody>
                   </table>
                 </div>
+                )}
 
                 {/* Modal Tambah/Edit Reseller */}
                 {showResellerModal && (
