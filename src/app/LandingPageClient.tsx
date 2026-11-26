@@ -492,14 +492,14 @@ function HomeTestimonialSummary({
     {
       name: "Dian A.",
       role: "Lolos di Kementerian Keuangan",
-      photo: "/testimonials/testimonial-dian.svg",
+      photo: "/testimonials/testimonial-dian.jpg",
       quote:
         "Karena rutin latihan try out tiap hari, pas ujian asli rasanya kayak udah pernah ngerjain sebelumnya.",
     },
     {
       name: "Rangga P.",
       role: "Lolos di Pemkab, Formasi Guru",
-      photo: "/testimonials/testimonial-rangga.svg",
+      photo: "/testimonials/testimonial-rangga.jpg",
       quote:
         "30 Days Challenge bener-bener bantu konsisten. Sekarang belajar jadi ada target jelas setiap hari.",
     },

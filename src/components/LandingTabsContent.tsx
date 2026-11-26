@@ -847,14 +847,14 @@ export function TestimoniFaqTab({
     {
       name: "Dian A.",
       role: "Lolos di Kementerian Keuangan",
-      photo: "/testimonials/testimonial-dian.svg",
+      photo: "/testimonials/testimonial-dian.jpg",
       quote:
         "Karena rutin latihan try out di KlinikCPNS tiap hari, pas ujian asli rasanya kayak udah pernah ngerjain sebelumnya. Nggak grogi sama sekali.",
     },
     {
       name: "Rangga P.",
       role: "Lolos di Pemkab, Formasi Guru",
-      photo: "/testimonials/testimonial-rangga.svg",
+      photo: "/testimonials/testimonial-rangga.jpg",
       quote:
         "30 Days Challenge KlinikCPNS bener-bener bantu saya konsisten. Biasanya males belajar, sekarang jadi ada targetnya tiap hari.",
     },
