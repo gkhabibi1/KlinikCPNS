@@ -29,6 +29,13 @@ import {
   Scale,
   MessageSquareQuote,
   Home,
+  Calendar,
+  Award,
+  Bot,
+  BrainCircuit,
+  Zap,
+  Layers,
+  Printer,
 } from "lucide-react";
 
 const VALID_TABS: PlatformTab[] = [
@@ -535,6 +542,293 @@ function StorytellingOverview({
 }
 
 /* ----------------------------------------------------------------------- */
+/*  Ringkasan Info CPNS 2026 (Preview dari Tab Panduan 2026)               */
+/* ----------------------------------------------------------------------- */
+function HomeInfoCPNS2026Summary({
+  onSwitchTab,
+}: {
+  onSwitchTab: (tab: PlatformTab) => void;
+}) {
+  const infoCards = [
+    {
+      icon: Calendar,
+      badge: "Jadwal Resmi",
+      title: "Timeline Seleksi 2026–2027",
+      points: [
+        "27 Nov 2026: Pendaftaran SSCASN dibuka",
+        "Des 2026: Seleksi administrasi berkas",
+        "Jan–Mar 2027: Ujian SKD & SKB CAT BKN",
+      ],
+    },
+    {
+      icon: Users,
+      badge: "154.052 Formasi",
+      title: "Alokasi Formasi Prioritas",
+      points: [
+        "Kehutanan (70.000) & Dosen/Dikti (26.614)",
+        "Hukum & HAM (19.016) & Nakes (13.362)",
+        "Statistik, Guru, Audit, Pangan & Lainnya",
+      ],
+    },
+    {
+      icon: Award,
+      badge: "KepmenPANRB 674/2026",
+      title: "Aturan Main & Passing Grade SKD",
+      points: [
+        "110 Soal CAT dalam waktu 100 menit",
+        "TWK min. 65 · TIU min. 80 · TKP min. 166",
+        "Cukup unggah transkrip nilai (tanpa ijazah)",
+      ],
+    },
+  ];
+
+  return (
+    <section className="bg-white border-b border-slate-100 py-14 md:py-20">
+      <div className="max-w-6xl mx-auto px-5 md:px-8">
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-10">
+          <div className="max-w-2xl">
+            <p className="text-xs font-bold text-blue-600 uppercase tracking-widest mb-2">
+              Ringkasan Informasi CPNS 2026
+            </p>
+            <h2 className="font-heading text-2xl sm:text-3xl font-extrabold text-slate-900 leading-[1.15] tracking-tight">
+              Fakta Penting Seleksi CASN 2026 yang Wajib Kamu Tahu
+            </h2>
+          </div>
+          <button
+            type="button"
+            onClick={() => onSwitchTab("panduan")}
+            className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-bold text-blue-700 hover:text-blue-800 bg-blue-50 hover:bg-blue-100 px-4 py-2.5 rounded-full transition cursor-pointer shrink-0 self-start md:self-auto"
+          >
+            Buka Panduan Lengkap 2026
+            <ArrowRight className="w-4 h-4" />
+          </button>
+        </div>
+
+        <div className="grid md:grid-cols-3 gap-5">
+          {infoCards.map((card) => {
+            const Icon = card.icon;
+            return (
+              <div
+                key={card.title}
+                className="bg-slate-50/70 border border-slate-200/80 rounded-2xl p-6 flex flex-col justify-between"
+              >
+                <div>
+                  <div className="flex items-center justify-between gap-2 mb-4">
+                    <div className="w-9 h-9 rounded-xl bg-blue-600 text-white flex items-center justify-center">
+                      <Icon className="w-4.5 h-4.5" />
+                    </div>
+                    <span className="text-[11px] font-bold text-blue-700 bg-blue-50 border border-blue-100 px-2.5 py-1 rounded-full">
+                      {card.badge}
+                    </span>
+                  </div>
+                  <h3 className="font-heading text-base font-bold text-slate-900 mb-3">
+                    {card.title}
+                  </h3>
+                  <ul className="space-y-2">
+                    {card.points.map((pt) => (
+                      <li
+                        key={pt}
+                        className="flex items-start gap-2 text-xs sm:text-sm text-slate-600 leading-relaxed"
+                      >
+                        <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
+                        <span>{pt}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/* ----------------------------------------------------------------------- */
+/*  Ringkasan Value & Keunggulan Belajar (Preview Tab Keunggulan)          */
+/* ----------------------------------------------------------------------- */
+function HomeValueSummary({
+  onSwitchTab,
+}: {
+  onSwitchTab: (tab: PlatformTab) => void;
+}) {
+  const highlights = [
+    {
+      icon: BookOpen,
+      title: "Materi Berjenjang 32 Subbab",
+      desc: "TWK, TIU, dan TKP terstruktur dari dasar dengan sistem unlock & checkpoint.",
+    },
+    {
+      icon: Bot,
+      title: "AI Tutor Interaktif",
+      desc: "Tanya konsep atau rumus langsung di dalam modul untuk penjelasan langkah demi langkah.",
+    },
+    {
+      icon: Layers,
+      title: "399+ Paket Simulasi CAT BKN",
+      desc: "Timer 100 menit, 110 soal, penanda ragu-ragu, dan pembobotan PG resmi 2026.",
+    },
+    {
+      icon: BrainCircuit,
+      title: "Buku Evaluasi & Bank Soal Salah",
+      desc: "Otomatis mencatat soal yang keliru untuk remedial terarah + cetak PDF A4.",
+    },
+    {
+      icon: Zap,
+      title: "Speed Drill & Mode Hafalan",
+      desc: "Latih kecepatan hitung & baca bersama Flashcard dan Cheat Sheet Rumus Sakti.",
+    },
+    {
+      icon: Printer,
+      title: "Ranking Nasional & Sertifikat",
+      desc: "Bandingkan skormu dengan ribuan peserta lain dan unduh sertifikat simulasi.",
+    },
+  ];
+
+  return (
+    <section className="bg-slate-50/70 border-b border-slate-100 py-14 md:py-20">
+      <div className="max-w-6xl mx-auto px-5 md:px-8">
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-10">
+          <div className="max-w-2xl">
+            <p className="text-xs font-bold text-blue-600 uppercase tracking-widest mb-2">
+              Apa yang Kamu Dapatkan
+            </p>
+            <h2 className="font-heading text-2xl sm:text-3xl font-extrabold text-slate-900 leading-[1.15] tracking-tight">
+              Ekosistem Belajar Lengkap, Bukan Sekadar Try Out Biasa
+            </h2>
+          </div>
+          <button
+            type="button"
+            onClick={() => onSwitchTab("keunggulan")}
+            className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-bold text-slate-900 bg-white hover:bg-slate-100 border border-slate-200 px-4 py-2.5 rounded-full transition cursor-pointer shrink-0 self-start md:self-auto"
+          >
+            Lihat Detail Semua Fitur
+            <ArrowRight className="w-4 h-4" />
+          </button>
+        </div>
+
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {highlights.map((item) => {
+            const Icon = item.icon;
+            return (
+              <div
+                key={item.title}
+                className="bg-white rounded-2xl border border-slate-200/80 p-5 flex items-start gap-3.5 shadow-2xs"
+              >
+                <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
+                  <Icon className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="font-heading text-sm font-bold text-slate-900 mb-1">
+                    {item.title}
+                  </h3>
+                  <p className="text-xs text-slate-600 leading-relaxed">
+                    {item.desc}
+                  </p>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/* ----------------------------------------------------------------------- */
+/*  Ringkasan Testimoni Alumni (Preview Tab Testimoni & FAQ)               */
+/* ----------------------------------------------------------------------- */
+function HomeTestimonialSummary({
+  onSwitchTab,
+}: {
+  onSwitchTab: (tab: PlatformTab) => void;
+}) {
+  const alumni = [
+    {
+      name: "Dian A.",
+      role: "Lolos di Kementerian Keuangan",
+      photo: "/testimonials/testimonial-dian.svg",
+      quote:
+        "Karena rutin latihan try out tiap hari, pas ujian asli rasanya kayak udah pernah ngerjain sebelumnya.",
+    },
+    {
+      name: "Rangga P.",
+      role: "Lolos di Pemkab, Formasi Guru",
+      photo: "/testimonials/testimonial-rangga.svg",
+      quote:
+        "30 Days Challenge bener-bener bantu konsisten. Sekarang belajar jadi ada target jelas setiap hari.",
+    },
+    {
+      name: "Sri W.",
+      role: "Lolos di Kemenkes",
+      photo: "/testimonials/testimonial-sri.svg",
+      quote:
+        "Pembahasan soalnya detail banget, jadi ngerti pola soal CAT bukan cuma nebak jawaban.",
+    },
+  ];
+
+  return (
+    <section className="bg-slate-50/70 border-t border-slate-100 py-14 md:py-20">
+      <div className="max-w-6xl mx-auto px-5 md:px-8">
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-10">
+          <div className="max-w-2xl">
+            <p className="text-xs font-bold text-blue-600 uppercase tracking-widest mb-2">
+              Cerita Alumni &amp; Tanya Jawab
+            </p>
+            <h2 className="font-heading text-2xl sm:text-3xl font-extrabold text-slate-900 leading-[1.15] tracking-tight">
+              Dipercaya 7.800+ Pejuang ASN di Seluruh Indonesia
+            </h2>
+          </div>
+          <button
+            type="button"
+            onClick={() => onSwitchTab("testimoni")}
+            className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-bold text-blue-700 hover:text-blue-800 bg-blue-50 hover:bg-blue-100 px-4 py-2.5 rounded-full transition cursor-pointer shrink-0 self-start md:self-auto"
+          >
+            Baca Testimoni &amp; FAQ Lengkap
+            <ArrowRight className="w-4 h-4" />
+          </button>
+        </div>
+
+        <div className="grid md:grid-cols-3 gap-5">
+          {alumni.map((item) => (
+            <div
+              key={item.name}
+              className="bg-white rounded-2xl border border-slate-200/80 p-5 flex flex-col justify-between shadow-2xs"
+            >
+              <div>
+                <div className="flex items-center gap-3 mb-3">
+                  <img
+                    src={item.photo}
+                    alt={item.name}
+                    className="w-11 h-11 rounded-full object-cover shrink-0 border-2 border-blue-100 bg-blue-50"
+                  />
+                  <div>
+                    <p className="font-bold text-slate-900 text-sm">{item.name}</p>
+                    <p className="text-[11px] text-slate-500">{item.role}</p>
+                  </div>
+                </div>
+                <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
+                  &ldquo;{item.quote}&rdquo;
+                </p>
+              </div>
+              <div className="flex gap-0.5 mt-4">
+                {Array.from({ length: 5 }).map((_, i) => (
+                  <Star
+                    key={i}
+                    className="w-3.5 h-3.5 fill-amber-400 text-amber-400"
+                  />
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/* ----------------------------------------------------------------------- */
 /*  Biaya di Home Page (Ringkas + Link ke Tab Perbandingan Harga)          */
 /* ----------------------------------------------------------------------- */
 function HomePricingSection({
@@ -826,6 +1120,8 @@ export default function KlinikCPNSLandingPage({
           <>
             <Hero onSwitchTab={switchTab} />
             <StorytellingOverview onSwitchTab={switchTab} />
+            <HomeInfoCPNS2026Summary onSwitchTab={switchTab} />
+            <HomeValueSummary onSwitchTab={switchTab} />
             <HomePricingSection
               plans={plans}
               resellerCode={resellerCode}
@@ -833,6 +1129,7 @@ export default function KlinikCPNSLandingPage({
               discountPercentage={discountPercentage}
               onSwitchTab={switchTab}
             />
+            <HomeTestimonialSummary onSwitchTab={switchTab} />
             <FinalCTA onSwitchTab={switchTab} />
           </>
         )}
