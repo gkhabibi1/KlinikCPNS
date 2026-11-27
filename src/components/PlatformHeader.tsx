@@ -12,8 +12,6 @@ import {
   Scale,
   MessageSquareQuote,
   ArrowRight,
-  Menu,
-  X,
   Newspaper,
 } from "lucide-react";
 
@@ -29,7 +27,6 @@ export default function PlatformHeader({
   onSwitchTab,
 }: PlatformHeaderProps) {
   const router = useRouter();
-  const [open, setOpen] = useState(false);
   const [currentUser, setCurrentUser] = useState<any>(null);
 
   useEffect(() => {
@@ -166,13 +163,6 @@ export default function PlatformHeader({
               </a>
             </>
           )}
-          <button
-            onClick={() => setOpen(!open)}
-            className="lg:hidden w-9 h-9 flex items-center justify-center rounded-lg text-slate-700"
-            aria-label="Buka menu"
-          >
-            {open ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-          </button>
         </div>
       </div>
 
@@ -211,89 +201,6 @@ export default function PlatformHeader({
           </Link>
         </div>
       </div>
-
-      {/* Mobile Dropdown Drawer */}
-      {open && (
-        <div className="lg:hidden border-t border-slate-100 bg-white px-5 py-4 flex flex-col gap-3">
-          {tabItems.map((tab) => {
-            const isActive = activeTab === tab.id;
-            return (
-              <button
-                key={tab.id}
-                type="button"
-                onClick={() => {
-                  handleTabClick(tab.id);
-                  setOpen(false);
-                }}
-                className={`text-left text-sm font-semibold flex items-center justify-between py-1 ${
-                  isActive ? "text-blue-600" : "text-slate-700"
-                }`}
-              >
-                <span>{tab.label}</span>
-                {isActive && (
-                  <span className="text-[11px] bg-blue-50 text-blue-600 px-2 py-0.5 rounded-full">
-                    Aktif
-                  </span>
-                )}
-              </button>
-            );
-          })}
-          <Link
-            href="/blog"
-            onClick={() => setOpen(false)}
-            className={`text-sm font-semibold flex items-center justify-between py-1 ${
-              isBlogActive ? "text-blue-600" : "text-slate-700"
-            }`}
-          >
-            <span>Blog &amp; Artikel CPNS</span>
-            {isBlogActive && (
-              <span className="text-[11px] bg-blue-50 text-blue-600 px-2 py-0.5 rounded-full">
-                Aktif
-              </span>
-            )}
-          </Link>
-          <div className="pt-2 border-t border-slate-100 flex flex-col gap-2">
-            {currentUser ? (
-              <>
-                <Link
-                  href="/dashboard"
-                  onClick={() => setOpen(false)}
-                  className="w-full text-center text-sm font-semibold text-white bg-blue-600 py-2.5 rounded-xl shadow-sm"
-                >
-                  Buka Dashboard
-                </Link>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setOpen(false);
-                    handleLogout();
-                  }}
-                  className="w-full text-center text-sm font-semibold text-red-600 bg-red-50 hover:bg-red-100 py-2 rounded-xl border border-red-200 transition-colors"
-                >
-                  Keluar dari Akun
-                </button>
-              </>
-            ) : (
-              <>
-                <a
-                  href="/login?mode=login"
-                  onClick={() => setOpen(false)}
-                  className="w-full text-center text-sm font-semibold text-slate-700 py-2 rounded-xl border border-slate-200"
-                >
-                  Masuk
-                </a>
-                <a
-                  href="/login?mode=register"
-                  onClick={() => setOpen(false)}
-                  className="w-full text-center text-sm font-semibold text-white bg-blue-600 py-2.5 rounded-xl shadow-sm"
-                >
-                  Daftar Sekarang
-                </a>
-              </>
-            )}
-          </div>
-        </div>
-      )}
     </header>
   );
 }
