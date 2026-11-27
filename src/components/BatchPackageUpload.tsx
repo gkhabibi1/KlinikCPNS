@@ -26,7 +26,8 @@ import {
   Loader2,
   CheckSquare,
   Square,
-  Trophy
+  Trophy,
+  Bot,
 } from 'lucide-react';
 
 interface BatchPackageItem {
@@ -103,6 +104,66 @@ export default function BatchPackageUpload({
 
   // Modal Pratinjau Soal per item
   const [previewItem, setPreviewItem] = useState<BatchPackageItem | null>(null);
+  const [previewAiReviews, setPreviewAiReviews] = useState<Record<string, any>>({});
+  const [isCheckingPreviewAi, setIsCheckingPreviewAi] = useState(false);
+  const [previewAiProgress, setPreviewAiProgress] = useState<{
+    current: number;
+    total: number;
+  } | null>(null);
+  const [previewAiError, setPreviewAiError] = useState<string | null>(null);
+
+  const handleCheckPreviewBatchWithAi = async (item: BatchPackageItem) => {
+    if (isCheckingPreviewAi || item.questions.length === 0) return;
+    setIsCheckingPreviewAi(true);
+    setPreviewAiError(null);
+    setPreviewAiProgress({ current: 0, total: item.questions.length });
+
+    const chunkSize = 5;
+    let done = 0;
+
+    try {
+      for (let i = 0; i < item.questions.length; i += chunkSize) {
+        const chunk = item.questions.slice(i, i + chunkSize).map((q, idx) => ({
+          id: `${item.localId}-${i + idx}`,
+          category: q.type,
+          question_text: q.question,
+          option_a: q.options.a || '',
+          option_b: q.options.b || '',
+          option_c: q.options.c || '',
+          option_d: q.options.d || '',
+          option_e: q.options.e || '',
+          correct_answer: q.correct,
+          explanation: q.explanation || '',
+          tkp_scores: q.type === 'TKP' ? q.scores : null,
+        }));
+
+        const res = await fetch('/api/admin/check-question', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ questions: chunk, persist: false }),
+        });
+
+        const data = await res.json();
+        if (!res.ok || !data.success) {
+          throw new Error(data.error || 'Gagal mengecek soal dengan AI');
+        }
+
+        const nextMap: Record<string, any> = {};
+        (data.reviews || []).forEach((rev: any) => {
+          if (rev.id) nextMap[rev.id] = rev;
+        });
+        setPreviewAiReviews((prev) => ({ ...prev, ...nextMap }));
+
+        done += chunk.length;
+        setPreviewAiProgress({ current: done, total: item.questions.length });
+      }
+    } catch (err: any) {
+      setPreviewAiError(err?.message || 'Gagal menjalankan cek AI batch');
+    } finally {
+      setIsCheckingPreviewAi(false);
+      setPreviewAiProgress(null);
+    }
+  };
 
   // Proses file-file yang dipilih / di-drop
   const processFiles = async (fileList: FileList | File[]) => {
@@ -1140,28 +1201,81 @@ export default function BatchPackageUpload({
                   {previewItem.stats.tkp})
                 </p>
               </div>
-              <button
-                type="button"
-                onClick={() => setPreviewItem(null)}
-                className="p-2 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-200 cursor-pointer"
-              >
-                <X className="w-5 h-5" />
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  disabled={isCheckingPreviewAi}
+                  onClick={() => handleCheckPreviewBatchWithAi(previewItem)}
+                  className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-purple-600 hover:bg-purple-700 disabled:bg-slate-300 text-white text-xs font-bold cursor-pointer transition"
+                >
+                  {isCheckingPreviewAi ? (
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  ) : (
+                    <Bot className="w-3.5 h-3.5" />
+                  )}
+                  <span>
+                    {isCheckingPreviewAi && previewAiProgress
+                      ? `Cek AI (${previewAiProgress.current}/${previewAiProgress.total})...`
+                      : `Cek AI Batch (${previewItem.questions.length})`}
+                  </span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setPreviewItem(null);
+                    setPreviewAiError(null);
+                  }}
+                  className="p-2 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-200 cursor-pointer"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
             </div>
 
             <div className="p-6 overflow-y-auto space-y-4">
-              {previewItem.questions.map((q, qIdx) => (
+              {previewAiError && (
+                <div className="p-3 rounded-lg bg-red-50 border border-red-200 text-xs text-red-700">
+                  {previewAiError}
+                </div>
+              )}
+              {previewItem.questions.map((q, qIdx) => {
+                const rev = previewAiReviews[`${previewItem.localId}-${qIdx}`];
+                return (
                 <div
                   key={qIdx}
                   className="border border-slate-200 rounded-xl p-4 bg-slate-50/50 space-y-2 text-xs"
                 >
-                  <div className="flex items-center justify-between">
-                    <span className="font-bold text-slate-700">
-                      Nomor {q.number} •{' '}
-                      <span className="px-2 py-0.5 rounded bg-blue-100 text-blue-700">
-                        {q.type}
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <div className="flex flex-wrap items-center gap-1.5">
+                      <span className="font-bold text-slate-700">
+                        Nomor {q.number} •{' '}
+                        <span className="px-2 py-0.5 rounded bg-blue-100 text-blue-700">
+                          {q.type}
+                        </span>
                       </span>
-                    </span>
+                      {rev && (
+                        <>
+                          <span
+                            className={`px-2 py-0.5 rounded font-bold border ${
+                              rev.answer_status === 'BENAR'
+                                ? 'bg-emerald-50 border-emerald-200 text-emerald-700'
+                                : rev.answer_status === 'KELIRU'
+                                ? 'bg-red-50 border-red-200 text-red-700'
+                                : 'bg-amber-50 border-amber-200 text-amber-700'
+                            }`}
+                          >
+                            {rev.answer_status === 'BENAR'
+                              ? '✓ AI Valid'
+                              : rev.answer_status === 'KELIRU'
+                              ? '✕ Kunci Keliru'
+                              : '⚠ Perlu Cek'}
+                          </span>
+                          <span className="px-2 py-0.5 rounded font-bold bg-purple-50 border border-purple-200 text-purple-700">
+                            Kesulitan {rev.difficulty}/5
+                          </span>
+                        </>
+                      )}
+                    </div>
                     <span className="font-bold text-emerald-700">
                       Kunci: {q.correct}
                     </span>
@@ -1200,8 +1314,18 @@ export default function BatchPackageUpload({
                       <FormattedText text={q.explanation} />
                     </div>
                   )}
+                  {rev && (
+                    <div className="p-2.5 bg-purple-50/70 border border-purple-200 rounded-lg text-purple-950 space-y-0.5">
+                      <p className="font-bold">
+                        AI Review (Kesulitan {rev.difficulty}/5 · {rev.difficulty_label})
+                        {rev.suggested_answer ? ` · Saran Kunci: ${rev.suggested_answer}` : ''}
+                      </p>
+                      <p>{rev.reason}</p>
+                    </div>
+                  )}
                 </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         </div>

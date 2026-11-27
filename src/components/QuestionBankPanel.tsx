@@ -25,6 +25,9 @@ import {
   Tag,
   AlertCircle,
   CheckCircle2,
+  Bot,
+  Loader2,
+  AlertTriangle,
 } from 'lucide-react';
 
 export interface QuestionBankItem {
@@ -96,6 +99,16 @@ export default function QuestionBankPanel({
   const [newPkgName, setNewPkgName] = useState('');
   const [newPkgExamType, setNewPkgExamType] = useState<'CPNS' | 'P3K'>('CPNS');
   const [newPkgPremium, setNewPkgPremium] = useState(true);
+
+  // AI Question Validator & Difficulty Checker
+  const [aiReviews, setAiReviews] = useState<Record<string, any>>({});
+  const [isCheckingAi, setIsCheckingAi] = useState(false);
+  const [aiCheckingId, setAiCheckingId] = useState<string | null>(null);
+  const [aiBatchProgress, setAiBatchProgress] = useState<{
+    current: number;
+    total: number;
+  } | null>(null);
+  const [aiErrorMessage, setAiErrorMessage] = useState<string | null>(null);
 
   const fetchAllRowsPaginated = async (
     table: string,
@@ -215,7 +228,69 @@ export default function QuestionBankPanel({
 
   useEffect(() => {
     loadQuestionBank();
+    fetch('/api/admin/check-question')
+      .then((r) => r.json())
+      .then((d) => {
+        if (d?.reviews) setAiReviews(d.reviews);
+      })
+      .catch(() => {});
   }, []);
+
+  const handleCheckWithAi = async (itemsToCheck: QuestionBankItem[]) => {
+    if (itemsToCheck.length === 0 || isCheckingAi) return;
+    setIsCheckingAi(true);
+    setAiErrorMessage(null);
+    setAiCheckingId(itemsToCheck.length === 1 ? itemsToCheck[0].id : null);
+    setAiBatchProgress({ current: 0, total: itemsToCheck.length });
+
+    const chunkSize = 5;
+    let checkedCount = 0;
+
+    try {
+      for (let i = 0; i < itemsToCheck.length; i += chunkSize) {
+        const chunk = itemsToCheck.slice(i, i + chunkSize).map((q) => ({
+          id: q.id,
+          category: q.category,
+          sub_category: q.sub_category,
+          question_text: q.question_text,
+          option_a: q.option_a,
+          option_b: q.option_b,
+          option_c: q.option_c,
+          option_d: q.option_d,
+          option_e: q.option_e,
+          correct_answer: q.correct_answer,
+          explanation: q.explanation,
+          tkp_scores: q.tkp_scores,
+        }));
+
+        const res = await fetch('/api/admin/check-question', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ questions: chunk, persist: true }),
+        });
+
+        const data = await res.json();
+        if (!res.ok || !data.success) {
+          throw new Error(data.error || 'Gagal mengecek soal dengan AI');
+        }
+
+        const nextMap: Record<string, any> = {};
+        (data.reviews || []).forEach((rev: any) => {
+          if (rev.id) nextMap[rev.id] = rev;
+        });
+        setAiReviews((prev) => ({ ...prev, ...nextMap }));
+
+        checkedCount += chunk.length;
+        setAiBatchProgress({ current: checkedCount, total: itemsToCheck.length });
+      }
+    } catch (err: any) {
+      setAiErrorMessage(err?.message || 'Gagal menjalankan pengecekan AI');
+    } finally {
+      setIsCheckingAi(false);
+      setAiCheckingId(null);
+      setAiBatchProgress(null);
+    }
+  };
 
   // Reset pagination on filter change
   useEffect(() => {
@@ -962,6 +1037,37 @@ export default function QuestionBankPanel({
 
           <button
             type="button"
+            onClick={() =>
+              handleCheckWithAi(
+                selectedIds.length > 0
+                  ? bankItems.filter((i) => selectedIds.includes(i.id))
+                  : paginatedItems
+              )
+            }
+            disabled={isCheckingAi || paginatedItems.length === 0}
+            className="px-4 py-2.5 rounded-lg bg-purple-600 hover:bg-purple-700 disabled:bg-slate-300 text-white text-xs sm:text-sm font-bold shadow-xs flex items-center justify-center gap-2 transition cursor-pointer shrink-0"
+            title={
+              selectedIds.length > 0
+                ? 'Cek semua soal yang dicentang dengan AI'
+                : 'Cek semua soal di halaman ini secara batch dengan AI'
+            }
+          >
+            {isCheckingAi ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <Bot className="w-4 h-4" />
+            )}
+            <span>
+              {isCheckingAi && aiBatchProgress
+                ? `Mengecek AI (${aiBatchProgress.current}/${aiBatchProgress.total})...`
+                : selectedIds.length > 0
+                ? `Cek AI Batch (${selectedIds.length})`
+                : `Cek AI Batch Halaman (${paginatedItems.length})`}
+            </span>
+          </button>
+
+          <button
+            type="button"
             onClick={() => handleReuseToPackage()}
             disabled={isReusing || selectedIds.length === 0}
             className="px-5 py-2.5 rounded-lg bg-blue-600 hover:bg-blue-700 disabled:bg-slate-300 text-white text-xs sm:text-sm font-bold shadow-xs flex items-center justify-center gap-2 transition cursor-pointer shrink-0"
@@ -974,6 +1080,43 @@ export default function QuestionBankPanel({
             </span>
           </button>
         </div>
+
+        {aiBatchProgress && (
+          <div className="pt-2">
+            <div className="flex items-center justify-between text-xs text-purple-700 font-semibold mb-1">
+              <span>AI sedang memeriksa validitas jawaban &amp; tingkat kesulitan (1–5)...</span>
+              <span>
+                {aiBatchProgress.current} / {aiBatchProgress.total}
+              </span>
+            </div>
+            <div className="w-full h-2 bg-purple-100 rounded-full overflow-hidden">
+              <div
+                className="h-full bg-purple-600 transition-all duration-300"
+                style={{
+                  width: `${Math.round(
+                    (aiBatchProgress.current / Math.max(1, aiBatchProgress.total)) * 100
+                  )}%`,
+                }}
+              />
+            </div>
+          </div>
+        )}
+
+        {aiErrorMessage && (
+          <div className="p-3 rounded-lg bg-red-50 border border-red-200 text-xs text-red-700 flex items-start justify-between gap-2">
+            <div className="flex items-start gap-2">
+              <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5 text-red-600" />
+              <span>{aiErrorMessage}</span>
+            </div>
+            <button
+              type="button"
+              onClick={() => setAiErrorMessage(null)}
+              className="font-bold text-red-600 hover:underline shrink-0 cursor-pointer"
+            >
+              Tutup
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Question Cards List */}
@@ -1052,10 +1195,56 @@ export default function QuestionBankPanel({
                     <span className="text-[11px] bg-amber-50 border border-amber-200 text-amber-700 px-2 py-0.5 rounded-md font-semibold">
                       Dipakai {item.usage_count || 1}x
                     </span>
+
+                    {aiReviews[item.id] && (
+                      <>
+                        <span
+                          className={`text-[11px] px-2 py-0.5 rounded-md font-bold border ${
+                            aiReviews[item.id].answer_status === 'BENAR'
+                              ? 'bg-emerald-50 border-emerald-200 text-emerald-700'
+                              : aiReviews[item.id].answer_status === 'KELIRU'
+                              ? 'bg-red-50 border-red-200 text-red-700'
+                              : 'bg-amber-50 border-amber-200 text-amber-700'
+                          }`}
+                        >
+                          {aiReviews[item.id].answer_status === 'BENAR'
+                            ? '✓ AI: Kunci Valid'
+                            : aiReviews[item.id].answer_status === 'KELIRU'
+                            ? '✕ AI: Kunci Keliru'
+                            : '⚠ AI: Perlu Cek'}
+                        </span>
+                        <span
+                          className={`text-[11px] px-2 py-0.5 rounded-md font-bold border ${
+                            aiReviews[item.id].difficulty >= 4
+                              ? 'bg-rose-50 border-rose-200 text-rose-700'
+                              : aiReviews[item.id].difficulty === 3
+                              ? 'bg-blue-50 border-blue-200 text-blue-700'
+                              : 'bg-slate-100 border-slate-200 text-slate-700'
+                          }`}
+                        >
+                          Kesulitan {aiReviews[item.id].difficulty}/5 ·{' '}
+                          {aiReviews[item.id].difficulty_label}
+                        </span>
+                      </>
+                    )}
                   </div>
 
                   {/* Quick Actions */}
                   <div className="flex items-center gap-1.5 ml-auto">
+                    <button
+                      type="button"
+                      onClick={() => handleCheckWithAi([item])}
+                      disabled={isCheckingAi}
+                      className="px-2.5 py-1 rounded-lg bg-purple-50 hover:bg-purple-100 text-purple-700 text-xs font-bold flex items-center gap-1 transition cursor-pointer disabled:opacity-50"
+                      title="Cek kebenaran jawaban & tingkat kesulitan (1-5) dengan AI"
+                    >
+                      {aiCheckingId === item.id ? (
+                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      ) : (
+                        <Bot className="w-3.5 h-3.5" />
+                      )}
+                      <span>Cek AI</span>
+                    </button>
                     <button
                       type="button"
                       onClick={() => handleReuseToPackage([item])}
@@ -1107,6 +1296,38 @@ export default function QuestionBankPanel({
                       alt="Gambar Soal"
                       className="mt-2 max-h-48 rounded-lg border border-slate-200"
                     />
+                  )}
+
+                  {/* AI Review Box */}
+                  {aiReviews[item.id] && (
+                    <div
+                      className={`mt-3 rounded-lg border p-3 text-xs space-y-1 ${
+                        aiReviews[item.id].answer_status === 'BENAR'
+                          ? 'bg-emerald-50/50 border-emerald-200 text-emerald-950'
+                          : aiReviews[item.id].answer_status === 'KELIRU'
+                          ? 'bg-red-50/60 border-red-200 text-red-950'
+                          : 'bg-amber-50/60 border-amber-200 text-amber-950'
+                      }`}
+                    >
+                      <div className="font-bold flex flex-wrap items-center gap-2">
+                        <span>Review AI:</span>
+                        <span>
+                          Kesulitan {aiReviews[item.id].difficulty}/5 (
+                          {aiReviews[item.id].difficulty_label})
+                        </span>
+                        {aiReviews[item.id].suggested_answer && (
+                          <span className="px-2 py-0.5 rounded bg-white border border-current/20">
+                            Saran Kunci: {aiReviews[item.id].suggested_answer}
+                          </span>
+                        )}
+                      </div>
+                      <p className="leading-relaxed">{aiReviews[item.id].reason}</p>
+                      {aiReviews[item.id].improvement_tip && (
+                        <p className="text-[11px] opacity-85">
+                          <strong>Saran:</strong> {aiReviews[item.id].improvement_tip}
+                        </p>
+                      )}
+                    </div>
                   )}
 
                   {/* Expanded Options & Answer */}
