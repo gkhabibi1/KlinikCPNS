@@ -71,13 +71,12 @@ interface QuestionBankPanelProps {
   onPackagesUpdated: () => void;
 }
 
-const ITEMS_PER_PAGE = 20;
-
 export default function QuestionBankPanel({
   packages,
   onPackagesUpdated,
 }: QuestionBankPanelProps) {
   const [bankItems, setBankItems] = useState<QuestionBankItem[]>([]);
+  const [itemsPerPage, setItemsPerPage] = useState<number>(20);
   const [isLoading, setIsLoading] = useState(true);
   const [bankTableAvailable, setBankTableAvailable] = useState(true);
   const [unsyncedQuestions, setUnsyncedQuestions] = useState<any[]>([]);
@@ -87,6 +86,7 @@ export default function QuestionBankPanel({
   const [filterCategory, setFilterCategory] = useState<'ALL' | MainSkdCategory>('ALL');
   const [filterSubCategory, setFilterSubCategory] = useState<string>('ALL');
   const [filterSourcePackage, setFilterSourcePackage] = useState<string>('ALL');
+  const [filterAiCriteria, setFilterAiCriteria] = useState<string>('ALL');
   const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
 
@@ -111,6 +111,25 @@ export default function QuestionBankPanel({
     total: number;
   } | null>(null);
   const [aiErrorMessage, setAiErrorMessage] = useState<string | null>(null);
+
+  // Pengaturan Provider, Model, & API Key AI di Admin Panel
+  const [showAiSettings, setShowAiSettings] = useState(false);
+  const [aiConfig, setAiConfig] = useState<{
+    provider: 'gemini' | 'openai' | 'deepseek' | 'openrouter' | 'groq' | 'custom';
+    model: string;
+    custom_base_url: string;
+    has_saved_key: boolean;
+    masked_key: string;
+  }>({
+    provider: 'gemini',
+    model: 'gemini-3.8-flash',
+    custom_base_url: '',
+    has_saved_key: false,
+    masked_key: '',
+  });
+  const [envKeys, setEnvKeys] = useState<Record<string, boolean>>({});
+  const [aiApiKeyInput, setAiApiKeyInput] = useState('');
+  const [isSavingAiConfig, setIsSavingAiConfig] = useState(false);
 
   const fetchAllRowsPaginated = async (
     table: string,
@@ -234,9 +253,57 @@ export default function QuestionBankPanel({
       .then((r) => r.json())
       .then((d) => {
         if (d?.reviews) setAiReviews(d.reviews);
+        if (d?.config) setAiConfig(d.config);
+        if (d?.env_keys) setEnvKeys(d.env_keys);
       })
       .catch(() => {});
   }, []);
+
+  const AI_MODEL_PRESETS: Record<string, string[]> = {
+    gemini: ['gemini-3.8-flash', 'gemini-2.5-pro'],
+    openai: ['gpt-4o-mini', 'gpt-4o'],
+    deepseek: ['deepseek-chat', 'deepseek-reasoner'],
+    openrouter: ['openai/gpt-4o-mini', 'anthropic/claude-3.5-sonnet', 'deepseek/deepseek-chat'],
+    groq: ['llama-3.3-70b-versatile'],
+    custom: [],
+  };
+
+  const handleSaveAiConfig = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!aiConfig.model.trim()) {
+      alert('Nama model AI wajib diisi.');
+      return;
+    }
+    setIsSavingAiConfig(true);
+    try {
+      const res = await fetch('/api/admin/check-question', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'save_config',
+          config: {
+            provider: aiConfig.provider,
+            model: aiConfig.model.trim(),
+            custom_base_url: aiConfig.custom_base_url.trim(),
+            api_key: aiApiKeyInput.trim() || undefined,
+          },
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || 'Gagal menyimpan pengaturan AI');
+      }
+      if (data.config) setAiConfig(data.config);
+      setAiApiKeyInput('');
+      setAiErrorMessage(null);
+      alert(`✅ Pengaturan AI disimpan (${data.config.provider.toUpperCase()} · ${data.config.model})`);
+      setShowAiSettings(false);
+    } catch (err: any) {
+      alert(err?.message || 'Gagal menyimpan pengaturan AI');
+    } finally {
+      setIsSavingAiConfig(false);
+    }
+  };
 
   const handleCheckWithAi = async (itemsToCheck: QuestionBankItem[]) => {
     if (itemsToCheck.length === 0 || isCheckingAi) return;
@@ -245,7 +312,7 @@ export default function QuestionBankPanel({
     setAiCheckingId(itemsToCheck.length === 1 ? itemsToCheck[0].id : null);
     setAiBatchProgress({ current: 0, total: itemsToCheck.length });
 
-    const chunkSize = 5;
+    const chunkSize = 10;
     let checkedCount = 0;
 
     try {
@@ -297,7 +364,7 @@ export default function QuestionBankPanel({
   // Reset pagination on filter change
   useEffect(() => {
     setCurrentPage(1);
-  }, [filterCategory, filterSubCategory, filterSourcePackage, searchQuery]);
+  }, [filterCategory, filterSubCategory, filterSourcePackage, filterAiCriteria, searchQuery, itemsPerPage]);
 
   // Reset sub_category filter when main category changes
   useEffect(() => {
@@ -457,6 +524,15 @@ export default function QuestionBankPanel({
       ) {
         return false;
       }
+      if (filterAiCriteria !== 'ALL') {
+        const rev = aiReviews[item.id];
+        if (filterAiCriteria === 'UNCHECKED' && rev) return false;
+        if (filterAiCriteria === 'ISSUE' && (!rev || rev.answer_status === 'BENAR')) return false;
+        if (filterAiCriteria.startsWith('DIFF_')) {
+          const targetDiff = Number(filterAiCriteria.replace('DIFF_', ''));
+          if (!rev || rev.difficulty !== targetDiff) return false;
+        }
+      }
       if (!q) return true;
       return (
         item.question_text.toLowerCase().includes(q) ||
@@ -465,13 +541,23 @@ export default function QuestionBankPanel({
         (item.source_package_name || '').toLowerCase().includes(q)
       );
     });
-  }, [bankItems, filterCategory, filterSubCategory, filterSourcePackage, searchQuery]);
+  }, [bankItems, filterCategory, filterSubCategory, filterSourcePackage, filterAiCriteria, aiReviews, searchQuery]);
 
-  const totalPages = Math.max(1, Math.ceil(filteredItems.length / ITEMS_PER_PAGE));
+  const uncheckedFilteredItems = useMemo(
+    () => filteredItems.filter((item) => !aiReviews[item.id]),
+    [filteredItems, aiReviews]
+  );
+
+  const batch100Targets = useMemo(() => {
+    const pool = uncheckedFilteredItems.length > 0 ? uncheckedFilteredItems : filteredItems;
+    return pool.slice(0, 100);
+  }, [uncheckedFilteredItems, filteredItems]);
+
+  const totalPages = Math.max(1, Math.ceil(filteredItems.length / itemsPerPage));
   const safePage = Math.min(currentPage, totalPages);
   const paginatedItems = filteredItems.slice(
-    (safePage - 1) * ITEMS_PER_PAGE,
-    safePage * ITEMS_PER_PAGE
+    (safePage - 1) * itemsPerPage,
+    safePage * itemsPerPage
   );
 
   const pageIds = paginatedItems.map((i) => i.id);
@@ -921,7 +1007,7 @@ export default function QuestionBankPanel({
           </select>
         </div>
 
-        <div className="md:col-span-4">
+        <div className="md:col-span-3">
           <select
             value={filterSourcePackage}
             onChange={(e) => setFilterSourcePackage(e.target.value)}
@@ -935,6 +1021,174 @@ export default function QuestionBankPanel({
             ))}
           </select>
         </div>
+
+        <div className="md:col-span-12">
+          <div className="flex flex-wrap items-center gap-1.5 pt-1">
+            <span className="text-[11px] font-bold text-slate-500 mr-1">Filter Kriteria AI:</span>
+            {[
+              { id: 'ALL', label: 'Semua' },
+              { id: 'UNCHECKED', label: 'Belum Dicek AI' },
+              { id: 'DIFF_1', label: '1 · Sangat Mudah' },
+              { id: 'DIFF_2', label: '2 · Mudah' },
+              { id: 'DIFF_3', label: '3 · Sedang' },
+              { id: 'DIFF_4', label: '4 · Sulit' },
+              { id: 'DIFF_5', label: '5 · HOTS' },
+              { id: 'ISSUE', label: '⚠ Perlu Cek / Keliru' },
+            ].map((opt) => (
+              <button
+                key={opt.id}
+                type="button"
+                onClick={() => setFilterAiCriteria(opt.id)}
+                className={`px-2.5 py-1 rounded-full text-[11px] font-semibold border transition cursor-pointer ${
+                  filterAiCriteria === opt.id
+                    ? 'bg-purple-600 text-white border-purple-600'
+                    : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-purple-50'
+                }`}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Pengaturan Provider & Model AI (Fleksibel di Admin Panel) */}
+      <div className="bg-purple-50/70 border border-purple-200 rounded-xl p-4 space-y-3">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <div className="flex flex-wrap items-center gap-2 text-xs">
+            <span className="inline-flex items-center gap-1.5 font-bold text-purple-900">
+              <Bot className="w-4 h-4 text-purple-600" />
+              AI Aktif:
+            </span>
+            <span className="px-2.5 py-0.5 rounded-full bg-white border border-purple-200 font-bold text-purple-700 uppercase">
+              {aiConfig.provider}
+            </span>
+            <span className="font-mono font-semibold text-slate-700 bg-white px-2.5 py-0.5 rounded-full border border-slate-200">
+              {aiConfig.model}
+            </span>
+            {aiConfig.has_saved_key || envKeys[aiConfig.provider] ? (
+              <span className="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 font-bold text-[11px]">
+                ✓ API Key Siap {aiConfig.has_saved_key ? '(Admin)' : '(Vercel Env)'}
+              </span>
+            ) : (
+              <span className="px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 font-bold text-[11px]">
+                ⚠ API Key Belum Diisi
+              </span>
+            )}
+          </div>
+
+          <button
+            type="button"
+            onClick={() => setShowAiSettings((v) => !v)}
+            className="text-xs font-bold text-purple-700 bg-white hover:bg-purple-100 border border-purple-200 px-3 py-1.5 rounded-lg transition cursor-pointer"
+          >
+            {showAiSettings ? 'Tutup Pengaturan AI' : '⚙️ Ganti Model / API Key AI'}
+          </button>
+        </div>
+
+        {showAiSettings && (
+          <form onSubmit={handleSaveAiConfig} className="pt-3 border-t border-purple-200/80 space-y-3">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div>
+                <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                  Provider AI
+                </label>
+                <select
+                  value={aiConfig.provider}
+                  onChange={(e) => {
+                    const nextProv = e.target.value as any;
+                    const presets = AI_MODEL_PRESETS[nextProv] || [];
+                    setAiConfig((prev) => ({
+                      ...prev,
+                      provider: nextProv,
+                      model: presets[0] || prev.model,
+                    }));
+                  }}
+                  className="w-full border border-slate-300 rounded-lg px-3 py-2 text-xs sm:text-sm bg-white font-semibold"
+                >
+                  <option value="gemini">Google Gemini</option>
+                  <option value="openai">OpenAI (ChatGPT)</option>
+                  <option value="deepseek">DeepSeek</option>
+                  <option value="openrouter">OpenRouter (Multi-Model)</option>
+                  <option value="groq">Groq</option>
+                  <option value="custom">Custom (OpenAI-Compatible)</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                  Nama Model AI
+                </label>
+                <input
+                  type="text"
+                  value={aiConfig.model}
+                  onChange={(e) => setAiConfig({ ...aiConfig, model: e.target.value })}
+                  placeholder="Mis. gemini-3.8-flash atau gpt-4o-mini"
+                  className="w-full border border-slate-300 rounded-lg px-3 py-2 text-xs sm:text-sm bg-white font-mono"
+                  required
+                />
+                {AI_MODEL_PRESETS[aiConfig.provider]?.length > 0 && (
+                  <div className="flex flex-wrap gap-1 mt-1.5">
+                    {AI_MODEL_PRESETS[aiConfig.provider].map((preset) => (
+                      <button
+                        key={preset}
+                        type="button"
+                        onClick={() => setAiConfig((prev) => ({ ...prev, model: preset }))}
+                        className="text-[10px] font-mono px-2 py-0.5 rounded bg-white border border-purple-200 text-purple-700 hover:bg-purple-100 cursor-pointer"
+                      >
+                        {preset}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                  API Key {aiConfig.has_saved_key ? `(Tersimpan: ${aiConfig.masked_key})` : '(Opsional jika sudah di Vercel)'}
+                </label>
+                <input
+                  type="password"
+                  value={aiApiKeyInput}
+                  onChange={(e) => setAiApiKeyInput(e.target.value)}
+                  placeholder={aiConfig.has_saved_key ? 'Kosongkan jika tetap pakai key lama' : 'Tempel API Key di sini...'}
+                  className="w-full border border-slate-300 rounded-lg px-3 py-2 text-xs sm:text-sm bg-white"
+                />
+              </div>
+            </div>
+
+            {aiConfig.provider === 'custom' && (
+              <div>
+                <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                  Custom Chat Completions URL
+                </label>
+                <input
+                  type="url"
+                  value={aiConfig.custom_base_url}
+                  onChange={(e) =>
+                    setAiConfig({ ...aiConfig, custom_base_url: e.target.value })
+                  }
+                  placeholder="https://api.domainanda.com/v1/chat/completions"
+                  className="w-full border border-slate-300 rounded-lg px-3 py-2 text-xs sm:text-sm bg-white font-mono"
+                  required
+                />
+              </div>
+            )}
+
+            <div className="flex items-center justify-between gap-2">
+              <p className="text-[11px] text-slate-600">
+                API Key yang disimpan di sini langsung aktif tanpa perlu edit Vercel atau redeploy.
+              </p>
+              <button
+                type="submit"
+                disabled={isSavingAiConfig}
+                className="px-4 py-2 rounded-lg bg-purple-600 hover:bg-purple-700 disabled:opacity-60 text-white text-xs font-bold cursor-pointer shrink-0"
+              >
+                {isSavingAiConfig ? 'Menyimpan...' : 'Simpan Pengaturan AI'}
+              </button>
+            </div>
+          </form>
+        )}
       </div>
 
       {/* Bulk Reuse Action Toolbar */}
@@ -990,19 +1244,67 @@ export default function QuestionBankPanel({
             )}
           </div>
 
-          {selectedIds.length > 0 && (
+          <div className="flex flex-wrap items-center gap-2 ml-auto">
+            {selectedIds.length > 0 && (
+              <button
+                type="button"
+                onClick={() => setSelectedIds([])}
+                className="text-xs font-semibold text-slate-500 hover:text-slate-700 px-2 py-1.5 cursor-pointer"
+              >
+                Reset Pilihan
+              </button>
+            )}
+
+            <div className="inline-flex items-center gap-1.5 bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1.5">
+              <span className="text-[11px] font-semibold text-slate-500">Tampilkan:</span>
+              <select
+                value={itemsPerPage}
+                onChange={(e) => setItemsPerPage(Number(e.target.value))}
+                className="text-xs font-bold text-slate-800 bg-transparent focus:outline-none cursor-pointer"
+                aria-label="Jumlah soal per halaman"
+              >
+                <option value={20}>20 soal</option>
+                <option value={50}>50 soal</option>
+                <option value={100}>100 soal</option>
+                <option value={250}>250 soal</option>
+              </select>
+            </div>
+
             <button
               type="button"
-              onClick={() => setSelectedIds([])}
-              className="text-xs font-semibold text-slate-500 hover:text-slate-700 cursor-pointer"
+              onClick={() =>
+                handleCheckWithAi(
+                  selectedIds.length > 0
+                    ? bankItems.filter((i) => selectedIds.includes(i.id))
+                    : batch100Targets
+                )
+              }
+              disabled={isCheckingAi || filteredItems.length === 0}
+              className="px-3.5 py-2 rounded-lg bg-purple-600 hover:bg-purple-700 disabled:bg-slate-300 text-white text-xs font-bold shadow-xs flex items-center justify-center gap-1.5 transition cursor-pointer shrink-0"
+              title={
+                selectedIds.length > 0
+                  ? 'Cek semua soal yang dicentang dengan AI'
+                  : 'Cek hingga 100 soal sekaligus secara batch dengan AI (prioritas yang belum dicek)'
+              }
             >
-              Reset Pilihan
+              {isCheckingAi ? (
+                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+              ) : (
+                <Bot className="w-3.5 h-3.5" />
+              )}
+              <span>
+                {isCheckingAi && aiBatchProgress
+                  ? `Mengecek AI (${aiBatchProgress.current}/${aiBatchProgress.total})...`
+                  : selectedIds.length > 0
+                  ? `Cek AI Terpilih (${selectedIds.length})`
+                  : `Cek AI Batch (${batch100Targets.length} Soal)`}
+              </span>
             </button>
-          )}
+          </div>
         </div>
 
         {/* Target Package Selector + Reuse Button */}
-        <div className="pt-3 border-t border-slate-200/80 flex flex-col lg:flex-row lg:items-center gap-3">
+        <div className="pt-3 border-t border-slate-200/80 flex flex-col md:flex-row md:items-center gap-3">
           {!showNewPkgForm ? (
             <div className="flex-1 flex flex-col sm:flex-row gap-2">
               <select
@@ -1060,37 +1362,6 @@ export default function QuestionBankPanel({
               </button>
             </div>
           )}
-
-          <button
-            type="button"
-            onClick={() =>
-              handleCheckWithAi(
-                selectedIds.length > 0
-                  ? bankItems.filter((i) => selectedIds.includes(i.id))
-                  : paginatedItems
-              )
-            }
-            disabled={isCheckingAi || paginatedItems.length === 0}
-            className="px-4 py-2.5 rounded-lg bg-purple-600 hover:bg-purple-700 disabled:bg-slate-300 text-white text-xs sm:text-sm font-bold shadow-xs flex items-center justify-center gap-2 transition cursor-pointer shrink-0"
-            title={
-              selectedIds.length > 0
-                ? 'Cek semua soal yang dicentang dengan AI'
-                : 'Cek semua soal di halaman ini secara batch dengan AI'
-            }
-          >
-            {isCheckingAi ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
-            ) : (
-              <Bot className="w-4 h-4" />
-            )}
-            <span>
-              {isCheckingAi && aiBatchProgress
-                ? `Mengecek AI (${aiBatchProgress.current}/${aiBatchProgress.total})...`
-                : selectedIds.length > 0
-                ? `Cek AI Batch (${selectedIds.length})`
-                : `Cek AI Batch Halaman (${paginatedItems.length})`}
-            </span>
-          </button>
 
           <button
             type="button"
@@ -1163,7 +1434,7 @@ export default function QuestionBankPanel({
             const isSelected = selectedIds.includes(item.id);
             const isExpanded = !!expandedIds[item.id];
             const subOptions = SKD_SUBCATEGORIES[item.category] || [];
-            const globalIndex = (safePage - 1) * ITEMS_PER_PAGE + idx + 1;
+            const globalIndex = (safePage - 1) * itemsPerPage + idx + 1;
 
             return (
               <div
@@ -1241,15 +1512,16 @@ export default function QuestionBankPanel({
                         </span>
                         <span
                           className={`text-[11px] px-2 py-0.5 rounded-md font-bold border ${
-                            aiReviews[item.id].difficulty >= 4
+                            aiReviews[item.id].difficulty === 5
                               ? 'bg-rose-50 border-rose-200 text-rose-700'
+                              : aiReviews[item.id].difficulty === 4
+                              ? 'bg-orange-50 border-orange-200 text-orange-700'
                               : aiReviews[item.id].difficulty === 3
                               ? 'bg-blue-50 border-blue-200 text-blue-700'
-                              : 'bg-slate-100 border-slate-200 text-slate-700'
+                              : 'bg-emerald-50 border-emerald-200 text-emerald-700'
                           }`}
                         >
-                          Kesulitan {aiReviews[item.id].difficulty}/5 ·{' '}
-                          {aiReviews[item.id].difficulty_label}
+                          Kriteria: {aiReviews[item.id].difficulty_label} ({aiReviews[item.id].difficulty}/5)
                         </span>
                       </>
                     )}
@@ -1399,8 +1671,8 @@ export default function QuestionBankPanel({
       {totalPages > 1 && (
         <div className="flex flex-wrap items-center justify-between gap-3 bg-white border border-slate-200 rounded-xl px-4 py-3 text-xs">
           <div className="text-slate-500">
-            Menampilkan {(safePage - 1) * ITEMS_PER_PAGE + 1}–
-            {Math.min(safePage * ITEMS_PER_PAGE, filteredItems.length)} dari{' '}
+            Menampilkan {(safePage - 1) * itemsPerPage + 1}–
+            {Math.min(safePage * itemsPerPage, filteredItems.length)} dari{' '}
             <strong>{filteredItems.length}</strong> soal
           </div>
           <div className="flex items-center gap-1.5">

@@ -85,6 +85,7 @@ const CATEGORY_LIMITS: { [key: string]: number } = {
 export default function AdminCommandCenter() {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<'analytics' | 'members' | 'packages' | 'question-bank' | 'challenge' | 'banners' | 'updates' | 'subscription-packages' | 'transactions' | 'vouchers' | 'blog' | 'resellers' | 'support'>('analytics');
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
 
   // State Tab Support & Live Chat
   const [supportConversations, setSupportConversations] = useState<any[]>([]);
@@ -1894,14 +1895,40 @@ export default function AdminCommandCenter() {
 
   return (
     <div className="flex h-screen bg-slate-50 font-sans text-slate-800 overflow-hidden">
-      
+      {/* Mobile Sidebar Backdrop */}
+      {isMobileSidebarOpen && (
+        <div
+          className="fixed inset-0 bg-black/50 z-40 lg:hidden"
+          onClick={() => setIsMobileSidebarOpen(false)}
+        />
+      )}
+
       {/* ================= SIDEBAR ADMIN ================= */}
-      <aside className="w-64 bg-slate-900 text-white flex flex-col transition-all duration-300 z-20">
-        <div className="h-16 flex items-center px-6 border-b border-slate-800">
+      <aside
+        className={`fixed inset-y-0 left-0 z-50 w-64 bg-slate-900 text-white flex flex-col transition-transform duration-300 lg:static lg:translate-x-0 shrink-0 ${
+          isMobileSidebarOpen ? 'translate-x-0' : '-translate-x-full'
+        }`}
+      >
+        <div className="h-16 flex items-center justify-between px-6 border-b border-slate-800">
           <div className="font-extrabold text-xl tracking-tight">Admin<span className="text-blue-500 font-light">Panel</span></div>
+          <button
+            type="button"
+            onClick={() => setIsMobileSidebarOpen(false)}
+            className="lg:hidden text-slate-400 hover:text-white p-1 rounded-lg"
+            aria-label="Tutup menu admin"
+          >
+            ✕
+          </button>
         </div>
         <div className="flex-1 overflow-y-auto py-6">
-          <nav className="space-y-2 px-4">
+          <nav
+            className="space-y-2 px-4"
+            onClick={(e) => {
+              if ((e.target as HTMLElement).closest('button')) {
+                setIsMobileSidebarOpen(false);
+              }
+            }}
+          >
             <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2 px-2">Menu Utama</div>
             <button onClick={() => setActiveTab('analytics')} className={`w-full flex items-center px-4 py-3 rounded-lg text-sm font-medium transition-colors ${activeTab === 'analytics' ? 'bg-blue-600 text-white' : 'text-slate-400 hover:bg-slate-800 hover:text-white'}`}>📊 Analitik & Omset</button>
             <button onClick={() => setActiveTab('members')} className={`w-full flex items-center px-4 py-3 rounded-lg text-sm font-medium transition-colors ${activeTab === 'members' ? 'bg-blue-600 text-white' : 'text-slate-400 hover:bg-slate-800 hover:text-white'}`}>👥 Data Member</button>
@@ -2013,9 +2040,19 @@ export default function AdminCommandCenter() {
       </aside>
 
       {/* ================= MAIN CONTENT ================= */}
-      <div className="flex-1 flex flex-col overflow-hidden relative">
-        <header className="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-8 z-10">
-          <h1 className="text-lg font-semibold text-slate-800 capitalize">
+      <div className="flex-1 flex flex-col overflow-hidden relative min-w-0">
+        <header className="h-16 bg-white border-b border-slate-200 flex items-center gap-3 px-4 sm:px-6 lg:px-8 z-10 shrink-0">
+          <button
+            type="button"
+            onClick={() => setIsMobileSidebarOpen(true)}
+            className="lg:hidden p-2 -ml-1 rounded-lg text-slate-700 hover:bg-slate-100 transition-colors shrink-0"
+            aria-label="Buka menu admin"
+          >
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16" />
+            </svg>
+          </button>
+          <h1 className="text-base sm:text-lg font-semibold text-slate-800 capitalize truncate">
             {activeTab === 'analytics' && 'Ringkasan Pendapatan'}
             {activeTab === 'members' && 'Manajemen Customer'}
             {activeTab === 'packages' && 'Bank Soal & Paket'}
@@ -2033,7 +2070,7 @@ export default function AdminCommandCenter() {
           </h1>
         </header>
 
-        <main className="flex-1 overflow-y-auto p-8">
+        <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
           <div className="max-w-6xl mx-auto">
             
             {activeTab === 'analytics' && <div className="p-6 bg-white rounded-xl shadow-sm border border-slate-200">Grafik omset akan ditambahkan setelah ada transaksi.</div>}
@@ -2125,6 +2162,7 @@ export default function AdminCommandCenter() {
                             </button>
                           </div>
                         ) : (
+                          <div className="overflow-x-auto">
                           <table className="w-full text-left border-collapse">
                             <thead>
                               <tr className="bg-slate-50 border-b border-slate-200">
@@ -2188,6 +2226,7 @@ export default function AdminCommandCenter() {
                               })}
                             </tbody>
                           </table>
+                          </div>
                         )}
                       </div>
                     </>
@@ -4360,7 +4399,7 @@ export default function AdminCommandCenter() {
                       </div>
 
                       {/* List Riwayat Generate */}
-                      <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm">
+                      <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm overflow-x-auto">
                         <table className="w-full">
                           <thead className="bg-slate-50 border-b border-slate-200">
                             <tr>
@@ -4529,7 +4568,7 @@ export default function AdminCommandCenter() {
                 </div>
 
                 {/* List Blog Posts */}
-                <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+                <div className="bg-white rounded-xl border border-slate-200 overflow-hidden overflow-x-auto">
                   <table className="w-full">
                     <thead className="bg-slate-50 border-b border-slate-200">
                       <tr>
@@ -4823,7 +4862,7 @@ export default function AdminCommandCenter() {
 
                 {/* List Reseller */}
                 {resellerSubTab === 'list' && (
-                <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+                <div className="bg-white rounded-xl border border-slate-200 overflow-hidden overflow-x-auto">
                   <table className="w-full">
                     <thead className="bg-slate-50 border-b border-slate-200">
                       <tr>
@@ -5354,7 +5393,7 @@ export default function AdminCommandCenter() {
                   </div>
 
                   {/* Table Hasil Ujian */}
-                  <div className="border border-slate-200 rounded-xl overflow-hidden">
+                  <div className="border border-slate-200 rounded-xl overflow-hidden overflow-x-auto">
                     <table className="w-full">
                       <thead className="bg-slate-50 border-b border-slate-200">
                         <tr>

@@ -118,7 +118,7 @@ export default function BatchPackageUpload({
     setPreviewAiError(null);
     setPreviewAiProgress({ current: 0, total: item.questions.length });
 
-    const chunkSize = 5;
+    const chunkSize = 10;
     let done = 0;
 
     try {
@@ -1271,7 +1271,7 @@ export default function BatchPackageUpload({
                               : '⚠ Perlu Cek'}
                           </span>
                           <span className="px-2 py-0.5 rounded font-bold bg-purple-50 border border-purple-200 text-purple-700">
-                            Kesulitan {rev.difficulty}/5
+                            Kriteria: {rev.difficulty_label} ({rev.difficulty}/5)
                           </span>
                         </>
                       )}

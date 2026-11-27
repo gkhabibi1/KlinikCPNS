@@ -14,7 +14,10 @@ import {
   Clock,
   BarChart3,
   Play,
-  X
+  X,
+  Flame,
+  ArrowRight,
+  ShieldCheck
 } from 'lucide-react';
 
 export default function TryoutListPage() {
@@ -159,31 +162,72 @@ export default function TryoutListPage() {
   return (
     <MemberLayout>
       <div className="space-y-6 p-4 md:p-6 max-w-6xl mx-auto">
-        {/* Segmented Tab Navigation */}
-        <div className="inline-flex gap-1.5 bg-slate-200/60 p-1.5 rounded-2xl border border-slate-200/70">
-          <button
-            onClick={() => setActiveTab('CPNS')}
-            className={`px-5 py-2.5 rounded-xl font-semibold text-xs sm:text-sm transition-all flex items-center gap-2 cursor-pointer ${
-              activeTab === 'CPNS'
-                ? 'bg-white text-blue-600 shadow-xs'
-                : 'text-slate-600 hover:text-slate-900'
-            }`}
-          >
-            <FileText className="w-4 h-4" strokeWidth={1.8} />
-            <span>Try Out CPNS</span>
-          </button>
-          <button
-            onClick={() => setActiveTab('P3K')}
-            className={`px-5 py-2.5 rounded-xl font-semibold text-xs sm:text-sm transition-all flex items-center gap-2 cursor-pointer ${
-              activeTab === 'P3K'
-                ? 'bg-white text-emerald-600 shadow-xs'
-                : 'text-slate-600 hover:text-slate-900'
-            }`}
-          >
-            <Briefcase className="w-4 h-4" strokeWidth={1.8} />
-            <span>Try Out P3K</span>
-          </button>
+        {/* Segmented Tab Navigation + Akses Cepat 30 Days Challenge */}
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="inline-flex flex-wrap gap-1.5 bg-slate-200/60 p-1.5 rounded-2xl border border-slate-200/70">
+            <button
+              onClick={() => setActiveTab('CPNS')}
+              className={`px-4 sm:px-5 py-2.5 rounded-xl font-semibold text-xs sm:text-sm transition-all flex items-center gap-2 cursor-pointer ${
+                activeTab === 'CPNS'
+                  ? 'bg-white text-blue-600 shadow-xs'
+                  : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              <FileText className="w-4 h-4" strokeWidth={1.8} />
+              <span>Try Out CPNS</span>
+            </button>
+            <button
+              onClick={() => setActiveTab('P3K')}
+              className={`px-4 sm:px-5 py-2.5 rounded-xl font-semibold text-xs sm:text-sm transition-all flex items-center gap-2 cursor-pointer ${
+                activeTab === 'P3K'
+                  ? 'bg-white text-emerald-600 shadow-xs'
+                  : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              <Briefcase className="w-4 h-4" strokeWidth={1.8} />
+              <span>Try Out P3K</span>
+            </button>
+            <Link
+              href="/dashboard/challenge"
+              className="px-4 sm:px-5 py-2.5 rounded-xl font-semibold text-xs sm:text-sm transition-all flex items-center gap-1.5 text-amber-700 bg-amber-50 hover:bg-amber-100 border border-amber-200/80"
+            >
+              <Flame className="w-4 h-4 text-amber-600" strokeWidth={2} />
+              <span>30 Days Challenge</span>
+            </Link>
+          </div>
         </div>
+
+        {/* Banner Cepat 30 Days Challenge (Mudah ditemukan di Mobile) */}
+        <Link
+          href="/dashboard/challenge"
+          className="block bg-gradient-to-r from-amber-500 via-orange-500 to-rose-500 text-white rounded-2xl p-4 sm:p-5 shadow-md hover:shadow-lg transition-all group"
+        >
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="flex items-start sm:items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-white/20 border border-white/30 flex items-center justify-center shrink-0">
+                <Flame className="w-5 h-5 text-white" />
+              </div>
+              <div>
+                <div className="flex flex-wrap items-center gap-2">
+                  <h2 className="font-heading text-sm sm:text-base font-extrabold tracking-tight">
+                    30 Days CPNS Challenge
+                  </h2>
+                  <span className="inline-flex items-center gap-1 text-[10px] font-bold bg-white/20 px-2 py-0.5 rounded-full">
+                    <ShieldCheck className="w-3 h-3" />
+                    Syarat Garansi 100%
+                  </span>
+                </div>
+                <p className="text-xs text-white/90 mt-0.5 leading-relaxed">
+                  Latihan konsisten 1 paket try out setiap hari selama 30 hari penuh.
+                </p>
+              </div>
+            </div>
+            <div className="inline-flex items-center justify-center gap-1.5 bg-white text-orange-600 font-bold text-xs sm:text-sm px-4 py-2 rounded-xl shadow-xs group-hover:translate-x-0.5 transition-transform shrink-0 self-start sm:self-center">
+              <span>Buka Challenge</span>
+              <ArrowRight className="w-4 h-4" />
+            </div>
+          </div>
+        </Link>
 
         {/* Status Langganan */}
         {isExpired && (
