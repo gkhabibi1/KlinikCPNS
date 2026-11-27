@@ -9,6 +9,7 @@ import BatchPackageUpload from '@/components/BatchPackageUpload';
 import QuestionBankPanel from '@/components/QuestionBankPanel';
 import AdminResellerSettings from '@/components/AdminResellerSettings';
 import AdminChallengePoolConfig from '@/components/AdminChallengePoolConfig';
+import AdminAnalyticsPanel from '@/components/AdminAnalyticsPanel';
 import { buildQuestionBankPayload } from '@/lib/questionSubcategory';
 import { parseQuestionsFromText, downloadQuestionTemplate, exportQuestionsToTxt } from '@/lib/questionParser';
 
@@ -2074,7 +2075,7 @@ export default function AdminCommandCenter() {
         <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
           <div className="max-w-6xl mx-auto">
             
-            {activeTab === 'analytics' && <div className="p-6 bg-white rounded-xl shadow-sm border border-slate-200">Grafik omset akan ditambahkan setelah ada transaksi.</div>}
+            {activeTab === 'analytics' && <AdminAnalyticsPanel />}
 
             {activeTab === 'question-bank' && (
               <QuestionBankPanel
