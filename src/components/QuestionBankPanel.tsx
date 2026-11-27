@@ -305,19 +305,32 @@ export default function QuestionBankPanel({
     }
   };
 
-  const handleCheckWithAi = async (itemsToCheck: QuestionBankItem[]) => {
+  const handleCheckWithAi = async (
+    itemsToCheck: QuestionBankItem[],
+    forceRecheck = false
+  ) => {
     if (itemsToCheck.length === 0 || isCheckingAi) return;
+
+    const pendingItems = forceRecheck
+      ? itemsToCheck
+      : itemsToCheck.filter((q) => !aiReviews[q.id]);
+
+    if (pendingItems.length === 0) {
+      alert('Semua soal yang dipilih sudah pernah dicek AI sebelumnya, sehingga dilewati.');
+      return;
+    }
+
     setIsCheckingAi(true);
     setAiErrorMessage(null);
-    setAiCheckingId(itemsToCheck.length === 1 ? itemsToCheck[0].id : null);
-    setAiBatchProgress({ current: 0, total: itemsToCheck.length });
+    setAiCheckingId(pendingItems.length === 1 ? pendingItems[0].id : null);
+    setAiBatchProgress({ current: 0, total: pendingItems.length });
 
     const chunkSize = 10;
     let checkedCount = 0;
 
     try {
-      for (let i = 0; i < itemsToCheck.length; i += chunkSize) {
-        const chunk = itemsToCheck.slice(i, i + chunkSize).map((q) => ({
+      for (let i = 0; i < pendingItems.length; i += chunkSize) {
+        const chunk = pendingItems.slice(i, i + chunkSize).map((q) => ({
           id: q.id,
           category: q.category,
           sub_category: q.sub_category,
@@ -350,7 +363,7 @@ export default function QuestionBankPanel({
         setAiReviews((prev) => ({ ...prev, ...nextMap }));
 
         checkedCount += chunk.length;
-        setAiBatchProgress({ current: checkedCount, total: itemsToCheck.length });
+        setAiBatchProgress({ current: checkedCount, total: pendingItems.length });
       }
     } catch (err: any) {
       setAiErrorMessage(err?.message || 'Gagal menjalankan pengecekan AI');
@@ -1531,7 +1544,7 @@ export default function QuestionBankPanel({
                   <div className="flex items-center gap-1.5 ml-auto">
                     <button
                       type="button"
-                      onClick={() => handleCheckWithAi([item])}
+                      onClick={() => handleCheckWithAi([item], true)}
                       disabled={isCheckingAi}
                       className="px-2.5 py-1 rounded-lg bg-purple-50 hover:bg-purple-100 text-purple-700 text-xs font-bold flex items-center gap-1 transition cursor-pointer disabled:opacity-50"
                       title="Cek kebenaran jawaban & tingkat kesulitan (1-5) dengan AI"
