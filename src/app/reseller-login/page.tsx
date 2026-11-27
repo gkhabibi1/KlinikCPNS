@@ -107,10 +107,18 @@ export default function ResellerLoginPage() {
           </button>
         </form>
 
-        <div className="mt-6 text-center text-sm text-slate-600">
-          <Link href="/" className="text-purple-600 hover:underline">
-            ← Kembali ke Beranda
-          </Link>
+        <div className="mt-6 space-y-2.5 text-center text-sm text-slate-600">
+          <p>
+            Belum punya akun reseller?{' '}
+            <Link href="/reseller/checkout" className="text-purple-600 font-semibold hover:underline">
+              Daftar &amp; Pilih Paket →
+            </Link>
+          </p>
+          <div>
+            <Link href="/" className="text-slate-500 hover:text-purple-600 hover:underline text-xs">
+              ← Kembali ke Beranda
+            </Link>
+          </div>
         </div>
       </div>
     </div>
