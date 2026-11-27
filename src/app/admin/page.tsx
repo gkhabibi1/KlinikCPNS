@@ -9,7 +9,7 @@ import BatchPackageUpload from '@/components/BatchPackageUpload';
 import QuestionBankPanel from '@/components/QuestionBankPanel';
 import AdminResellerSettings from '@/components/AdminResellerSettings';
 import { buildQuestionBankPayload } from '@/lib/questionSubcategory';
-import { parseQuestionsFromText, downloadQuestionTemplate } from '@/lib/questionParser';
+import { parseQuestionsFromText, downloadQuestionTemplate, exportQuestionsToTxt } from '@/lib/questionParser';
 
 interface Profile {
   id: string;
@@ -2631,6 +2631,34 @@ export default function AdminCommandCenter() {
                                               className="flex-1 min-w-[130px] bg-blue-50 text-blue-600 hover:bg-blue-100 py-2 rounded-lg font-semibold text-sm transition-colors text-center"
                                           >
                                               ⚙️ Kelola Soal ({pkg.question_count || 0})
+                                          </button>
+
+                                          <button
+                                            type="button"
+                                            onClick={async () => {
+                                              const { data, error } = await supabase
+                                                .from('questions')
+                                                .select('*')
+                                                .eq('package_id', pkg.id)
+                                                .order('question_number', { ascending: true });
+                                              if (error) {
+                                                alert('Gagal mengambil soal: ' + error.message);
+                                                return;
+                                              }
+                                              if (!data || data.length === 0) {
+                                                alert('Paket ini belum memiliki soal.');
+                                                return;
+                                              }
+                                              const safeName = (pkg.name || 'paket-tryout')
+                                                .toLowerCase()
+                                                .replace(/[^a-z0-9]+/g, '-')
+                                                .replace(/^-|-$/g, '');
+                                              exportQuestionsToTxt(data, `${safeName}.txt`);
+                                            }}
+                                            className="px-3 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 py-2 rounded-lg font-semibold text-sm transition-colors text-center"
+                                            title="Download seluruh soal di paket ini (.txt)"
+                                          >
+                                            ⬇️ Download
                                           </button>
 
                                           {/* Tombol Set Challenge */}

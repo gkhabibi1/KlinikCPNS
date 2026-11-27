@@ -196,3 +196,102 @@ export function parseQuestionsFromText(text: string): ParsedQuestion[] {
 
   return questionsList;
 }
+
+export interface ExportableQuestion {
+  category?: string | null;
+  question_number?: number | null;
+  question_text?: string | null;
+  option_a?: string | null;
+  option_b?: string | null;
+  option_c?: string | null;
+  option_d?: string | null;
+  option_e?: string | null;
+  correct_answer?: string | null;
+  explanation?: string | null;
+  tkp_scores?: Record<string, number> | null;
+}
+
+/**
+ * Mengekspor daftar soal menjadi file .txt yang kompatibel dengan parser upload KlinikCPNS
+ */
+export function exportQuestionsToTxt(
+  questions: ExportableQuestion[],
+  filename = 'bank-soal-cpns.txt'
+) {
+  if (!questions || questions.length === 0) {
+    alert('Tidak ada soal untuk didownload.');
+    return;
+  }
+
+  const blocks = questions.map((q, idx) => {
+    const rawType = (q.category || 'TWK').toUpperCase();
+    const type = rawType.includes('TIU')
+      ? 'TIU'
+      : rawType.includes('TKP')
+      ? 'TKP'
+      : 'TWK';
+    const num = q.question_number || idx + 1;
+
+    let explanationText = q.explanation || '';
+    let tkpScores: Record<string, number> | null = q.tkp_scores || null;
+
+    if (type === 'TKP' && explanationText.trim().startsWith('{')) {
+      try {
+        const parsed = JSON.parse(explanationText);
+        if (parsed && typeof parsed === 'object') {
+          tkpScores = parsed;
+          explanationText =
+            parsed.explanation || parsed.pembahasan || '';
+        }
+      } catch {
+        // biarkan apa adanya jika bukan JSON valid
+      }
+    }
+
+    const lines = [
+      `TYPE: ${type}`,
+      `NUMBER: ${num}`,
+      `QUESTION: ${q.question_text || ''}`,
+      `A. ${q.option_a || ''}`,
+      `B. ${q.option_b || ''}`,
+      `C. ${q.option_c || ''}`,
+      `D. ${q.option_d || ''}`,
+      `E. ${q.option_e || ''}`,
+      `CORRECT: ${(q.correct_answer || 'A').toUpperCase()}`,
+    ];
+
+    if (type === 'TKP') {
+      const sA = tkpScores?.a ?? tkpScores?.A ?? 1;
+      const sB = tkpScores?.b ?? tkpScores?.B ?? 2;
+      const sC = tkpScores?.c ?? tkpScores?.C ?? 3;
+      const sD = tkpScores?.d ?? tkpScores?.D ?? 4;
+      const sE = tkpScores?.e ?? tkpScores?.E ?? 5;
+      lines.push(
+        `SCORE_A: ${sA}`,
+        `SCORE_B: ${sB}`,
+        `SCORE_C: ${sC}`,
+        `SCORE_D: ${sD}`,
+        `SCORE_E: ${sE}`
+      );
+    } else {
+      lines.push(`POINTS: 5`);
+    }
+
+    if (explanationText) {
+      lines.push(`EXPLANATION: ${explanationText}`);
+    }
+
+    return lines.join('\n');
+  });
+
+  const content = blocks.join('\n\n---\n\n');
+  const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = filename.endsWith('.txt') ? filename : `${filename}.txt`;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+}

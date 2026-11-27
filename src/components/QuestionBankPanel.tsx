@@ -10,6 +10,7 @@ import {
   detectQuestionSubcategory,
   buildQuestionBankPayload,
 } from '@/lib/questionSubcategory';
+import { exportQuestionsToTxt } from '@/lib/questionParser';
 import {
   Database,
   Search,
@@ -28,6 +29,7 @@ import {
   Bot,
   Loader2,
   AlertTriangle,
+  Download,
 } from 'lucide-react';
 
 export interface QuestionBankItem {
@@ -683,6 +685,30 @@ export default function QuestionBankPanel({
         </div>
 
         <div className="flex flex-wrap items-center gap-2 shrink-0">
+          <button
+            type="button"
+            onClick={() =>
+              exportQuestionsToTxt(
+                selectedIds.length > 0
+                  ? bankItems.filter((i) => selectedIds.includes(i.id))
+                  : filteredItems,
+                selectedIds.length > 0
+                  ? `bank-soal-terpilih-${selectedIds.length}.txt`
+                  : `bank-soal-${filterCategory.toLowerCase()}-${filteredItems.length}.txt`
+              )
+            }
+            disabled={isLoading || filteredItems.length === 0}
+            className="px-3.5 py-2 rounded-xl bg-blue-500 hover:bg-blue-600 text-white text-xs font-bold shadow-sm flex items-center gap-1.5 transition cursor-pointer disabled:opacity-50"
+            title="Download seluruh soal hasil filter atau soal terpilih dalam format .txt"
+          >
+            <Download className="w-3.5 h-3.5" />
+            <span>
+              {selectedIds.length > 0
+                ? `Download Terpilih (${selectedIds.length})`
+                : `Download Soal (${filteredItems.length})`}
+            </span>
+          </button>
+
           <button
             type="button"
             onClick={loadQuestionBank}
