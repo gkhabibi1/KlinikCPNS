@@ -29,10 +29,12 @@ export default function TryoutPage() {
     isChallenge: boolean;
     dayNumber: number | null;
     progressId: string | null;
+    fallbackPackageId?: string | null;
   }>({
     isChallenge: false,
     dayNumber: null,
     progressId: null,
+    fallbackPackageId: null,
   });
   const [isViolationModalOpen, setIsViolationModalOpen] = useState(false);
   const [violationReason, setViolationReason] = useState('');
@@ -49,6 +51,52 @@ export default function TryoutPage() {
 
   useEffect(() => {
     const fetchData = async () => {
+      const { data: { user: currentUser } } = await supabase.auth.getUser();
+      const { data: { session } } = await supabase.auth.getSession();
+      const user = currentUser || session?.user || null;
+
+      if (params.package_id === 'challenge-pool') {
+        const search = new URLSearchParams(window.location.search);
+        const dayParam = Math.max(1, Math.min(30, Number(search.get('day')) || 1));
+
+        if (!user) {
+          router.push('/login');
+          return;
+        }
+
+        try {
+          const res = await fetch(
+            `/api/challenge/session?user_id=${encodeURIComponent(user.id)}&day_number=${dayParam}`
+          );
+          const data = await res.json();
+          if (res.ok && data.questions) {
+            setPackageData({
+              id: 'challenge-pool',
+              name: `30 Days Challenge · Hari ke-${dayParam}`,
+              show_explanation: true,
+            });
+            setQuestions(data.questions);
+            setChallengeInfo({
+              isChallenge: true,
+              dayNumber: dayParam,
+              progressId: data.progressId || null,
+              fallbackPackageId: data.fallbackPackageId || null,
+            });
+          } else {
+            alert(data.error || 'Gagal memuat soal acak 30 Days Challenge.');
+            router.push('/dashboard/challenge');
+            return;
+          }
+        } catch (err) {
+          console.error('Challenge pool load error:', err);
+          router.push('/dashboard/challenge');
+          return;
+        }
+
+        setIsLoading(false);
+        return;
+      }
+
       const { data: pkgData } = await supabase
         .from('tryout_packages')
         .select('*')
@@ -64,10 +112,6 @@ export default function TryoutPage() {
       if (questionsData) setQuestions(questionsData);
 
       // Cek apakah paket ini adalah paket aktif 30 Days Challenge untuk user yang login
-      const { data: { user: currentUser } } = await supabase.auth.getUser();
-      const { data: { session } } = await supabase.auth.getSession();
-      const user = currentUser || session?.user || null;
-
       if (user) {
         const { data: challengeDay } = await supabase
           .from('challenge_packages')
@@ -96,7 +140,7 @@ export default function TryoutPage() {
       setIsLoading(false);
     };
     fetchData();
-  }, [params.package_id]);
+  }, [params.package_id, router]);
 
   // Handler Pelanggaran Anti-Curang
   const triggerViolation = async (reasonText: string) => {
@@ -215,9 +259,14 @@ export default function TryoutPage() {
       const isLulus = skorTWK >= 65 && skorTIU >= 80 && skorTKP >= 166;
 
       if (user) {
+        const effectivePackageId =
+          params.package_id === 'challenge-pool'
+            ? challengeInfoRef.current.fallbackPackageId || null
+            : params.package_id;
+
         const payload = {
           user_id: user.id,
-          package_id: params.package_id,
+          package_id: effectivePackageId,
           skor_twk: skorTWK,
           skor_tiu: skorTIU,
           skor_tkp: skorTKP,
@@ -234,72 +283,59 @@ export default function TryoutPage() {
           console.error('❌ Error insert ke DB:', insertError.message);
         } else {
           dbSaveSuccess = true;
+        }
 
-          const { data: challengeDay } = await supabase
-            .from('challenge_packages')
-            .select('day_number')
-            .eq('package_id', params.package_id)
-            .single();
+        // Update 30 Days Challenge Progress (berlaku untuk mode statis maupun pool acak)
+        const currentChallenge = challengeInfoRef.current;
+        if (currentChallenge.isChallenge && currentChallenge.dayNumber && currentChallenge.progressId) {
+          const dayNum = currentChallenge.dayNumber;
+          let isChallengePassed = false;
+          let targetDesc = '';
 
-          if (challengeDay && user) {
-            const { data: userProgress } = await supabase
+          if (dayNum <= 10) {
+            isChallengePassed = isLulus;
+            targetDesc = 'Passing Grade (TWK≥65, TIU≥80, TKP≥166)';
+          } else if (dayNum <= 20) {
+            isChallengePassed = total >= 400;
+            targetDesc = 'Total Skor ≥ 400';
+          } else {
+            isChallengePassed = total >= 500;
+            targetDesc = 'Total Skor ≥ 500';
+          }
+
+          await supabase
+            .from('challenge_daily_scores')
+            .insert([{
+              progress_id: currentChallenge.progressId,
+              day_number: dayNum,
+              exam_result_id: insertData && insertData.length > 0 ? insertData[0].id : null,
+              skor_total: total,
+              skor_twk: skorTWK,
+              skor_tiu: skorTIU,
+              skor_tkp: skorTKP,
+              is_passed: isChallengePassed
+            }]);
+
+          if (isChallengePassed) {
+            await supabase
               .from('challenge_progress')
-              .select('id, current_day')
-              .eq('user_id', user.id)
-              .eq('status', 'active')
-              .single();
+              .update({ current_day: dayNum + 1 })
+              .eq('id', currentChallenge.progressId);
 
-            if (userProgress && userProgress.current_day === challengeDay.day_number) {
-              const dayNum = challengeDay.day_number;
-              let isChallengePassed = false;
-              let targetDesc = '';
-
-              if (dayNum <= 10) {
-                isChallengePassed = isLulus;
-                targetDesc = 'Passing Grade (TWK≥65, TIU≥80, TKP≥166)';
-              } else if (dayNum <= 20) {
-                isChallengePassed = total >= 400;
-                targetDesc = 'Total Skor ≥ 400';
-              } else {
-                isChallengePassed = total >= 500;
-                targetDesc = 'Total Skor ≥ 500';
-              }
-
+            if (dayNum === 30) {
               await supabase
-                .from('challenge_daily_scores')
-                .insert([{
-                  progress_id: userProgress.id,
-                  day_number: dayNum,
-                  exam_result_id: insertData && insertData.length > 0 ? insertData[0].id : null,
-                  skor_total: total,
-                  skor_twk: skorTWK,
-                  skor_tiu: skorTIU,
-                  skor_tkp: skorTKP,
-                  is_passed: isChallengePassed
-                }]);
-
-              if (isChallengePassed) {
-                await supabase
-                  .from('challenge_progress')
-                  .update({ current_day: dayNum + 1 })
-                  .eq('id', userProgress.id);
-
-                if (dayNum === 30) {
-                  await supabase
-                    .from('challenge_progress')
-                    .update({ status: 'completed' })
-                    .eq('id', userProgress.id);
-                }
-              } else {
-                await supabase
-                  .from('challenge_progress')
-                  .update({
-                    status: 'failed',
-                    failed_reason: `Nilai minimal Hari ke-${dayNum} tidak tercapai (Target: ${targetDesc}, Skor Anda: ${total})`
-                  })
-                  .eq('id', userProgress.id);
-              }
+                .from('challenge_progress')
+                .update({ status: 'completed' })
+                .eq('id', currentChallenge.progressId);
             }
+          } else {
+            await supabase
+              .from('challenge_progress')
+              .update({
+                status: 'failed',
+                failed_reason: `Nilai minimal Hari ke-${dayNum} tidak tercapai (Target: ${targetDesc}, Skor Anda: ${total})`
+              })
+              .eq('id', currentChallenge.progressId);
           }
         }
       }

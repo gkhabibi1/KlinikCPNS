@@ -40,6 +40,7 @@ export default function ChallengePage() {
   const [failReason, setFailReason] = useState('');
   const [isRestarting, setIsRestarting] = useState(false);
   const [guaranteeFormUrl, setGuaranteeFormUrl] = useState<string>(GUARANTEE_FORM_URL);
+  const [challengeMode, setChallengeMode] = useState<'static' | 'pool'>('static');
   const [pendingLaunch, setPendingLaunch] = useState<{
     dayNumber: number;
     packageId: string;
@@ -71,6 +72,15 @@ export default function ChallengePage() {
         const localUrl = localStorage.getItem('guarantee_form_url');
         if (localUrl) setGuaranteeFormUrl(localUrl);
       }
+
+      // 0b. Ambil mode Challenge (static vs pool bank soal acak)
+      try {
+        const modeRes = await fetch('/api/challenge/session?action=config_only');
+        const modeData = await modeRes.json();
+        if (modeData?.config?.mode === 'pool') {
+          setChallengeMode('pool');
+        }
+      } catch {}
 
       // 1. Ambil konfigurasi challenge dari admin
       const { data: days } = await supabase
@@ -405,6 +415,10 @@ export default function ChallengePage() {
                   <span>{isRestarting ? 'Mereset Data Tantangan...' : 'MULAI ULANG CHALLENGE SEKARANG (RESET KE HARI 01)'}</span>
                 </button>
 
+                <p className="text-[11px] text-cyan-200 bg-cyan-950/60 border border-cyan-500/30 rounded-xl p-3 leading-relaxed">
+                  <strong>Info Soal Saat Mengulang:</strong> Jika Anda mengulang dari <strong>Hari ke-1</strong>, soal yang tampil di Hari ke-1 dan hari-hari berikutnya akan <strong>diacak ulang dan berbeda dari soal yang pernah Anda kerjakan kemarin</strong> agar latihan Anda tetap maksimal.
+                </p>
+
                 <p className="text-[11px] text-slate-400">
                   ⚡ Dengan menekan tombol di atas, status tantangan Anda akan otomatis di-reset ke <strong>Hari ke-1</strong> dan Anda dapat langsung memulai pengerjaan try out baru.
                 </p>
@@ -620,14 +634,20 @@ export default function ChallengePage() {
 
               {/* Action Button */}
               <div className="w-full md:w-auto shrink-0">
-                {challengeDays[currentDay - 1].package_id ? (
+                {challengeMode === 'pool' || challengeDays[currentDay - 1]?.package_id ? (
                   <button
                     type="button"
                     onClick={() =>
                       setPendingLaunch({
                         dayNumber: currentDay,
-                        packageId: challengeDays[currentDay - 1].package_id,
-                        packageName: challengeDays[currentDay - 1].tryout_packages?.name,
+                        packageId:
+                          challengeMode === 'pool'
+                            ? 'challenge-pool'
+                            : challengeDays[currentDay - 1].package_id,
+                        packageName:
+                          challengeMode === 'pool'
+                            ? `Bank Soal Acak Hari ke-${currentDay}`
+                            : challengeDays[currentDay - 1].tryout_packages?.name,
                       })
                     }
                     className="w-full md:w-auto inline-flex items-center justify-center gap-3 bg-gradient-to-r from-cyan-500 via-blue-600 to-indigo-600 hover:from-cyan-400 hover:to-indigo-500 text-white font-black py-4 px-8 rounded-2xl text-sm shadow-[0_0_25px_rgba(6,182,212,0.4)] hover:shadow-[0_0_35px_rgba(59,130,246,0.6)] transition-all transform hover:-translate-y-0.5 cursor-pointer whitespace-nowrap"
@@ -729,14 +749,18 @@ export default function ChallengePage() {
                           key={day.id || dayNumber}
                           type="button"
                           onClick={() => {
-                            if (!day.package_id) {
+                            if (challengeMode !== 'pool' && !day.package_id) {
                               alert('Paket try out untuk hari ini belum diatur oleh Admin.');
                               return;
                             }
                             setPendingLaunch({
                               dayNumber,
-                              packageId: day.package_id,
-                              packageName: day.tryout_packages?.name,
+                              packageId:
+                                challengeMode === 'pool' ? 'challenge-pool' : day.package_id,
+                              packageName:
+                                challengeMode === 'pool'
+                                  ? `Bank Soal Acak Hari ke-${dayNumber}`
+                                  : day.tryout_packages?.name,
                             });
                           }}
                           className="relative aspect-square rounded-2xl bg-gradient-to-b from-cyan-950/50 to-blue-950/40 border-2 border-cyan-400 p-2.5 flex flex-col items-center justify-between text-center shadow-[0_0_20px_rgba(6,182,212,0.35)] ring-2 ring-cyan-400/40 animate-pulse hover:scale-105 transition-all cursor-pointer"
@@ -970,8 +994,13 @@ export default function ChallengePage() {
                   type="button"
                   onClick={() => {
                     const targetId = pendingLaunch.packageId;
+                    const dayNum = pendingLaunch.dayNumber;
                     setPendingLaunch(null);
-                    router.push(`/tryout/${targetId}`);
+                    router.push(
+                      targetId === 'challenge-pool'
+                        ? `/tryout/challenge-pool?day=${dayNum}`
+                        : `/tryout/${targetId}`
+                    );
                   }}
                   className="flex-1 inline-flex items-center justify-center gap-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold py-3 px-5 rounded-xl text-sm shadow-md cursor-pointer"
                 >
@@ -1017,6 +1046,9 @@ export default function ChallengePage() {
                 </div>
                 <p>
                   Jangan berkecil hati. Setiap pejuang NIP pernah jatuh bangun dalam prosesnya. Jadikan hasil ini sebagai bahan evaluasi untuk bangkit lebih kuat.
+                </p>
+                <p className="text-cyan-300 font-semibold pt-1 border-t border-slate-800">
+                  Catatan: Saat mengulang dari Hari ke-1, soal yang Anda kerjakan akan berbeda dari soal yang pernah dikerjakan kemarin karena diacak ulang dari Bank Soal Challenge.
                 </p>
               </div>
 

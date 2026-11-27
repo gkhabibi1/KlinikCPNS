@@ -8,6 +8,7 @@ import ChatMessageContent from '@/components/ChatMessageContent';
 import BatchPackageUpload from '@/components/BatchPackageUpload';
 import QuestionBankPanel from '@/components/QuestionBankPanel';
 import AdminResellerSettings from '@/components/AdminResellerSettings';
+import AdminChallengePoolConfig from '@/components/AdminChallengePoolConfig';
 import { buildQuestionBankPayload } from '@/lib/questionSubcategory';
 import { parseQuestionsFromText, downloadQuestionTemplate, exportQuestionsToTxt } from '@/lib/questionParser';
 
@@ -3663,6 +3664,9 @@ export default function AdminCommandCenter() {
                     </div>
                   </div>
                 </div>
+
+                {/* Mode Pool Bank Soal Acak (60 Paket / Anti-Soal Sama) */}
+                <AdminChallengePoolConfig allPackages={allPackages} />
 
                 {/* Form Link Klaim Garansi */}
                 <div className="bg-amber-50 border border-amber-300 rounded-xl p-5 mb-6">
