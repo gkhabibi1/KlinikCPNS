@@ -30,6 +30,7 @@ import {
   Loader2,
   AlertTriangle,
   Download,
+  Zap,
 } from 'lucide-react';
 
 export interface QuestionBankItem {
@@ -130,6 +131,15 @@ export default function QuestionBankPanel({
   const [envKeys, setEnvKeys] = useState<Record<string, boolean>>({});
   const [aiApiKeyInput, setAiApiKeyInput] = useState('');
   const [isSavingAiConfig, setIsSavingAiConfig] = useState(false);
+
+  // AI Upgrade Difficulty (Sangat Mudah/Mudah -> Sulit / HOTS)
+  const [upgradingItemId, setUpgradingItemId] = useState<string | null>(null);
+  const [upgradePreview, setUpgradePreview] = useState<{
+    original: QuestionBankItem;
+    upgraded: any;
+    targetLevel: 4 | 5;
+  } | null>(null);
+  const [isSavingUpgrade, setIsSavingUpgrade] = useState(false);
 
   const fetchAllRowsPaginated = async (
     table: string,
@@ -374,6 +384,151 @@ export default function QuestionBankPanel({
     }
   };
 
+  const handleRequestUpgrade = async (
+    item: QuestionBankItem,
+    targetLevel: 4 | 5
+  ) => {
+    if (upgradingItemId || isCheckingAi) return;
+    setUpgradingItemId(item.id);
+    setAiErrorMessage(null);
+    try {
+      const res = await fetch('/api/admin/check-question', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'upgrade_difficulty',
+          target_difficulty: targetLevel,
+          question: {
+            id: item.id,
+            category: item.category,
+            sub_category: item.sub_category,
+            question_text: item.question_text,
+            option_a: item.option_a,
+            option_b: item.option_b,
+            option_c: item.option_c,
+            option_d: item.option_d,
+            option_e: item.option_e,
+            correct_answer: item.correct_answer,
+            explanation: item.explanation,
+            tkp_scores: item.tkp_scores,
+          },
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || 'Gagal meng-upgrade soal dengan AI');
+      }
+      setUpgradePreview({
+        original: item,
+        upgraded: data.upgraded,
+        targetLevel,
+      });
+    } catch (err: any) {
+      setAiErrorMessage(err?.message || 'Gagal menaikkan grade soal');
+    } finally {
+      setUpgradingItemId(null);
+    }
+  };
+
+  const handleApplyUpgrade = async (mode: 'replace' | 'new') => {
+    if (!upgradePreview) return;
+    setIsSavingUpgrade(true);
+    const { original, upgraded, targetLevel } = upgradePreview;
+
+    const tkpExplanationPayload =
+      original.category === 'TKP' && upgraded.tkp_scores
+        ? JSON.stringify({
+            ...upgraded.tkp_scores,
+            explanation: upgraded.explanation || '',
+          })
+        : upgraded.explanation || '';
+
+    try {
+      if (mode === 'replace') {
+        if (!original.isVirtualFallback && bankTableAvailable) {
+          const { error: qbErr } = await supabase
+            .from('question_bank')
+            .update({
+              question_text: upgraded.question_text,
+              option_a: upgraded.option_a,
+              option_b: upgraded.option_b,
+              option_c: upgraded.option_c,
+              option_d: upgraded.option_d,
+              option_e: upgraded.option_e,
+              correct_answer: upgraded.correct_answer,
+              explanation: tkpExplanationPayload,
+              updated_at: new Date().toISOString(),
+            })
+            .eq('id', original.id);
+          if (qbErr) throw qbErr;
+        }
+
+        if (original.source_question_id) {
+          await supabase
+            .from('questions')
+            .update({
+              question_text: upgraded.question_text,
+              option_a: upgraded.option_a,
+              option_b: upgraded.option_b,
+              option_c: upgraded.option_c,
+              option_d: upgraded.option_d,
+              option_e: upgraded.option_e,
+              correct_answer: upgraded.correct_answer,
+              explanation: tkpExplanationPayload,
+            })
+            .eq('id', original.source_question_id);
+        }
+
+        // Update review AI ke level baru
+        setAiReviews((prev) => ({
+          ...prev,
+          [original.id]: {
+            id: original.id,
+            is_valid: true,
+            answer_status: 'BENAR',
+            suggested_answer: '',
+            difficulty: targetLevel,
+            difficulty_label: upgraded.difficulty_label,
+            reason: upgraded.reason,
+            checked_at: new Date().toISOString(),
+          },
+        }));
+
+        alert(`✅ Soal berhasil diperbarui ke level ${upgraded.difficulty_label}!`);
+      } else {
+        if (!bankTableAvailable) {
+          throw new Error('Tabel question_bank belum aktif untuk menyimpan soal baru.');
+        }
+        const payload = buildQuestionBankPayload({
+          category: original.category,
+          sub_category: original.sub_category,
+          question_text: upgraded.question_text,
+          option_a: upgraded.option_a,
+          option_b: upgraded.option_b,
+          option_c: upgraded.option_c,
+          option_d: upgraded.option_d,
+          option_e: upgraded.option_e,
+          correct_answer: upgraded.correct_answer,
+          explanation: tkpExplanationPayload,
+          source_package_id: original.source_package_id || null,
+          source_package_name: original.source_package_name
+            ? `${original.source_package_name} (Upgrade AI)`
+            : 'Upgrade AI',
+        });
+        const { error: insErr } = await supabase.from('question_bank').insert([payload]);
+        if (insErr) throw insErr;
+        alert(`✅ Soal baru level ${upgraded.difficulty_label} berhasil ditambahkan ke Bank Soal!`);
+      }
+
+      setUpgradePreview(null);
+      await loadQuestionBank();
+    } catch (err: any) {
+      alert('Gagal menyimpan soal upgrade: ' + (err?.message || 'Terjadi kesalahan'));
+    } finally {
+      setIsSavingUpgrade(false);
+    }
+  };
+
   // Reset pagination on filter change
   useEffect(() => {
     setCurrentPage(1);
@@ -524,6 +679,24 @@ export default function QuestionBankPanel({
       sourcePackages: Array.from(sourcePkgOptions.keys()).sort(),
     };
   }, [bankItems, filterCategory]);
+
+  const aiCriteriaCounts = useMemo(() => {
+    const c = { all: bankItems.length, unchecked: 0, d1: 0, d2: 0, d3: 0, d4: 0, d5: 0, issue: 0 };
+    bankItems.forEach((item) => {
+      const rev = aiReviews[item.id];
+      if (!rev) {
+        c.unchecked++;
+        return;
+      }
+      if (rev.difficulty === 1) c.d1++;
+      else if (rev.difficulty === 2) c.d2++;
+      else if (rev.difficulty === 3) c.d3++;
+      else if (rev.difficulty === 4) c.d4++;
+      else if (rev.difficulty === 5) c.d5++;
+      if (rev.answer_status !== 'BENAR') c.issue++;
+    });
+    return c;
+  }, [bankItems, aiReviews]);
 
   // Filtered list
   const filteredItems = useMemo(() => {
@@ -1039,14 +1212,14 @@ export default function QuestionBankPanel({
           <div className="flex flex-wrap items-center gap-1.5 pt-1">
             <span className="text-[11px] font-bold text-slate-500 mr-1">Filter Kriteria AI:</span>
             {[
-              { id: 'ALL', label: 'Semua' },
-              { id: 'UNCHECKED', label: 'Belum Dicek AI' },
-              { id: 'DIFF_1', label: '1 · Sangat Mudah' },
-              { id: 'DIFF_2', label: '2 · Mudah' },
-              { id: 'DIFF_3', label: '3 · Sedang' },
-              { id: 'DIFF_4', label: '4 · Sulit' },
-              { id: 'DIFF_5', label: '5 · HOTS' },
-              { id: 'ISSUE', label: '⚠ Perlu Cek / Keliru' },
+              { id: 'ALL', label: `Semua (${aiCriteriaCounts.all})` },
+              { id: 'UNCHECKED', label: `Belum Dicek AI (${aiCriteriaCounts.unchecked})` },
+              { id: 'DIFF_1', label: `1 · Sangat Mudah (${aiCriteriaCounts.d1})` },
+              { id: 'DIFF_2', label: `2 · Mudah (${aiCriteriaCounts.d2})` },
+              { id: 'DIFF_3', label: `3 · Sedang (${aiCriteriaCounts.d3})` },
+              { id: 'DIFF_4', label: `4 · Sulit (${aiCriteriaCounts.d4})` },
+              { id: 'DIFF_5', label: `5 · HOTS (${aiCriteriaCounts.d5})` },
+              { id: 'ISSUE', label: `⚠ Perlu Cek / Keliru (${aiCriteriaCounts.issue})` },
             ].map((opt) => (
               <button
                 key={opt.id}
@@ -1541,7 +1714,31 @@ export default function QuestionBankPanel({
                   </div>
 
                   {/* Quick Actions */}
-                  <div className="flex items-center gap-1.5 ml-auto">
+                  <div className="flex flex-wrap items-center gap-1.5 ml-auto">
+                    <button
+                      type="button"
+                      onClick={() => handleRequestUpgrade(item, 4)}
+                      disabled={Boolean(upgradingItemId) || isCheckingAi}
+                      className="px-2.5 py-1 rounded-lg bg-orange-50 hover:bg-orange-100 text-orange-700 text-xs font-bold flex items-center gap-1 transition cursor-pointer disabled:opacity-50"
+                      title="Gunakan AI untuk menaikkan grade soal ini ke tingkat Sulit (4/5)"
+                    >
+                      {upgradingItemId === item.id ? (
+                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      ) : (
+                        <Zap className="w-3.5 h-3.5" />
+                      )}
+                      <span>→ Sulit</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleRequestUpgrade(item, 5)}
+                      disabled={Boolean(upgradingItemId) || isCheckingAi}
+                      className="px-2.5 py-1 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-700 text-xs font-bold flex items-center gap-1 transition cursor-pointer disabled:opacity-50"
+                      title="Gunakan AI untuk menaikkan grade soal ini ke tingkat HOTS (5/5)"
+                    >
+                      <Zap className="w-3.5 h-3.5" />
+                      <span>→ HOTS</span>
+                    </button>
                     <button
                       type="button"
                       onClick={() => handleCheckWithAi([item], true)}
@@ -1708,6 +1905,107 @@ export default function QuestionBankPanel({
             >
               Berikutnya →
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Preview Upgrade Grade Soal (Sulit / HOTS) */}
+      {upgradePreview && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto">
+          <div className="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] flex flex-col shadow-2xl overflow-hidden my-auto">
+            <div className="px-6 py-4 bg-gradient-to-r from-orange-600 to-rose-600 text-white flex items-center justify-between">
+              <div>
+                <h3 className="font-bold text-base sm:text-lg">
+                  Preview Upgrade Soal ke {upgradePreview.upgraded.difficulty_label} ({upgradePreview.targetLevel}/5)
+                </h3>
+                <p className="text-xs text-orange-100">
+                  Bandingkan soal asli dengan hasil upgrade AI sebelum menyimpan.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setUpgradePreview(null)}
+                className="text-white/80 hover:text-white text-xl font-bold px-2 cursor-pointer"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="p-5 sm:p-6 overflow-y-auto grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+              {/* Soal Asal */}
+              <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-2">
+                <span className="inline-block px-2 py-0.5 rounded bg-slate-200 text-slate-700 font-bold text-[11px]">
+                  Soal Asal ({upgradePreview.original.category})
+                </span>
+                <p className="text-sm text-slate-800 font-medium leading-relaxed">
+                  {upgradePreview.original.question_text}
+                </p>
+                <div className="space-y-1 text-slate-600 pt-1">
+                  <p>A. {upgradePreview.original.option_a}</p>
+                  <p>B. {upgradePreview.original.option_b}</p>
+                  <p>C. {upgradePreview.original.option_c}</p>
+                  <p>D. {upgradePreview.original.option_d}</p>
+                  <p>E. {upgradePreview.original.option_e}</p>
+                </div>
+                <p className="font-bold text-emerald-700 pt-1">
+                  Kunci: {upgradePreview.original.correct_answer}
+                </p>
+              </div>
+
+              {/* Soal Hasil Upgrade AI */}
+              <div className="bg-orange-50/40 border border-orange-200 rounded-xl p-4 space-y-2">
+                <span className="inline-block px-2 py-0.5 rounded bg-rose-100 text-rose-700 font-bold text-[11px]">
+                  Hasil Upgrade AI · {upgradePreview.upgraded.difficulty_label} ({upgradePreview.targetLevel}/5)
+                </span>
+                <p className="text-sm text-slate-900 font-semibold leading-relaxed">
+                  {upgradePreview.upgraded.question_text}
+                </p>
+                <div className="space-y-1 text-slate-700 pt-1">
+                  <p>A. {upgradePreview.upgraded.option_a}</p>
+                  <p>B. {upgradePreview.upgraded.option_b}</p>
+                  <p>C. {upgradePreview.upgraded.option_c}</p>
+                  <p>D. {upgradePreview.upgraded.option_d}</p>
+                  <p>E. {upgradePreview.upgraded.option_e}</p>
+                </div>
+                <p className="font-bold text-emerald-700 pt-1">
+                  Kunci: {upgradePreview.upgraded.correct_answer}
+                </p>
+                {upgradePreview.upgraded.explanation && (
+                  <p className="text-slate-600 bg-white border border-orange-100 rounded-lg p-2.5 leading-relaxed">
+                    <strong>Pembahasan:</strong> {upgradePreview.upgraded.explanation}
+                  </p>
+                )}
+                <p className="text-[11px] text-orange-800 italic">
+                  <strong>Alasan AI:</strong> {upgradePreview.upgraded.reason}
+                </p>
+              </div>
+            </div>
+
+            <div className="px-6 py-4 border-t border-slate-200 bg-slate-50 flex flex-wrap items-center justify-end gap-2.5">
+              <button
+                type="button"
+                onClick={() => setUpgradePreview(null)}
+                className="px-4 py-2 rounded-lg border border-slate-300 bg-white hover:bg-slate-100 text-slate-700 text-xs font-semibold cursor-pointer"
+              >
+                Batal
+              </button>
+              <button
+                type="button"
+                disabled={isSavingUpgrade}
+                onClick={() => handleApplyUpgrade('new')}
+                className="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-white text-xs font-bold cursor-pointer"
+              >
+                {isSavingUpgrade ? 'Menyimpan...' : 'Simpan Sebagai Soal Baru'}
+              </button>
+              <button
+                type="button"
+                disabled={isSavingUpgrade}
+                onClick={() => handleApplyUpgrade('replace')}
+                className="px-4 py-2 rounded-lg bg-rose-600 hover:bg-rose-700 disabled:opacity-60 text-white text-xs font-bold cursor-pointer"
+              >
+                {isSavingUpgrade ? 'Menyimpan...' : 'Ganti Soal Ini'}
+              </button>
+            </div>
           </div>
         </div>
       )}

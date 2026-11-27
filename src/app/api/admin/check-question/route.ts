@@ -132,6 +132,121 @@ function maskKey(key?: string): string {
   return `${key.slice(0, 6)}••••••${key.slice(-4)}`;
 }
 
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+function isTransientError(status: number, msg: string) {
+  const low = (msg || '').toLowerCase();
+  return (
+    status === 429 ||
+    status === 503 ||
+    status === 502 ||
+    low.includes('high demand') ||
+    low.includes('overloaded') ||
+    low.includes('try again later')
+  );
+}
+
+async function callAiJson(
+  config: AiCheckerConfig,
+  apiKey: string,
+  systemInstruction: string,
+  userContent: string
+): Promise<{ rawText?: string; error?: string; status?: number }> {
+  const provider: AiProviderId = config.provider || 'gemini';
+  const model = config.model || 'gemini-3.8-flash';
+
+  if (provider === 'gemini') {
+    const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(
+      model
+    )}:generateContent?key=${encodeURIComponent(apiKey)}`;
+
+    let geminiRes: Response | null = null;
+    let geminiJson: any = null;
+    for (let attempt = 1; attempt <= 3; attempt++) {
+      geminiRes = await fetch(geminiUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [
+            {
+              role: 'user',
+              parts: [{ text: `${systemInstruction}\n\n${userContent}` }],
+            },
+          ],
+          generationConfig: {
+            temperature: 0.35,
+            responseMimeType: 'application/json',
+          },
+        }),
+      });
+      geminiJson = await geminiRes.json();
+      const errMsg = geminiJson?.error?.message || '';
+      if (
+        geminiRes.ok ||
+        !isTransientError(geminiRes.status, errMsg) ||
+        attempt === 3
+      ) {
+        break;
+      }
+      await sleep(attempt * 1500);
+    }
+
+    if (!geminiRes || !geminiRes.ok) {
+      return {
+        error: `Gemini API Error: ${geminiJson?.error?.message || 'Gagal menghubungi Gemini API'}`,
+        status: geminiRes?.status || 500,
+      };
+    }
+
+    return {
+      rawText: geminiJson?.candidates?.[0]?.content?.parts?.[0]?.text || '{}',
+    };
+  }
+
+  const endpoint = getOpenAiCompatibleEndpoint(provider, config.custom_base_url);
+  if (!endpoint) {
+    return {
+      error: 'Endpoint Custom Base URL wajib diisi untuk provider Custom.',
+      status: 400,
+    };
+  }
+
+  let aiRes: Response | null = null;
+  let aiJson: any = null;
+  for (let attempt = 1; attempt <= 3; attempt++) {
+    aiRes = await fetch(endpoint, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({
+        model,
+        temperature: 0.35,
+        messages: [
+          { role: 'system', content: systemInstruction },
+          { role: 'user', content: userContent },
+        ],
+      }),
+    });
+    aiJson = await aiRes.json();
+    const errMsg = aiJson?.error?.message || aiJson?.message || '';
+    if (aiRes.ok || !isTransientError(aiRes.status, errMsg) || attempt === 3) {
+      break;
+    }
+    await sleep(attempt * 1500);
+  }
+
+  if (!aiRes || !aiRes.ok) {
+    return {
+      error: `${provider.toUpperCase()} API Error: ${aiJson?.error?.message || aiJson?.message || `Gagal menghubungi ${provider}`}`,
+      status: aiRes?.status || 500,
+    };
+  }
+
+  return { rawText: aiJson?.choices?.[0]?.message?.content || '{}' };
+}
+
 export async function GET() {
   const [reviews, config] = await Promise.all([
     readSettingJson<Record<string, QuestionAiReview>>(REVIEWS_SETTING_KEY, {}),
@@ -211,6 +326,101 @@ export async function POST(request: Request) {
       );
     }
 
+    // Naikkan grade kesulitan soal (misal dari Sangat Mudah/Mudah -> Sulit 4 atau HOTS 5)
+    if (body.action === 'upgrade_difficulty') {
+      const q: QuestionCheckInput = body.question;
+      const targetLevel = Number(body.target_difficulty) === 5 ? 5 : 4;
+      const targetLabel = targetLevel === 5 ? 'HOTS (Sangat Sulit)' : 'Sulit';
+
+      if (!q || !q.question_text) {
+        return NextResponse.json(
+          { error: 'Data soal wajib diisi untuk di-upgrade.' },
+          { status: 400 }
+        );
+      }
+
+      const upgradePrompt = `Anda adalah pembuat soal profesional seleksi CPNS SKD (TWK, TIU, TKP) standar CAT BKN Indonesia.
+Tugas Anda: Ubah dan tingkatkan soal berikut agar naik grade ke tingkat kesulitan ${targetLevel}/5 (${targetLabel}) dengan topik dan sub-bidang yang sama (${q.category} - ${q.sub_category || 'Umum'}).
+
+Panduan peningkatan grade:
+- Untuk TWK: ubah dari sekadar hafalan menjadi analisis kasus nyata, penerapan nilai Pancasila/UUD 1945/tata negara, atau perbandingan konsep dengan opsi pengecoh yang logis & mirip.
+- Untuk TIU: tingkatkan kompleksitas penalaran (multi-langkah, silogisme majemuk, atau soal cerita analitis) dengan angka/logika yang 100% valid dan konsisten.
+- Untuk TKP: buat skenario dilematis ASN BerAKHLAK yang realistis dengan perbedaan skor 5..1 yang halus namun tetap jelas mana solusi terbaik.
+- Pastikan kunci jawaban (A-E) 100% benar dan sertakan pembahasan yang jelas dan lengkap.
+
+Kembalikan HANYA JSON valid dengan schema persis:
+{
+  "question_text": "string",
+  "option_a": "string",
+  "option_b": "string",
+  "option_c": "string",
+  "option_d": "string",
+  "option_e": "string",
+  "correct_answer": "A" | "B" | "C" | "D" | "E",
+  "explanation": "string (pembahasan lengkap; jika TKP tetap tuliskan pembahasan naratif)",
+  "tkp_scores": { "a": 1, "b": 2, "c": 5, "d": 4, "e": 3 } | null,
+  "reason": "string (penjelasan singkat perubahan yang membuat soal ini naik ke ${targetLabel})"
+}`;
+
+      const aiResp = await callAiJson(
+        config,
+        apiKey,
+        upgradePrompt,
+        `Soal asal:\n${JSON.stringify({
+          category: q.category,
+          sub_category: q.sub_category || '',
+          question_text: q.question_text,
+          option_a: q.option_a,
+          option_b: q.option_b,
+          option_c: q.option_c,
+          option_d: q.option_d,
+          option_e: q.option_e,
+          correct_answer: q.correct_answer,
+          explanation: q.explanation || '',
+          tkp_scores: q.category === 'TKP' ? q.tkp_scores || null : null,
+        }, null, 2)}`
+      );
+
+      if (aiResp.error) {
+        return NextResponse.json(
+          { error: aiResp.error },
+          { status: aiResp.status || 500 }
+        );
+      }
+
+      const cleaned = (aiResp.rawText || '{}')
+        .replace(/^```json\s*/i, '')
+        .replace(/^```\s*/i, '')
+        .replace(/```$/i, '')
+        .trim();
+
+      try {
+        const upgraded = JSON.parse(cleaned);
+        return NextResponse.json({
+          success: true,
+          upgraded: {
+            question_text: String(upgraded.question_text || q.question_text),
+            option_a: String(upgraded.option_a || q.option_a),
+            option_b: String(upgraded.option_b || q.option_b),
+            option_c: String(upgraded.option_c || q.option_c),
+            option_d: String(upgraded.option_d || q.option_d),
+            option_e: String(upgraded.option_e || q.option_e),
+            correct_answer: String(upgraded.correct_answer || q.correct_answer).toUpperCase().slice(0, 1),
+            explanation: String(upgraded.explanation || ''),
+            tkp_scores: q.category === 'TKP' ? upgraded.tkp_scores || null : null,
+            difficulty: targetLevel,
+            difficulty_label: DIFFICULTY_LABELS[targetLevel],
+            reason: String(upgraded.reason || `Soal berhasil dinaikkan ke tingkat ${targetLabel}.`),
+          },
+        });
+      } catch {
+        return NextResponse.json(
+          { error: 'Respons AI saat meng-upgrade soal tidak valid JSON. Coba ulangi.' },
+          { status: 500 }
+        );
+      }
+    }
+
     const questions: QuestionCheckInput[] = Array.isArray(body.questions)
       ? body.questions
       : body.question
@@ -277,121 +487,21 @@ Kembalikan HANYA JSON valid berbentuk array of objects (atau object {"results": 
   }
 ]`;
 
-    let rawText = '[]';
+    const aiResult = await callAiJson(
+      config,
+      apiKey,
+      systemInstruction,
+      `Data soal untuk dicek:\n${JSON.stringify(promptPayload, null, 2)}`
+    );
 
-    const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
-    const isTransientError = (status: number, msg: string) => {
-      const low = (msg || '').toLowerCase();
-      return (
-        status === 429 ||
-        status === 503 ||
-        status === 502 ||
-        low.includes('high demand') ||
-        low.includes('overloaded') ||
-        low.includes('try again later')
+    if (aiResult.error) {
+      return NextResponse.json(
+        { error: aiResult.error },
+        { status: aiResult.status || 500 }
       );
-    };
-
-    if (provider === 'gemini') {
-      const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(
-        model
-      )}:generateContent?key=${encodeURIComponent(apiKey)}`;
-
-      let geminiRes: Response | null = null;
-      let geminiJson: any = null;
-      const maxAttempts = 3;
-
-      for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-        geminiRes = await fetch(geminiUrl, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            contents: [
-              {
-                role: 'user',
-                parts: [
-                  {
-                    text: `${systemInstruction}\n\nData soal untuk dicek:\n${JSON.stringify(
-                      promptPayload,
-                      null,
-                      2
-                    )}`,
-                  },
-                ],
-              },
-            ],
-            generationConfig: {
-              temperature: 0.2,
-              responseMimeType: 'application/json',
-            },
-          }),
-        });
-
-        geminiJson = await geminiRes.json();
-        const errMsg = geminiJson?.error?.message || '';
-        if (geminiRes.ok || !isTransientError(geminiRes.status, errMsg) || attempt === maxAttempts) {
-          break;
-        }
-        await sleep(attempt * 1500);
-      }
-
-      if (!geminiRes || !geminiRes.ok) {
-        const apiErrMsg =
-          geminiJson?.error?.message || 'Gagal menghubungi Gemini API';
-        return NextResponse.json(
-          { error: `Gemini API Error: ${apiErrMsg}` },
-          { status: geminiRes?.status || 500 }
-        );
-      }
-
-      rawText = geminiJson?.candidates?.[0]?.content?.parts?.[0]?.text || '[]';
-    } else {
-      const endpoint = getOpenAiCompatibleEndpoint(
-        provider,
-        config.custom_base_url
-      );
-      if (!endpoint) {
-        return NextResponse.json(
-          { error: 'Endpoint Custom Base URL wajib diisi untuk provider Custom.' },
-          { status: 400 }
-        );
-      }
-
-      const aiRes = await fetch(endpoint, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${apiKey}`,
-        },
-        body: JSON.stringify({
-          model,
-          temperature: 0.2,
-          messages: [
-            { role: 'system', content: systemInstruction },
-            {
-              role: 'user',
-              content: `Data soal untuk dicek:\n${JSON.stringify(
-                promptPayload,
-                null,
-                2
-              )}`,
-            },
-          ],
-        }),
-      });
-
-      const aiJson = await aiRes.json();
-      if (!aiRes.ok) {
-        const errMsg =
-          aiJson?.error?.message || aiJson?.message || `Gagal menghubungi ${provider}`;
-        return NextResponse.json(
-          { error: `${provider.toUpperCase()} API Error: ${errMsg}` },
-          { status: aiRes.status || 500 }
-        );
-      }
-
-      rawText = aiJson?.choices?.[0]?.message?.content || '[]';
     }
+
+    const rawText = aiResult.rawText || '[]';
 
     // Bersihkan markdown code fence jika model membungkus JSON dengan ```json ... ```
     const cleanedJsonText = rawText
