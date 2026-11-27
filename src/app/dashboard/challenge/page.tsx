@@ -40,6 +40,11 @@ export default function ChallengePage() {
   const [failReason, setFailReason] = useState('');
   const [isRestarting, setIsRestarting] = useState(false);
   const [guaranteeFormUrl, setGuaranteeFormUrl] = useState<string>(GUARANTEE_FORM_URL);
+  const [pendingLaunch, setPendingLaunch] = useState<{
+    dayNumber: number;
+    packageId: string;
+    packageName?: string;
+  } | null>(null);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -616,14 +621,21 @@ export default function ChallengePage() {
               {/* Action Button */}
               <div className="w-full md:w-auto shrink-0">
                 {challengeDays[currentDay - 1].package_id ? (
-                  <Link
-                    href={`/tryout/${challengeDays[currentDay - 1].package_id}`}
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setPendingLaunch({
+                        dayNumber: currentDay,
+                        packageId: challengeDays[currentDay - 1].package_id,
+                        packageName: challengeDays[currentDay - 1].tryout_packages?.name,
+                      })
+                    }
                     className="w-full md:w-auto inline-flex items-center justify-center gap-3 bg-gradient-to-r from-cyan-500 via-blue-600 to-indigo-600 hover:from-cyan-400 hover:to-indigo-500 text-white font-black py-4 px-8 rounded-2xl text-sm shadow-[0_0_25px_rgba(6,182,212,0.4)] hover:shadow-[0_0_35px_rgba(59,130,246,0.6)] transition-all transform hover:-translate-y-0.5 cursor-pointer whitespace-nowrap"
                   >
                     <Play className="w-4 h-4 fill-current" />
                     <span>LUNCURKAN TRY OUT HARI INI</span>
                     <ChevronRight className="w-4 h-4" />
-                  </Link>
+                  </button>
                 ) : (
                   <div className="text-xs font-semibold text-slate-500 bg-slate-900/80 border border-slate-800 p-3 rounded-xl italic">
                     Paket try out hari ini sedang disiapkan oleh Admin.
@@ -713,9 +725,20 @@ export default function ChallengePage() {
 
                     if (isAvailable) {
                       return (
-                        <Link
+                        <button
                           key={day.id || dayNumber}
-                          href={day.package_id ? `/tryout/${day.package_id}` : '#'}
+                          type="button"
+                          onClick={() => {
+                            if (!day.package_id) {
+                              alert('Paket try out untuk hari ini belum diatur oleh Admin.');
+                              return;
+                            }
+                            setPendingLaunch({
+                              dayNumber,
+                              packageId: day.package_id,
+                              packageName: day.tryout_packages?.name,
+                            });
+                          }}
                           className="relative aspect-square rounded-2xl bg-gradient-to-b from-cyan-950/50 to-blue-950/40 border-2 border-cyan-400 p-2.5 flex flex-col items-center justify-between text-center shadow-[0_0_20px_rgba(6,182,212,0.35)] ring-2 ring-cyan-400/40 animate-pulse hover:scale-105 transition-all cursor-pointer"
                         >
                           <div className="w-full flex items-center justify-between">
@@ -732,7 +755,7 @@ export default function ChallengePage() {
                             <Play className="w-2.5 h-2.5 fill-current" />
                             <span>MULAI</span>
                           </div>
-                        </Link>
+                        </button>
                       );
                     }
 
@@ -889,7 +912,78 @@ export default function ChallengePage() {
           </p>
         </div>
 
-        {/* ================= 7. MODAL NOTIFIKASI GAGAL ================= */}
+        {/* ================= 7. MODAL PERINGATAN SEBELUM MULAI CHALLENGE ================= */}
+        {pendingLaunch && (
+          <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto">
+            <div className="relative w-full max-w-lg bg-white rounded-3xl p-6 sm:p-7 text-slate-800 border border-amber-200 shadow-2xl space-y-5 my-auto">
+              <div className="flex items-start gap-3.5">
+                <div className="w-12 h-12 rounded-2xl bg-amber-100 text-amber-600 flex items-center justify-center shrink-0">
+                  <ShieldAlert className="w-6 h-6" />
+                </div>
+                <div>
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-amber-700 bg-amber-50 border border-amber-200 px-2.5 py-0.5 rounded-full">
+                    Peringatan Hari ke-{pendingLaunch.dayNumber}
+                  </span>
+                  <h3 className="text-lg sm:text-xl font-extrabold text-slate-900 mt-1.5">
+                    Perhatian Sebelum Memulai Challenge
+                  </h3>
+                  {pendingLaunch.packageName && (
+                    <p className="text-xs text-slate-500 mt-0.5">
+                      Paket: <strong className="text-slate-700">{pendingLaunch.packageName}</strong>
+                    </p>
+                  )}
+                </div>
+              </div>
+
+              <div className="space-y-3 text-xs sm:text-sm">
+                <div className="bg-rose-50 border border-rose-200 rounded-xl p-3.5 flex items-start gap-2.5">
+                  <AlertTriangle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
+                  <p className="text-rose-900 leading-relaxed">
+                    <strong>Sistem Pendeteksi Kecurangan Aktif:</strong> Dilarang berpindah tab browser, me-minimize layar, split-screen, atau membuka aplikasi lain (kalkulator, catatan, dll.) selama ujian berlangsung.
+                  </p>
+                </div>
+
+                <div className="bg-amber-50 border border-amber-200 rounded-xl p-3.5 flex items-start gap-2.5">
+                  <AlertCircle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+                  <p className="text-amber-950 leading-relaxed">
+                    <strong>Jangan Matikan atau Kunci Layar HP:</strong> Pastikan layar handphone tetap menyala, baterai mencukupi, dan hindari keluar dari halaman ujian sebelum selesai.
+                  </p>
+                </div>
+
+                <div className="bg-slate-900 text-white rounded-xl p-3.5 flex items-start gap-2.5">
+                  <RotateCcw className="w-4 h-4 text-rose-400 shrink-0 mt-0.5" />
+                  <p className="text-slate-200 leading-relaxed">
+                    <strong>Konsekuensi Gagal = Mengulang dari Hari ke-1:</strong> Jika terdeteksi pelanggaran, keluar dari halaman ujian, atau nilai harian tidak memenuhi target, tantangan dinyatakan <strong>GAGAL</strong> dan wajib mengulang dari <strong>Hari ke-1</strong>.
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex flex-col-reverse sm:flex-row gap-2.5 pt-1">
+                <button
+                  type="button"
+                  onClick={() => setPendingLaunch(null)}
+                  className="w-full sm:w-auto px-5 py-3 rounded-xl border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 font-semibold text-sm cursor-pointer"
+                >
+                  Batal / Persiapkan Dulu
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const targetId = pendingLaunch.packageId;
+                    setPendingLaunch(null);
+                    router.push(`/tryout/${targetId}`);
+                  }}
+                  className="flex-1 inline-flex items-center justify-center gap-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold py-3 px-5 rounded-xl text-sm shadow-md cursor-pointer"
+                >
+                  <Play className="w-4 h-4 fill-current" />
+                  <span>Saya Mengerti &amp; Mulai Kerjakan</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ================= 8. MODAL NOTIFIKASI GAGAL ================= */}
         {showFailModal && (
           <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4">
             <div className="relative w-full max-w-lg bg-slate-950 rounded-3xl p-6 sm:p-8 text-white border-2 border-rose-600/70 shadow-[0_0_50px_rgba(225,29,72,0.3)] space-y-5 animate-in fade-in zoom-in duration-200">
