@@ -279,43 +279,68 @@ Kembalikan HANYA JSON valid berbentuk array of objects (atau object {"results": 
 
     let rawText = '[]';
 
+    const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+    const isTransientError = (status: number, msg: string) => {
+      const low = (msg || '').toLowerCase();
+      return (
+        status === 429 ||
+        status === 503 ||
+        status === 502 ||
+        low.includes('high demand') ||
+        low.includes('overloaded') ||
+        low.includes('try again later')
+      );
+    };
+
     if (provider === 'gemini') {
       const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(
         model
       )}:generateContent?key=${encodeURIComponent(apiKey)}`;
 
-      const geminiRes = await fetch(geminiUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [
-            {
-              role: 'user',
-              parts: [
-                {
-                  text: `${systemInstruction}\n\nData soal untuk dicek:\n${JSON.stringify(
-                    promptPayload,
-                    null,
-                    2
-                  )}`,
-                },
-              ],
-            },
-          ],
-          generationConfig: {
-            temperature: 0.2,
-            responseMimeType: 'application/json',
-          },
-        }),
-      });
+      let geminiRes: Response | null = null;
+      let geminiJson: any = null;
+      const maxAttempts = 3;
 
-      const geminiJson = await geminiRes.json();
-      if (!geminiRes.ok) {
+      for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+        geminiRes = await fetch(geminiUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: [
+              {
+                role: 'user',
+                parts: [
+                  {
+                    text: `${systemInstruction}\n\nData soal untuk dicek:\n${JSON.stringify(
+                      promptPayload,
+                      null,
+                      2
+                    )}`,
+                  },
+                ],
+              },
+            ],
+            generationConfig: {
+              temperature: 0.2,
+              responseMimeType: 'application/json',
+            },
+          }),
+        });
+
+        geminiJson = await geminiRes.json();
+        const errMsg = geminiJson?.error?.message || '';
+        if (geminiRes.ok || !isTransientError(geminiRes.status, errMsg) || attempt === maxAttempts) {
+          break;
+        }
+        await sleep(attempt * 1500);
+      }
+
+      if (!geminiRes || !geminiRes.ok) {
         const apiErrMsg =
           geminiJson?.error?.message || 'Gagal menghubungi Gemini API';
         return NextResponse.json(
           { error: `Gemini API Error: ${apiErrMsg}` },
-          { status: geminiRes.status || 500 }
+          { status: geminiRes?.status || 500 }
         );
       }
 
