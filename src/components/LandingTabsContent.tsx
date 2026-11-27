@@ -75,13 +75,25 @@ export function resolvePackageCards(
         ? `/checkout/${pkg.id}?ref=${resellerCode}`
         : `/checkout/${pkg.id}`;
 
+      const durationMonths =
+        typeof pkg.duration_months === "number"
+          ? pkg.duration_months
+          : pkg.duration_days
+          ? Math.max(1, Math.round(pkg.duration_days / 30))
+          : 1;
+      const isLifetime = durationMonths === 999;
+      const durationDays = isLifetime
+        ? 0
+        : pkg.duration_days || durationMonths * 30;
+      const periodLabel = isLifetime ? "Lifetime" : `${durationMonths} bulan`;
+
       return {
         name: pkg.name,
         price: formatPrice(finalPriceVal),
         rawPriceVal: finalPriceVal,
-        durationDays: pkg.duration_days || 30,
+        durationDays,
         originalPrice: hasDiscount ? formatPrice(rawPrice) : undefined,
-        period: `${pkg.duration_days} hari`,
+        period: periodLabel,
         badge:
           idx === 1
             ? "Paling Populer"
@@ -105,7 +117,7 @@ export function resolvePackageCards(
       price: "Rp49.000",
       rawPriceVal: 49000,
       durationDays: 30,
-      period: "bulan",
+      period: "1 bulan",
       desc: "Cocok untuk pemanasan dan latihan cepat menjelang tes.",
       features: [
         "399 paket try out TWK, TIU, TKP",
@@ -172,6 +184,8 @@ export interface PlanCardProps {
 export function PlanCard({
   name,
   price,
+  rawPriceVal,
+  durationDays,
   originalPrice,
   period,
   badge,
@@ -181,6 +195,10 @@ export function PlanCard({
   ctaText,
   href,
 }: PlanCardProps) {
+  const perDay =
+    rawPriceVal && durationDays && durationDays > 0
+      ? Math.round(rawPriceVal / durationDays)
+      : 0;
   return (
     <div
       className={`relative rounded-3xl p-6 sm:p-7 flex flex-col justify-between transition-all ${
@@ -228,18 +246,39 @@ export function PlanCard({
               </span>
             </div>
           )}
-          <div className="flex items-baseline gap-1">
+          <div className="flex items-baseline gap-1.5 flex-wrap">
             <span className="text-3xl md:text-4xl font-extrabold tracking-tight">
               {price}
             </span>
             <span
-              className={`text-xs ${
-                popular ? "text-slate-400" : "text-slate-500"
+              className={`text-xs font-semibold ${
+                popular ? "text-slate-300" : "text-slate-500"
               }`}
             >
               /{period}
             </span>
           </div>
+          {perDay > 0 ? (
+            <p
+              className={`mt-2 inline-flex items-center text-xs font-bold px-2.5 py-1 rounded-full ${
+                popular
+                  ? "bg-emerald-500/20 text-emerald-300 border border-emerald-400/30"
+                  : "bg-emerald-50 text-emerald-700 border border-emerald-200"
+              }`}
+            >
+              Hanya Rp{perDay.toLocaleString("id-ID")} / hari
+            </p>
+          ) : period === "Lifetime" ? (
+            <p
+              className={`mt-2 inline-flex items-center text-xs font-bold px-2.5 py-1 rounded-full ${
+                popular
+                  ? "bg-emerald-500/20 text-emerald-300 border border-emerald-400/30"
+                  : "bg-emerald-50 text-emerald-700 border border-emerald-200"
+              }`}
+            >
+              Sekali bayar, akses selamanya
+            </p>
+          ) : null}
         </div>
 
         <ul className="space-y-2.5 mb-7">
