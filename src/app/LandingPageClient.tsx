@@ -506,7 +506,7 @@ function HomeTestimonialSummary({
     {
       name: "Sri W.",
       role: "Lolos di Kemenkes",
-      photo: "/testimonials/testimonial-sri.svg",
+      photo: "/testimonials/testimonial-sri.jpg",
       quote:
         "Pembahasan soalnya detail banget, jadi ngerti pola soal CAT bukan cuma nebak jawaban.",
     },

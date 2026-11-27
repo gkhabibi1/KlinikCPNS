@@ -861,7 +861,7 @@ export function TestimoniFaqTab({
     {
       name: "Sri W.",
       role: "Lolos di Kemenkes",
-      photo: "/testimonials/testimonial-sri.svg",
+      photo: "/testimonials/testimonial-sri.jpg",
       quote:
         "Pembahasan soal di KlinikCPNS detail banget, jadi saya ngerti pola soal CAT bukan cuma nebak jawaban. Worth it banget.",
     },
