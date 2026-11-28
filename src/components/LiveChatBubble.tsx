@@ -357,11 +357,11 @@ Tim Admin kami juga dapat dihubungi via WhatsApp resmi di [+62 851-9965-5534](${
   return (
     <>
       {/* FLOATING CHAT BUBBLE BUTTON */}
-      <div className="fixed bottom-6 right-6 z-50">
+      <div className="fixed bottom-24 right-4 md:bottom-6 md:right-6 z-50">
         <button
           onClick={handleToggleOpen}
           aria-label="Buka Live Chat Support"
-          className="relative group flex items-center justify-center w-14 h-14 rounded-full bg-gradient-to-tr from-blue-600 via-blue-500 to-indigo-600 text-white shadow-xl hover:shadow-2xl hover:scale-105 active:scale-95 transition-all duration-300 focus:outline-none focus:ring-4 focus:ring-blue-300 cursor-pointer"
+          className="relative group flex items-center justify-center w-12 h-12 md:w-14 md:h-14 rounded-full bg-gradient-to-tr from-blue-600 via-blue-500 to-indigo-600 text-white shadow-xl hover:shadow-2xl hover:scale-105 active:scale-95 transition-all duration-300 focus:outline-none focus:ring-4 focus:ring-blue-300 cursor-pointer"
         >
           {isOpen ? (
             <X className="w-6 h-6 transition-transform transform rotate-0 hover:rotate-90 duration-200" />
@@ -388,7 +388,7 @@ Tim Admin kami juga dapat dihubungi via WhatsApp resmi di [+62 851-9965-5534](${
 
       {/* CHAT WINDOW BOX */}
       {isOpen && (
-        <div className="fixed bottom-24 right-4 sm:right-6 z-50 w-[92vw] sm:w-[380px] max-h-[82vh] h-[560px] bg-white rounded-2xl shadow-2xl border border-slate-200 flex flex-col overflow-hidden animate-in fade-in slide-in-from-bottom-5 duration-200">
+        <div className="fixed bottom-40 md:bottom-24 right-3 sm:right-6 z-50 w-[92vw] sm:w-[380px] max-h-[68vh] md:max-h-[82vh] h-[520px] md:h-[560px] bg-white rounded-2xl shadow-2xl border border-slate-200 flex flex-col overflow-hidden animate-in fade-in slide-in-from-bottom-5 duration-200">
           
           {/* HEADER */}
           <div className="bg-gradient-to-r from-blue-600 to-indigo-700 text-white p-4 flex items-center justify-between shadow-md flex-shrink-0">
