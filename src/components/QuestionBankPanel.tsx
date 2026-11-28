@@ -265,7 +265,7 @@ export default function QuestionBankPanel({
 
   useEffect(() => {
     loadQuestionBank();
-    fetch('/api/admin/check-question')
+    fetch('/api/admin/check-question', { cache: 'no-store' })
       .then((r) => r.json())
       .then((d) => {
         if (d?.reviews) setAiReviews(d.reviews);

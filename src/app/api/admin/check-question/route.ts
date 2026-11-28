@@ -1,6 +1,9 @@
 import { NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/supabase-admin';
 
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 export interface QuestionCheckInput {
   id: string;
   category: string;
@@ -77,16 +80,24 @@ async function readSettingJson<T>(key: string, fallback: T): Promise<T> {
   }
 }
 
-async function writeSettingJson(key: string, value: unknown) {
+async function writeSettingJson(key: string, value: unknown, throwOnError = false) {
   try {
     const supabaseAdmin = getSupabaseAdmin();
-    await supabaseAdmin.from('system_settings').upsert({
-      key,
-      value: JSON.stringify(value),
-      updated_at: new Date().toISOString(),
-    });
+    const { error } = await supabaseAdmin.from('system_settings').upsert(
+      {
+        key,
+        value: JSON.stringify(value),
+        updated_at: new Date().toISOString(),
+      },
+      { onConflict: 'key' }
+    );
+    if (error) {
+      console.warn(`Could not persist ${key} to system_settings:`, error);
+      if (throwOnError) throw error;
+    }
   } catch (err) {
     console.warn(`Could not persist ${key} to system_settings:`, err);
+    if (throwOnError) throw err;
   }
 }
 
@@ -259,24 +270,31 @@ export async function GET() {
     readSettingJson<AiCheckerConfig>(CONFIG_SETTING_KEY, DEFAULT_AI_CONFIG),
   ]);
 
-  return NextResponse.json({
-    reviews,
-    config: {
-      provider: config.provider || 'gemini',
-      model: config.model || 'gemini-3.8-flash',
-      custom_base_url: config.custom_base_url || '',
-      has_saved_key: Boolean(config.api_key),
-      masked_key: maskKey(config.api_key),
+  return NextResponse.json(
+    {
+      reviews,
+      config: {
+        provider: config.provider || 'gemini',
+        model: config.model || 'gemini-3.8-flash',
+        custom_base_url: config.custom_base_url || '',
+        has_saved_key: Boolean(config.api_key),
+        masked_key: maskKey(config.api_key),
+      },
+      env_keys: {
+        gemini: Boolean(process.env.GEMINI_API_KEY),
+        openai: Boolean(process.env.OPENAI_API_KEY),
+        deepseek: Boolean(process.env.DEEPSEEK_API_KEY),
+        openrouter: Boolean(process.env.OPENROUTER_API_KEY),
+        groq: Boolean(process.env.GROQ_API_KEY),
+        custom: Boolean(process.env.CUSTOM_AI_API_KEY),
+      },
     },
-    env_keys: {
-      gemini: Boolean(process.env.GEMINI_API_KEY),
-      openai: Boolean(process.env.OPENAI_API_KEY),
-      deepseek: Boolean(process.env.DEEPSEEK_API_KEY),
-      openrouter: Boolean(process.env.OPENROUTER_API_KEY),
-      groq: Boolean(process.env.GROQ_API_KEY),
-      custom: Boolean(process.env.CUSTOM_AI_API_KEY),
-    },
-  });
+    {
+      headers: {
+        'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0',
+      },
+    }
+  );
 }
 
 export async function POST(request: Request) {
@@ -289,18 +307,22 @@ export async function POST(request: Request) {
         CONFIG_SETTING_KEY,
         DEFAULT_AI_CONFIG
       );
+      const nextProvider = (body.config?.provider || existing.provider || 'gemini') as AiProviderId;
+      const providerChanged = nextProvider !== existing.provider;
       const nextConfig: AiCheckerConfig = {
-        provider: (body.config?.provider || existing.provider || 'gemini') as AiProviderId,
+        provider: nextProvider,
         model: String(body.config?.model || existing.model || 'gemini-3.8-flash').trim(),
         custom_base_url: String(body.config?.custom_base_url || '').trim(),
         api_key: body.clear_api_key
           ? ''
           : body.config?.api_key?.trim()
           ? String(body.config.api_key).trim()
+          : providerChanged
+          ? ''
           : existing.api_key || '',
       };
 
-      await writeSettingJson(CONFIG_SETTING_KEY, nextConfig);
+      await writeSettingJson(CONFIG_SETTING_KEY, nextConfig, true);
 
       return NextResponse.json({
         success: true,
