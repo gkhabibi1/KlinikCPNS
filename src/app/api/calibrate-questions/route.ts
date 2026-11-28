@@ -5,7 +5,7 @@ export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 export const maxDuration = 60;
 
-export type CalibratorProvider = 'gemini' | 'groq' | 'mistral';
+export type CalibratorProvider = 'gemini' | 'groq' | 'openrouter' | 'mistral';
 export type TargetDifficulty = 'sulit' | 'sangat_sulit';
 
 interface FallbackProviderEntry {
@@ -60,6 +60,7 @@ function normalizeAnswerLetter(ans: string, fallback: string): string {
 function getEnvCalibratorKey(provider: CalibratorProvider): string {
   if (provider === 'gemini') return (process.env.GEMINI_API_KEY || '').trim();
   if (provider === 'groq') return (process.env.GROQ_API_KEY || '').trim();
+  if (provider === 'openrouter') return (process.env.OPENROUTER_API_KEY || '').trim();
   if (provider === 'mistral') return (process.env.MISTRAL_API_KEY || '').trim();
   return '';
 }
@@ -72,7 +73,7 @@ async function callProviderWithKey(
 ): Promise<{ ok: true; rawText: string } | { ok: false; rateLimited: boolean; status: number; error: string }> {
   try {
     if (provider === 'gemini') {
-      const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${encodeURIComponent(apiKey)}`;
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key=${encodeURIComponent(apiKey)}`;
       const res = await fetch(url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -99,14 +100,27 @@ async function callProviderWithKey(
     const endpoint =
       provider === 'groq'
         ? 'https://api.groq.com/openai/v1/chat/completions'
+        : provider === 'openrouter'
+        ? 'https://openrouter.ai/api/v1/chat/completions'
         : 'https://api.mistral.ai/v1/chat/completions';
-    const model = provider === 'groq' ? 'llama-3.3-70b-versatile' : 'mistral-small-latest';
+    const model =
+      provider === 'groq'
+        ? 'openai/gpt-oss-120b'
+        : provider === 'openrouter'
+        ? 'google/gemma-4-31b-it:free'
+        : 'mistral-small-latest';
 
     const res = await fetch(endpoint, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${apiKey}`,
+        ...(provider === 'openrouter'
+          ? {
+              'HTTP-Referer': process.env.NEXT_PUBLIC_SITE_URL || 'https://klinikcpns.id',
+              'X-Title': 'Klinik CPNS',
+            }
+          : {}),
       },
       body: JSON.stringify({
         model,
@@ -165,6 +179,7 @@ export async function GET() {
         envKeys: {
           gemini: Boolean(process.env.GEMINI_API_KEY),
           groq: Boolean(process.env.GROQ_API_KEY),
+          openrouter: Boolean(process.env.OPENROUTER_API_KEY),
           mistral: Boolean(process.env.MISTRAL_API_KEY),
         },
       },

@@ -295,7 +295,7 @@ export default function QuestionBankPanel({
       'anthropic/claude-3.5-sonnet',
       'deepseek/deepseek-chat',
     ],
-    groq: ['llama-3.3-70b-versatile'],
+    groq: ['openai/gpt-oss-120b'],
     custom: [],
   };
 

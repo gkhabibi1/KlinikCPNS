@@ -13,7 +13,7 @@ import {
   Loader2,
 } from 'lucide-react';
 
-type CalibratorProvider = 'gemini' | 'groq' | 'mistral';
+type CalibratorProvider = 'gemini' | 'groq' | 'openrouter' | 'mistral';
 type TargetDifficulty = 'sulit' | 'sangat_sulit';
 
 interface ActivityLogItem {
@@ -54,6 +54,7 @@ export default function AiCalibratorModal({
   const [keysMap, setKeysMap] = useState<Record<CalibratorProvider, string>>({
     gemini: '',
     groq: '',
+    openrouter: '',
     mistral: '',
   });
 
@@ -66,6 +67,7 @@ export default function AiCalibratorModal({
   const [envKeys, setEnvKeys] = useState<Record<CalibratorProvider, boolean>>({
     gemini: false,
     groq: false,
+    openrouter: false,
     mistral: false,
   });
   const [isLoadingStats, setIsLoadingStats] = useState(false);
@@ -83,7 +85,7 @@ export default function AiCalibratorModal({
   useEffect(() => {
     try {
       const savedProvider = localStorage.getItem(STORAGE_KEYS.provider) as CalibratorProvider | null;
-      if (savedProvider && ['gemini', 'groq', 'mistral'].includes(savedProvider)) {
+      if (savedProvider && ['gemini', 'groq', 'openrouter', 'mistral'].includes(savedProvider)) {
         setProvider(savedProvider);
       }
       const savedKeys = localStorage.getItem(STORAGE_KEYS.keysByProvider);
@@ -92,6 +94,7 @@ export default function AiCalibratorModal({
         setKeysMap({
           gemini: String(parsed?.gemini || ''),
           groq: String(parsed?.groq || ''),
+          openrouter: String(parsed?.openrouter || ''),
           mistral: String(parsed?.mistral || ''),
         });
       }
@@ -128,6 +131,7 @@ export default function AiCalibratorModal({
           setEnvKeys({
             gemini: Boolean(data.envKeys.gemini),
             groq: Boolean(data.envKeys.groq),
+            openrouter: Boolean(data.envKeys.openrouter),
             mistral: Boolean(data.envKeys.mistral),
           });
         }
@@ -206,7 +210,7 @@ export default function AiCalibratorModal({
     setStatusMessage('Memulai kalibrasi batch pertama...');
 
     let activeProv: CalibratorProvider = provider;
-    const allProviders: CalibratorProvider[] = ['gemini', 'groq', 'mistral'];
+    const allProviders: CalibratorProvider[] = ['gemini', 'groq', 'openrouter', 'mistral'];
     const parseKeysFor = (p: CalibratorProvider) =>
       keysMap[p]
         .split(/\r?\n/)
@@ -449,9 +453,10 @@ export default function AiCalibratorModal({
                 onChange={(e) => handleProviderChange(e.target.value as CalibratorProvider)}
                 className="w-full border border-slate-300 rounded-xl px-3 py-2 text-xs sm:text-sm font-bold text-black bg-white disabled:bg-slate-100"
               >
-                <option value="gemini">Google Gemini Flash</option>
-                <option value="groq">Groq (Llama 3.3 70B)</option>
-                <option value="mistral">Mistral AI</option>
+                <option value="gemini">Google Gemini Flash (3.8)</option>
+                <option value="groq">Groq (GPT-OSS 120B)</option>
+                <option value="openrouter">OpenRouter Free (Gemma 4 31B)</option>
+                <option value="mistral">Mistral AI (Berbayar)</option>
               </select>
             </div>
 
