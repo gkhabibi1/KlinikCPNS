@@ -303,6 +303,8 @@ Tugas Anda pada setiap soal dalam array JSON input:
     let allRateLimited = true;
     let lastError = '';
 
+    const providerErrors: string[] = [];
+
     for (const attempt of attemptQueue) {
       const result = await callProviderWithKey(
         attempt.provider,
@@ -317,7 +319,11 @@ Tugas Anda pada setiap soal dalam array JSON input:
         allRateLimited = false;
         break;
       }
-      lastError = result.error;
+      const prefixedErr = `[${attempt.provider.toUpperCase()}] ${result.error}`;
+      lastError = prefixedErr;
+      if (!providerErrors.includes(prefixedErr)) {
+        providerErrors.push(prefixedErr);
+      }
       if (!result.rateLimited) {
         allRateLimited = false;
       }
@@ -337,7 +343,7 @@ Tugas Anda pada setiap soal dalam array JSON input:
       }
       return NextResponse.json(
         {
-          error: lastError || `Gagal memanggil AI API (${triedProviders}).`,
+          error: providerErrors.join(' | ') || lastError || `Gagal memanggil AI API (${triedProviders}).`,
           remaining: stats.remaining,
         },
         { status: 502 }
