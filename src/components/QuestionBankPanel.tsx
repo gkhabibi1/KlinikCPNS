@@ -5,6 +5,7 @@ import { supabase } from '@/lib/supabaseClient';
 import FormattedText from '@/components/FormattedText';
 import PageLoadingSpinner from '@/components/PageLoadingSpinner';
 import AiCalibratorModal from '@/components/AiCalibratorModal';
+import ImportReplaceTxtModal from '@/components/ImportReplaceTxtModal';
 import {
   SKD_SUBCATEGORIES,
   MainSkdCategory,
@@ -32,6 +33,7 @@ import {
   Loader2,
   AlertTriangle,
   Download,
+  Upload,
   Zap,
 } from 'lucide-react';
 
@@ -95,6 +97,7 @@ export default function QuestionBankPanel({
   const [filterAiCriteria, setFilterAiCriteria] = useState<string>('ALL');
   const [filterCalibrationStatus, setFilterCalibrationStatus] = useState<'ALL' | 'CALIBRATED' | 'UNCALIBRATED'>('ALL');
   const [showCalibratorModal, setShowCalibratorModal] = useState(false);
+  const [showImportTxtModal, setShowImportTxtModal] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
 
@@ -1146,6 +1149,16 @@ export default function QuestionBankPanel({
                 ? `Download Terpilih (${selectedIds.length})`
                 : `Download Soal (${filteredItems.length})`}
             </span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setShowImportTxtModal(true)}
+            className="px-3.5 py-2 rounded-xl bg-white text-slate-900 hover:bg-slate-100 text-xs font-bold shadow-sm flex items-center gap-1.5 transition cursor-pointer"
+            title="Upload / Replace Bank Soal dari file .txt"
+          >
+            <Upload className="w-3.5 h-3.5" />
+            <span>Submit / Replace TXT</span>
           </button>
 
           <button
@@ -2357,6 +2370,12 @@ export default function QuestionBankPanel({
         isOpen={showCalibratorModal}
         onClose={() => setShowCalibratorModal(false)}
         onUpdated={loadQuestionBank}
+      />
+
+      <ImportReplaceTxtModal
+        isOpen={showImportTxtModal}
+        onClose={() => setShowImportTxtModal(false)}
+        onImported={loadQuestionBank}
       />
     </div>
   );
