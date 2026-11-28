@@ -4,6 +4,8 @@ export interface ParsedQuestion {
   question: string;
   correct: string;
   explanation: string;
+  verified?: 'BENAR' | 'PERLU_CEK' | 'KELIRU' | 'BELUM';
+  difficulty?: 1 | 2 | 3 | 4 | 5;
   options: {
     a: string;
     b: string;
@@ -30,6 +32,8 @@ D. Pancasila hanya berlaku untuk generasi awal kemerdekaan
 E. Pancasila bersifat kaku dan tidak perlu dikembangkan
 CORRECT: B
 POINTS: 5
+VERIFIED: BENAR
+DIFFICULTY: 4
 EXPLANATION: Ideologi terbuka berarti mampu berinteraksi dengan perkembangan zaman dan menerima nilai-nilai positif baru tanpa mengubah nilai dasarnya (Ketuhanan, Kemanusiaan, Persatuan, Kerakyatan, Keadilan).
 
 ---
@@ -124,6 +128,35 @@ export function parseQuestionsFromText(text: string): ParsedQuestion[] {
         currentField = null;
       } else if (/^POINTS:\s*/i.test(line)) {
         currentField = null;
+      } else if (/^VERIFIED:\s*/i.test(line)) {
+        const rawVer = line.replace(/^VERIFIED:\s*/i, '').trim().toUpperCase();
+        if (rawVer === 'BENAR' || rawVer === 'VALID' || rawVer === 'TRUE' || rawVer === 'SUDAH') {
+          question.verified = 'BENAR';
+        } else if (rawVer === 'PERLU_CEK' || rawVer === 'PERLU CEK') {
+          question.verified = 'PERLU_CEK';
+        } else if (rawVer === 'KELIRU' || rawVer === 'SALAH') {
+          question.verified = 'KELIRU';
+        } else {
+          question.verified = 'BELUM';
+        }
+        currentField = null;
+      } else if (/^DIFFICULTY:\s*/i.test(line)) {
+        const rawDiff = line.replace(/^DIFFICULTY:\s*/i, '').trim().toUpperCase();
+        const numMatch = rawDiff.match(/[1-5]/);
+        if (numMatch) {
+          question.difficulty = Number(numMatch[0]) as 1 | 2 | 3 | 4 | 5;
+        } else if (rawDiff.includes('HOTS') || rawDiff.includes('SANGAT SULIT')) {
+          question.difficulty = 5;
+        } else if (rawDiff.includes('SULIT')) {
+          question.difficulty = 4;
+        } else if (rawDiff.includes('SEDANG')) {
+          question.difficulty = 3;
+        } else if (rawDiff.includes('SANGAT MUDAH')) {
+          question.difficulty = 1;
+        } else if (rawDiff.includes('MUDAH')) {
+          question.difficulty = 2;
+        }
+        currentField = null;
       } else if (/^EXPLANATION:\s*/i.test(line)) {
         question.explanation = rawLine.replace(/^\s*EXPLANATION:\s*/i, '');
         currentField = 'explanation';
@@ -209,6 +242,8 @@ export interface ExportableQuestion {
   correct_answer?: string | null;
   explanation?: string | null;
   tkp_scores?: Record<string, number> | null;
+  verified_status?: 'BENAR' | 'PERLU_CEK' | 'KELIRU' | 'BELUM' | null;
+  difficulty?: number | null;
 }
 
 /**
@@ -275,6 +310,13 @@ export function exportQuestionsToTxt(
       );
     } else {
       lines.push(`POINTS: 5`);
+    }
+
+    if (q.verified_status) {
+      lines.push(`VERIFIED: ${q.verified_status}`);
+    }
+    if (q.difficulty && q.difficulty >= 1 && q.difficulty <= 5) {
+      lines.push(`DIFFICULTY: ${q.difficulty}`);
     }
 
     if (explanationText) {

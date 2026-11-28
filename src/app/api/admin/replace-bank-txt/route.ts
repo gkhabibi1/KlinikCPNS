@@ -14,6 +14,8 @@ interface IncomingQuestion {
   question: string;
   correct: string;
   explanation?: string;
+  verified?: 'BENAR' | 'PERLU_CEK' | 'KELIRU' | 'BELUM';
+  difficulty?: 1 | 2 | 3 | 4 | 5;
   options: {
     a?: string;
     b?: string;
@@ -29,6 +31,16 @@ interface IncomingQuestion {
     e?: number;
   };
 }
+
+const DIFFICULTY_LABELS: Record<number, string> = {
+  1: 'Sangat Mudah',
+  2: 'Mudah',
+  3: 'Sedang',
+  4: 'Sulit',
+  5: 'HOTS (Sangat Sulit)',
+};
+
+const REVIEWS_SETTING_KEY = 'question_ai_reviews';
 
 export async function POST(request: Request) {
   try {
@@ -47,6 +59,14 @@ export async function POST(request: Request) {
       if (delErr) {
         throw delErr;
       }
+      await supabaseAdmin.from('system_settings').upsert(
+        {
+          key: REVIEWS_SETTING_KEY,
+          value: JSON.stringify({}),
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: 'key' }
+      );
     }
 
     if (items.length === 0) {
@@ -78,6 +98,11 @@ export async function POST(request: Request) {
             }
           : null;
 
+      const itemCalibrated =
+        q.verified === 'BENAR' || q.verified === 'PERLU_CEK' || q.verified === 'KELIRU'
+          ? true
+          : markCalibrated;
+
       return {
         category,
         sub_category: subCategory,
@@ -91,19 +116,21 @@ export async function POST(request: Request) {
         explanation: String(q.explanation || '').trim(),
         tkp_scores: tkpScores,
         usage_count: 1,
-        is_ai_calibrated: markCalibrated,
-        ai_calibrated_at: markCalibrated ? nowIso : null,
-        ai_calibration_notes: markCalibrated
-          ? 'Diimpor dari file TXT HOTS terkalibrasi'
+        is_ai_calibrated: itemCalibrated,
+        ai_calibrated_at: itemCalibrated ? nowIso : null,
+        ai_calibration_notes: itemCalibrated
+          ? `Terverifikasi (${q.verified || 'BENAR'}) · Level ${q.difficulty || 5}/5 dari file TXT`
           : null,
         created_at: nowIso,
         updated_at: nowIso,
       };
     });
 
-    const { error: insertErr } = await supabaseAdmin
+    let insertedIds: string[] = [];
+    const { data: insertedData, error: insertErr } = await supabaseAdmin
       .from('question_bank')
-      .insert(rows);
+      .insert(rows)
+      .select('id');
 
     if (insertErr) {
       // Fallback jika kolom migrasi is_ai_calibrated belum dijalankan
@@ -112,13 +139,71 @@ export async function POST(request: Request) {
         const legacyRows = rows.map(
           ({ is_ai_calibrated, ai_calibrated_at, ai_calibration_notes, ...rest }) => rest
         );
-        const { error: legacyErr } = await supabaseAdmin
+        const { data: legacyData, error: legacyErr } = await supabaseAdmin
           .from('question_bank')
-          .insert(legacyRows);
+          .insert(legacyRows)
+          .select('id');
         if (legacyErr) throw legacyErr;
+        insertedIds = (legacyData || []).map((r: any) => r.id);
       } else {
         throw insertErr;
       }
+    } else {
+      insertedIds = (insertedData || []).map((r: any) => r.id);
+    }
+
+    // Simpan status verifikasi & tingkat kesulitan ke question_ai_reviews agar langsung terdeteksi di Bank Soal
+    const hasReviewMetadata = items.some(
+      (q) => (q.verified && q.verified !== 'BELUM') || q.difficulty
+    );
+    if (hasReviewMetadata && insertedIds.length > 0) {
+      const { data: existingSetting } = await supabaseAdmin
+        .from('system_settings')
+        .select('value')
+        .eq('key', REVIEWS_SETTING_KEY)
+        .maybeSingle();
+
+      let currentReviews: Record<string, any> = {};
+      if (existingSetting?.value) {
+        try {
+          currentReviews = JSON.parse(existingSetting.value) || {};
+        } catch {
+          currentReviews = {};
+        }
+      }
+
+      insertedIds.forEach((id, idx) => {
+        const src = items[idx];
+        if (!src) return;
+        const status =
+          src.verified && src.verified !== 'BELUM'
+            ? src.verified
+            : markCalibrated
+            ? 'BENAR'
+            : null;
+        const diffNum = Number(src.difficulty);
+        const validDiff = diffNum >= 1 && diffNum <= 5 ? diffNum : 5;
+        if (status || src.difficulty) {
+          currentReviews[id] = {
+            id,
+            is_valid: (status || 'BENAR') === 'BENAR',
+            answer_status: status || 'BENAR',
+            difficulty: validDiff,
+            difficulty_label: DIFFICULTY_LABELS[validDiff] || 'HOTS (Sangat Sulit)',
+            reason: 'Terverifikasi & terkalibrasi dari file TXT.',
+            checked_at: nowIso,
+          };
+        }
+      });
+
+      await supabaseAdmin.from('system_settings').upsert(
+        {
+          key: REVIEWS_SETTING_KEY,
+          value: JSON.stringify(currentReviews),
+          updated_at: nowIso,
+        },
+        { onConflict: 'key' }
+      );
     }
 
     return NextResponse.json({
