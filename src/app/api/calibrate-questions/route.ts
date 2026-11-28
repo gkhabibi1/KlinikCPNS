@@ -51,6 +51,13 @@ function normalizeAnswerLetter(ans: string, fallback: string): string {
   return ['A', 'B', 'C', 'D', 'E'].includes(letter) ? letter : fallback;
 }
 
+function getEnvCalibratorKey(provider: CalibratorProvider): string {
+  if (provider === 'gemini') return (process.env.GEMINI_API_KEY || '').trim();
+  if (provider === 'groq') return (process.env.GROQ_API_KEY || '').trim();
+  if (provider === 'mistral') return (process.env.MISTRAL_API_KEY || '').trim();
+  return '';
+}
+
 async function callProviderWithKey(
   provider: CalibratorProvider,
   apiKey: string,
@@ -146,9 +153,19 @@ export async function GET() {
   try {
     const supabaseAdmin = getSupabaseAdmin();
     const stats = await getCalibrationStats(supabaseAdmin);
-    return NextResponse.json(stats, {
-      headers: { 'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0' },
-    });
+    return NextResponse.json(
+      {
+        ...stats,
+        envKeys: {
+          gemini: Boolean(process.env.GEMINI_API_KEY),
+          groq: Boolean(process.env.GROQ_API_KEY),
+          mistral: Boolean(process.env.MISTRAL_API_KEY),
+        },
+      },
+      {
+        headers: { 'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0' },
+      }
+    );
   } catch (err: any) {
     return NextResponse.json(
       { error: err?.message || 'Gagal membaca statistik kalibrasi' },
@@ -163,13 +180,16 @@ export async function POST(request: Request) {
     const batchSize = Math.min(10, Math.max(1, Number(body.batchSize) || 5));
     const provider: CalibratorProvider = body.provider || 'gemini';
     const targetDifficulty: TargetDifficulty = body.targetDifficulty === 'sangat_sulit' ? 'sangat_sulit' : 'sulit';
-    const apiKeys = (Array.isArray(body.apiKeys) ? body.apiKeys : [])
+    const rawKeys = (Array.isArray(body.apiKeys) ? body.apiKeys : [])
       .map((k) => String(k || '').trim())
       .filter(Boolean);
+    const envFallbackKey = getEnvCalibratorKey(provider);
+    const apiKeys =
+      rawKeys.length > 0 ? rawKeys : envFallbackKey ? [envFallbackKey] : [];
 
     if (apiKeys.length === 0) {
       return NextResponse.json(
-        { error: 'Minimal 1 API Key harus diisi sebelum memulai kalibrasi.' },
+        { error: 'Minimal 1 API Key harus diisi (atau set di Environment Variables Vercel).' },
         { status: 400 }
       );
     }

@@ -61,6 +61,11 @@ export default function AiCalibratorModal({
     calibratedCount: 0,
     remaining: 0,
   });
+  const [envKeys, setEnvKeys] = useState<Record<CalibratorProvider, boolean>>({
+    gemini: false,
+    groq: false,
+    mistral: false,
+  });
   const [isLoadingStats, setIsLoadingStats] = useState(false);
 
   const [isRunning, setIsRunning] = useState(false);
@@ -117,6 +122,13 @@ export default function AiCalibratorModal({
           calibratedCount: data.calibratedCount || 0,
           remaining: data.remaining || 0,
         });
+        if (data.envKeys) {
+          setEnvKeys({
+            gemini: Boolean(data.envKeys.gemini),
+            groq: Boolean(data.envKeys.groq),
+            mistral: Boolean(data.envKeys.mistral),
+          });
+        }
       }
     } catch {
       // ignore
@@ -179,8 +191,10 @@ export default function AiCalibratorModal({
   const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
   const handleStartCalibration = async () => {
-    if (parsedApiKeys.length === 0) {
-      setErrorMessage(`Masukkan minimal 1 API Key ${provider.toUpperCase()} terlebih dahulu.`);
+    if (parsedApiKeys.length === 0 && !envKeys[provider]) {
+      setErrorMessage(
+        `Masukkan minimal 1 API Key ${provider.toUpperCase()} terlebih dahulu (atau set di Vercel Env).`
+      );
       return;
     }
 
@@ -450,7 +464,11 @@ export default function AiCalibratorModal({
                 Daftar API Key {provider.toUpperCase()} (1 key per baris untuk rotasi otomatis)
               </label>
               <span className="text-[11px] font-bold text-black bg-slate-100 px-2 py-0.5 rounded-full">
-                {parsedApiKeys.length} key aktif
+                {parsedApiKeys.length > 0
+                  ? `${parsedApiKeys.length} key aktif (rotasi)`
+                  : envKeys[provider]
+                  ? '✓ Pakai Key Vercel Env'
+                  : '0 key'}
               </span>
             </div>
             <textarea
@@ -458,7 +476,11 @@ export default function AiCalibratorModal({
               disabled={isRunning}
               value={keysMap[provider]}
               onChange={(e) => updateKeysForProvider(e.target.value)}
-              placeholder={`Tempel beberapa API Key ${provider.toUpperCase()} dipisah baris baru (disimpan aman di browser localStorage)...`}
+              placeholder={
+                envKeys[provider]
+                  ? `Opsional: kosongkan untuk memakai ${provider.toUpperCase()}_API_KEY dari Vercel, atau tempel beberapa key (1 per baris) untuk rotasi otomatis...`
+                  : `Tempel beberapa API Key ${provider.toUpperCase()} dipisah baris baru (disimpan aman di browser localStorage)...`
+              }
               className="w-full border border-slate-300 rounded-xl p-3 text-xs font-mono text-black bg-white focus:outline-none focus:border-black disabled:bg-slate-100"
             />
           </div>
