@@ -279,7 +279,15 @@ export default function QuestionBankPanel({
     gemini: ['gemini-3.8-flash', 'gemini-2.5-pro'],
     openai: ['gpt-4o-mini', 'gpt-4o'],
     deepseek: ['deepseek-chat', 'deepseek-reasoner'],
-    openrouter: ['openai/gpt-4o-mini', 'anthropic/claude-3.5-sonnet', 'deepseek/deepseek-chat'],
+    openrouter: [
+      'google/gemma-3-27b-it:free',
+      'google/gemma-3-27b-it',
+      'google/gemma-2-27b-it',
+      'openai/gpt-4o',
+      'openai/gpt-4o-mini',
+      'anthropic/claude-3.5-sonnet',
+      'deepseek/deepseek-chat',
+    ],
     groq: ['llama-3.3-70b-versatile'],
     custom: [],
   };

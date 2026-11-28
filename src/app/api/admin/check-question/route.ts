@@ -219,6 +219,12 @@ async function callAiJson(
       headers: {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${apiKey}`,
+        ...(provider === 'openrouter'
+          ? {
+              'HTTP-Referer': process.env.NEXT_PUBLIC_SITE_URL || 'https://klinikcpns.id',
+              'X-Title': 'Klinik CPNS',
+            }
+          : {}),
       },
       body: JSON.stringify({
         model,
