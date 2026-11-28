@@ -20,7 +20,8 @@ import {
   LogOut,
   PanelLeftClose,
   PanelLeftOpen,
-  Home
+  Home,
+  ShieldCheck
 } from 'lucide-react';
 
 interface MemberLayoutProps {
@@ -455,6 +456,16 @@ function MemberLayoutContent({ children }: MemberLayoutProps) {
           </div>
 
           <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
+            {userProfile?.role === 'admin' && (
+              <Link
+                href="/admin"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-white bg-slate-900 hover:bg-slate-800 rounded-xl transition-all shadow-xs active:scale-95"
+                title="Beralih ke Panel Admin"
+              >
+                <ShieldCheck className="w-3.5 h-3.5 text-blue-400 shrink-0" />
+                <span>Panel Admin</span>
+              </Link>
+            )}
             <div className="text-[11px] font-semibold text-slate-600 bg-slate-100 border border-slate-200/80 px-3 py-1 rounded-full hidden md:inline-flex items-center gap-1.5">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
               CAT BKN 2026 Ready
