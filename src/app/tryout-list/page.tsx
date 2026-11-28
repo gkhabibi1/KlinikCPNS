@@ -17,7 +17,10 @@ import {
   X,
   Flame,
   ArrowRight,
-  ShieldCheck
+  ShieldCheck,
+  Trophy,
+  ChevronDown,
+  ChevronUp
 } from 'lucide-react';
 
 export default function TryoutListPage() {
@@ -31,6 +34,17 @@ export default function TryoutListPage() {
   const [error, setError] = useState<string | null>(null);
   const [selectedPackage, setSelectedPackage] = useState<any>(null);
   const [showHistoryModal, setShowHistoryModal] = useState(false);
+  const [leaderboard, setLeaderboard] = useState<any[]>([]);
+  const [showLeaderboard, setShowLeaderboard] = useState(false);
+
+  useEffect(() => {
+    fetch('/api/tryout/leaderboard')
+      .then((r) => r.json())
+      .then((d) => {
+        if (Array.isArray(d?.leaderboard)) setLeaderboard(d.leaderboard);
+      })
+      .catch(() => {});
+  }, []);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -228,6 +242,80 @@ export default function TryoutListPage() {
             </div>
           </div>
         </Link>
+
+        {/* Peringkat Nasional Top 10 (Collapsible) */}
+        {leaderboard.length > 0 && (
+          <div className="bg-white border border-slate-200/80 rounded-2xl shadow-2xs overflow-hidden">
+            <button
+              type="button"
+              onClick={() => setShowLeaderboard((v) => !v)}
+              className="w-full px-4 sm:px-5 py-3.5 flex items-center justify-between gap-3 hover:bg-slate-50 transition cursor-pointer"
+            >
+              <div className="flex items-center gap-2.5 text-left">
+                <div className="w-8 h-8 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center shrink-0">
+                  <Trophy className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="text-xs sm:text-sm font-bold text-slate-900">
+                    Top {leaderboard.length} Peringkat Nasional Try Out SKD
+                  </h3>
+                  <p className="text-[11px] text-slate-500">
+                    Skor tertinggi peserta · Klik untuk {showLeaderboard ? 'menyembunyikan' : 'melihat'} papan peringkat
+                  </p>
+                </div>
+              </div>
+              {showLeaderboard ? (
+                <ChevronUp className="w-4 h-4 text-slate-500 shrink-0" />
+              ) : (
+                <ChevronDown className="w-4 h-4 text-slate-500 shrink-0" />
+              )}
+            </button>
+
+            {showLeaderboard && (
+              <div className="border-t border-slate-100 divide-y divide-slate-100">
+                {leaderboard.map((row) => (
+                  <div
+                    key={`${row.rank}-${row.display_name}`}
+                    className="px-4 sm:px-5 py-2.5 flex items-center justify-between gap-3 text-xs"
+                  >
+                    <div className="flex items-center gap-3 min-w-0">
+                      <span
+                        className={`w-6 h-6 rounded-full flex items-center justify-center font-extrabold text-[11px] shrink-0 ${
+                          row.rank === 1
+                            ? 'bg-amber-400 text-slate-950'
+                            : row.rank === 2
+                            ? 'bg-slate-300 text-slate-900'
+                            : row.rank === 3
+                            ? 'bg-orange-300 text-slate-900'
+                            : 'bg-slate-100 text-slate-600'
+                        }`}
+                      >
+                        {row.rank}
+                      </span>
+                      <div className="min-w-0">
+                        <p className="font-bold text-slate-800 truncate">
+                          {row.display_name}
+                        </p>
+                        <p className="text-[11px] text-slate-500 truncate">
+                          {row.package_name}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2 shrink-0">
+                      <span className="hidden sm:inline text-[11px] text-slate-500">
+                        TWK {row.skor_twk} · TIU {row.skor_tiu} · TKP {row.skor_tkp}
+                      </span>
+                      <span className="px-2.5 py-1 rounded-lg bg-blue-50 text-blue-700 font-extrabold">
+                        {row.skor_total}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Status Langganan */}
         {isExpired && (
