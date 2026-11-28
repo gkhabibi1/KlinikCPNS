@@ -11,6 +11,7 @@ import QuestionBankPanel from '@/components/QuestionBankPanel';
 import AdminResellerSettings from '@/components/AdminResellerSettings';
 import AdminChallengePoolConfig from '@/components/AdminChallengePoolConfig';
 import AdminAnalyticsPanel from '@/components/AdminAnalyticsPanel';
+import PageLoadingSpinner from '@/components/PageLoadingSpinner';
 import { buildQuestionBankPayload } from '@/lib/questionSubcategory';
 import { parseQuestionsFromText, downloadQuestionTemplate, exportQuestionsToTxt } from '@/lib/questionParser';
 
@@ -2160,7 +2161,12 @@ export default function AdminCommandCenter() {
                       
                       <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
                         {isLoadingMembers ? (
-                          <div className="text-center py-10 text-slate-500 font-medium">Memuat data member...</div>
+                          <div className="p-4">
+                            <PageLoadingSpinner
+                              title="Memuat Data Member..."
+                              subtitle="Sedang mengambil daftar akun member, status langganan, dan riwayat paket."
+                            />
+                          </div>
                         ) : filteredMembers.length === 0 ? (
                           <div className="text-center py-10 flex flex-col items-center">
                             <div className="text-4xl mb-2">🔍</div>
@@ -2564,7 +2570,10 @@ export default function AdminCommandCenter() {
                         )}
 
                         {isLoadingPackages ? (
-                          <div className="text-center py-6 text-slate-500">Memuat data paket...</div>
+                          <PageLoadingSpinner
+                            title="Memuat Paket Try Out..."
+                            subtitle="Sedang menyiapkan daftar paket tryout beserta jumlah soal TWK, TIU, dan TKP."
+                          />
                         ) : filteredPackages.length === 0 ? (
                           <div className="bg-white rounded-xl border border-slate-200 p-8 text-center text-slate-500 shadow-sm">
                             <div className="text-4xl mb-2">🔍</div>
