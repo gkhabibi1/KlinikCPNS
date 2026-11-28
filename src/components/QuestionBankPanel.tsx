@@ -3,6 +3,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 import FormattedText from '@/components/FormattedText';
+import PageLoadingSpinner from '@/components/PageLoadingSpinner';
 import {
   SKD_SUBCATEGORIES,
   MainSkdCategory,
@@ -1604,9 +1605,10 @@ export default function QuestionBankPanel({
 
       {/* Question Cards List */}
       {isLoading ? (
-        <div className="bg-white rounded-xl border border-slate-200 p-12 text-center text-slate-500 text-sm">
-          Memuat seluruh soal dari Bank Soal...
-        </div>
+        <PageLoadingSpinner
+          title="Memuat Bank Soal SKD..."
+          subtitle="Mengambil seluruh soal, kategori sub-bidang, dan hasil review AI."
+        />
       ) : filteredItems.length === 0 ? (
         <div className="bg-white rounded-xl border border-slate-200 p-12 text-center text-slate-500">
           <p className="font-bold text-slate-700 text-base">Belum ada soal yang cocok dengan filter</p>

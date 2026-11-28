@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import { supabase } from '@/lib/supabaseClient';
+import PageLoadingSpinner from '@/components/PageLoadingSpinner';
 import {
   TrendingUp,
   Users,
@@ -276,9 +277,10 @@ export default function AdminAnalyticsPanel() {
 
   if (isLoading) {
     return (
-      <div className="bg-white rounded-2xl border border-slate-200 p-10 text-center text-sm text-slate-500">
-        Memuat data analitik &amp; grafik omset...
-      </div>
+      <PageLoadingSpinner
+        title="Menghitung Analitik & Omset..."
+        subtitle="Sedang merekap data pendaftar, transaksi, dan grafik."
+      />
     );
   }
 

@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabaseClient';
 import MemberLayout from '../../components/MemberLayout';
+import PageLoadingSpinner from '../../components/PageLoadingSpinner';
 import {
   FileText,
   Briefcase,
@@ -341,7 +342,10 @@ export default function TryoutListPage() {
 
         {/* Daftar Paket */}
         {isLoading ? (
-          <div className="text-center py-12 text-sm text-slate-500">Memuat paket try out...</div>
+          <PageLoadingSpinner
+            title="Memuat Daftar Paket Try Out..."
+            subtitle="Menyiapkan paket CPNS, P3K, dan riwayat nilai Anda."
+          />
         ) : packages.length === 0 ? (
           <div className="bg-white border border-slate-200/80 rounded-3xl text-center py-16 px-4 shadow-xs">
             <div className="w-12 h-12 rounded-2xl bg-slate-100 text-slate-400 flex items-center justify-center mx-auto mb-3">

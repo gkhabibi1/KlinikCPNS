@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabaseClient';
 import FormattedText from '@/components/FormattedText';
+import PageLoadingSpinner from '@/components/PageLoadingSpinner';
 
 const Latex = ({ children }: { children: string }) => {
   return <FormattedText text={children} inline={true} />;
@@ -424,9 +425,11 @@ export default function TryoutPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-50">
-        <div className="text-slate-500 font-medium">Memuat soal...</div>
-      </div>
+      <PageLoadingSpinner
+        fullScreen
+        title="Menyiapkan Soal Try Out CAT..."
+        subtitle="Sedang memuat soal dan timer ujian Anda. Mohon tunggu sebentar, jangan refresh halaman."
+      />
     );
   }
 
