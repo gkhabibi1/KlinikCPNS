@@ -280,10 +280,10 @@ export default function QuestionBankPanel({
     openai: ['gpt-4o-mini', 'gpt-4o'],
     deepseek: ['deepseek-chat', 'deepseek-reasoner'],
     openrouter: [
-      'google/gemma-3-27b-it:free',
+      'google/gemma-4-31b-it:free',
+      'google/gemma-4-26b-a4b-it:free',
+      'openrouter/free',
       'google/gemma-3-27b-it',
-      'google/gemma-2-27b-it',
-      'openai/gpt-4o',
       'openai/gpt-4o-mini',
       'anthropic/claude-3.5-sonnet',
       'deepseek/deepseek-chat',
