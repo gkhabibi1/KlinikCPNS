@@ -131,6 +131,7 @@ export default function QuestionBankPanel({
   });
   const [envKeys, setEnvKeys] = useState<Record<string, boolean>>({});
   const [aiApiKeyInput, setAiApiKeyInput] = useState('');
+  const [clearSavedKey, setClearSavedKey] = useState(false);
   const [isSavingAiConfig, setIsSavingAiConfig] = useState(false);
 
   // AI Upgrade Difficulty (Sangat Mudah/Mudah -> Sulit / HOTS)
@@ -305,6 +306,7 @@ export default function QuestionBankPanel({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           action: 'save_config',
+          clear_api_key: clearSavedKey && !aiApiKeyInput.trim(),
           config: {
             provider: aiConfig.provider,
             model: aiConfig.model.trim(),
@@ -319,6 +321,7 @@ export default function QuestionBankPanel({
       }
       if (data.config) setAiConfig(data.config);
       setAiApiKeyInput('');
+      setClearSavedKey(false);
       setAiErrorMessage(null);
       alert(`✅ Pengaturan AI disimpan (${data.config.provider.toUpperCase()} · ${data.config.model})`);
       setShowAiSettings(false);
@@ -1445,7 +1448,10 @@ export default function QuestionBankPanel({
                       ...prev,
                       provider: nextProv,
                       model: presets[0] || prev.model,
+                      has_saved_key: false,
+                      masked_key: '',
                     }));
+                    setClearSavedKey(false);
                   }}
                   className="w-full border border-slate-300 rounded-lg px-3 py-2 text-xs sm:text-sm bg-white font-semibold"
                 >
@@ -1493,10 +1499,34 @@ export default function QuestionBankPanel({
                 <input
                   type="password"
                   value={aiApiKeyInput}
-                  onChange={(e) => setAiApiKeyInput(e.target.value)}
-                  placeholder={aiConfig.has_saved_key ? 'Kosongkan jika tetap pakai key lama' : 'Tempel API Key di sini...'}
-                  className="w-full border border-slate-300 rounded-lg px-3 py-2 text-xs sm:text-sm bg-white"
+                  onChange={(e) => {
+                    setAiApiKeyInput(e.target.value);
+                    if (e.target.value.trim()) setClearSavedKey(false);
+                  }}
+                  placeholder={
+                    clearSavedKey
+                      ? 'Key lama akan dihapus (pakai Vercel Env)'
+                      : aiConfig.has_saved_key
+                      ? 'Kosongkan jika tetap pakai key lama'
+                      : 'Tempel API Key di sini...'
+                  }
+                  disabled={clearSavedKey}
+                  className="w-full border border-slate-300 rounded-lg px-3 py-2 text-xs sm:text-sm bg-white disabled:bg-slate-100"
                 />
+                {aiConfig.has_saved_key && (
+                  <label className="mt-1.5 inline-flex items-center gap-1.5 text-[11px] font-medium text-rose-700 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={clearSavedKey}
+                      onChange={(e) => {
+                        setClearSavedKey(e.target.checked);
+                        if (e.target.checked) setAiApiKeyInput('');
+                      }}
+                      className="rounded border-rose-300 text-rose-600 focus:ring-rose-500"
+                    />
+                    Hapus key tersimpan &amp; pakai Env Vercel
+                  </label>
+                )}
               </div>
             </div>
 

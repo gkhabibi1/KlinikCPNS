@@ -143,6 +143,16 @@ function maskKey(key?: string): string {
   return `${key.slice(0, 6)}••••••${key.slice(-4)}`;
 }
 
+function sanitizeProviderKey(provider: AiProviderId, key?: string): string {
+  const trimmed = (key || '').trim();
+  if (!trimmed) return '';
+  if (provider === 'gemini' && trimmed.startsWith('sk-')) return '';
+  if (provider === 'openrouter' && trimmed.startsWith('AIza')) return '';
+  if ((provider === 'openai' || provider === 'deepseek') && (trimmed.startsWith('sk-or-') || trimmed.startsWith('AIza'))) return '';
+  if (provider === 'groq' && (trimmed.startsWith('sk-') || trimmed.startsWith('AIza'))) return '';
+  return trimmed;
+}
+
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 function isTransientError(status: number, msg: string) {
@@ -270,15 +280,18 @@ export async function GET() {
     readSettingJson<AiCheckerConfig>(CONFIG_SETTING_KEY, DEFAULT_AI_CONFIG),
   ]);
 
+  const effectiveProvider = (config.provider || 'gemini') as AiProviderId;
+  const effectiveKey = sanitizeProviderKey(effectiveProvider, config.api_key);
+
   return NextResponse.json(
     {
       reviews,
       config: {
-        provider: config.provider || 'gemini',
+        provider: effectiveProvider,
         model: config.model || 'gemini-3.8-flash',
         custom_base_url: config.custom_base_url || '',
-        has_saved_key: Boolean(config.api_key),
-        masked_key: maskKey(config.api_key),
+        has_saved_key: Boolean(effectiveKey),
+        masked_key: maskKey(effectiveKey),
       },
       env_keys: {
         gemini: Boolean(process.env.GEMINI_API_KEY),
@@ -319,7 +332,7 @@ export async function POST(request: Request) {
           ? String(body.config.api_key).trim()
           : providerChanged
           ? ''
-          : existing.api_key || '',
+          : sanitizeProviderKey(nextProvider, existing.api_key),
       };
 
       await writeSettingJson(CONFIG_SETTING_KEY, nextConfig, true);
@@ -342,7 +355,7 @@ export async function POST(request: Request) {
     );
     const provider: AiProviderId = config.provider || 'gemini';
     const model = config.model || 'gemini-3.8-flash';
-    const apiKey = (config.api_key || '').trim() || getEnvApiKey(provider);
+    const apiKey = sanitizeProviderKey(provider, config.api_key) || getEnvApiKey(provider);
 
     if (!apiKey) {
       return NextResponse.json(
