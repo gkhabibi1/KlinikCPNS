@@ -396,22 +396,42 @@ Kembalikan HANYA JSON valid dengan schema persis:
 
       try {
         const upgraded = JSON.parse(cleaned);
+        const resultPayload = {
+          question_text: String(upgraded.question_text || q.question_text),
+          option_a: String(upgraded.option_a || q.option_a),
+          option_b: String(upgraded.option_b || q.option_b),
+          option_c: String(upgraded.option_c || q.option_c),
+          option_d: String(upgraded.option_d || q.option_d),
+          option_e: String(upgraded.option_e || q.option_e),
+          correct_answer: String(upgraded.correct_answer || q.correct_answer).toUpperCase().slice(0, 1),
+          explanation: String(upgraded.explanation || ''),
+          tkp_scores: q.category === 'TKP' ? upgraded.tkp_scores || null : null,
+          difficulty: targetLevel as 4 | 5,
+          difficulty_label: DIFFICULTY_LABELS[targetLevel],
+          reason: String(upgraded.reason || `Soal berhasil dinaikkan ke tingkat ${targetLabel}.`),
+        };
+
+        if (body.persist === true && q.id) {
+          const existing = await readSettingJson<Record<string, QuestionAiReview>>(
+            REVIEWS_SETTING_KEY,
+            {}
+          );
+          existing[q.id] = {
+            id: q.id,
+            is_valid: true,
+            answer_status: 'BENAR',
+            suggested_answer: '',
+            difficulty: targetLevel as 4 | 5,
+            difficulty_label: DIFFICULTY_LABELS[targetLevel],
+            reason: resultPayload.reason,
+            checked_at: new Date().toISOString(),
+          };
+          await writeSettingJson(REVIEWS_SETTING_KEY, existing);
+        }
+
         return NextResponse.json({
           success: true,
-          upgraded: {
-            question_text: String(upgraded.question_text || q.question_text),
-            option_a: String(upgraded.option_a || q.option_a),
-            option_b: String(upgraded.option_b || q.option_b),
-            option_c: String(upgraded.option_c || q.option_c),
-            option_d: String(upgraded.option_d || q.option_d),
-            option_e: String(upgraded.option_e || q.option_e),
-            correct_answer: String(upgraded.correct_answer || q.correct_answer).toUpperCase().slice(0, 1),
-            explanation: String(upgraded.explanation || ''),
-            tkp_scores: q.category === 'TKP' ? upgraded.tkp_scores || null : null,
-            difficulty: targetLevel,
-            difficulty_label: DIFFICULTY_LABELS[targetLevel],
-            reason: String(upgraded.reason || `Soal berhasil dinaikkan ke tingkat ${targetLabel}.`),
-          },
+          upgraded: resultPayload,
         });
       } catch {
         return NextResponse.json(

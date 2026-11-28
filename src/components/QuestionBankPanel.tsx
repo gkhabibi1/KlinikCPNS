@@ -141,6 +141,11 @@ export default function QuestionBankPanel({
     targetLevel: 4 | 5;
   } | null>(null);
   const [isSavingUpgrade, setIsSavingUpgrade] = useState(false);
+  const [batchUpgradeProgress, setBatchUpgradeProgress] = useState<{
+    current: number;
+    total: number;
+    targetLabel: string;
+  } | null>(null);
 
   const fetchAllRowsPaginated = async (
     table: string,
@@ -530,6 +535,138 @@ export default function QuestionBankPanel({
     }
   };
 
+  const handleBatchUpgrade = async (targetLevel: 4 | 5) => {
+    const targetItems = bankItems.filter((i) => selectedIds.includes(i.id));
+    if (targetItems.length === 0 || batchUpgradeProgress || isCheckingAi) return;
+
+    const targetLabel = targetLevel === 5 ? 'HOTS (5/5)' : 'Sulit (4/5)';
+    if (
+      !confirm(
+        `Naikkan ${targetItems.length} soal terpilih ke tingkat ${targetLabel} menggunakan AI?\n\nSoal terpilih akan langsung diperbarui di Bank Soal & hasil review AI-nya otomatis menjadi ${targetLabel}.`
+      )
+    ) {
+      return;
+    }
+
+    setBatchUpgradeProgress({
+      current: 0,
+      total: targetItems.length,
+      targetLabel,
+    });
+    setAiErrorMessage(null);
+    let successCount = 0;
+
+    try {
+      for (let i = 0; i < targetItems.length; i++) {
+        const item = targetItems[i];
+        const res = await fetch('/api/admin/check-question', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action: 'upgrade_difficulty',
+            target_difficulty: targetLevel,
+            persist: true,
+            question: {
+              id: item.id,
+              category: item.category,
+              sub_category: item.sub_category,
+              question_text: item.question_text,
+              option_a: item.option_a,
+              option_b: item.option_b,
+              option_c: item.option_c,
+              option_d: item.option_d,
+              option_e: item.option_e,
+              correct_answer: item.correct_answer,
+              explanation: item.explanation,
+              tkp_scores: item.tkp_scores,
+            },
+          }),
+        });
+
+        const data = await res.json();
+        if (!res.ok || !data.success) {
+          throw new Error(
+            data.error || `Gagal meng-upgrade soal ke-${i + 1}`
+          );
+        }
+
+        const upgraded = data.upgraded;
+        const tkpExplanationPayload =
+          item.category === 'TKP' && upgraded.tkp_scores
+            ? JSON.stringify({
+                ...upgraded.tkp_scores,
+                explanation: upgraded.explanation || '',
+              })
+            : upgraded.explanation || '';
+
+        if (!item.isVirtualFallback && bankTableAvailable) {
+          await supabase
+            .from('question_bank')
+            .update({
+              question_text: upgraded.question_text,
+              option_a: upgraded.option_a,
+              option_b: upgraded.option_b,
+              option_c: upgraded.option_c,
+              option_d: upgraded.option_d,
+              option_e: upgraded.option_e,
+              correct_answer: upgraded.correct_answer,
+              explanation: tkpExplanationPayload,
+              updated_at: new Date().toISOString(),
+            })
+            .eq('id', item.id);
+        }
+
+        if (item.source_question_id) {
+          await supabase
+            .from('questions')
+            .update({
+              question_text: upgraded.question_text,
+              option_a: upgraded.option_a,
+              option_b: upgraded.option_b,
+              option_c: upgraded.option_c,
+              option_d: upgraded.option_d,
+              option_e: upgraded.option_e,
+              correct_answer: upgraded.correct_answer,
+              explanation: tkpExplanationPayload,
+            })
+            .eq('id', item.source_question_id);
+        }
+
+        setAiReviews((prev) => ({
+          ...prev,
+          [item.id]: {
+            id: item.id,
+            is_valid: true,
+            answer_status: 'BENAR',
+            suggested_answer: '',
+            difficulty: targetLevel,
+            difficulty_label: upgraded.difficulty_label,
+            reason: upgraded.reason,
+            checked_at: new Date().toISOString(),
+          },
+        }));
+
+        successCount++;
+        setBatchUpgradeProgress({
+          current: i + 1,
+          total: targetItems.length,
+          targetLabel,
+        });
+      }
+
+      alert(`✅ Berhasil menaikkan ${successCount} soal ke tingkat ${targetLabel}!`);
+      setSelectedIds([]);
+      await loadQuestionBank();
+    } catch (err: any) {
+      setAiErrorMessage(
+        `Batch upgrade berhenti (${successCount}/${targetItems.length} berhasil): ${err?.message || 'Error'}`
+      );
+      if (successCount > 0) await loadQuestionBank();
+    } finally {
+      setBatchUpgradeProgress(null);
+    }
+  };
+
   // Reset pagination on filter change
   useEffect(() => {
     setCurrentPage(1);
@@ -715,7 +852,8 @@ export default function QuestionBankPanel({
         const rev = aiReviews[item.id];
         if (filterAiCriteria === 'UNCHECKED' && rev) return false;
         if (filterAiCriteria === 'ISSUE' && (!rev || rev.answer_status === 'BENAR')) return false;
-        if (filterAiCriteria.startsWith('DIFF_')) {
+        if (filterAiCriteria === 'DIFF_1_2' && (!rev || (rev.difficulty !== 1 && rev.difficulty !== 2))) return false;
+        if (filterAiCriteria.startsWith('DIFF_') && filterAiCriteria !== 'DIFF_1_2') {
           const targetDiff = Number(filterAiCriteria.replace('DIFF_', ''));
           if (!rev || rev.difficulty !== targetDiff) return false;
         }
@@ -739,6 +877,15 @@ export default function QuestionBankPanel({
     const pool = uncheckedFilteredItems.length > 0 ? uncheckedFilteredItems : filteredItems;
     return pool.slice(0, 100);
   }, [uncheckedFilteredItems, filteredItems]);
+
+  const easyItems = useMemo(
+    () =>
+      bankItems.filter((item) => {
+        const d = aiReviews[item.id]?.difficulty;
+        return d === 1 || d === 2;
+      }),
+    [bankItems, aiReviews]
+  );
 
   const totalPages = Math.max(1, Math.ceil(filteredItems.length / itemsPerPage));
   const safePage = Math.min(currentPage, totalPages);
@@ -1215,6 +1362,7 @@ export default function QuestionBankPanel({
             {[
               { id: 'ALL', label: `Semua (${aiCriteriaCounts.all})` },
               { id: 'UNCHECKED', label: `Belum Dicek AI (${aiCriteriaCounts.unchecked})` },
+              { id: 'DIFF_1_2', label: `1–2 · Sangat Mudah + Mudah (${aiCriteriaCounts.d1 + aiCriteriaCounts.d2})` },
               { id: 'DIFF_1', label: `1 · Sangat Mudah (${aiCriteriaCounts.d1})` },
               { id: 'DIFF_2', label: `2 · Mudah (${aiCriteriaCounts.d2})` },
               { id: 'DIFF_3', label: `3 · Sedang (${aiCriteriaCounts.d3})` },
@@ -1424,6 +1572,32 @@ export default function QuestionBankPanel({
               </button>
             )}
 
+            {easyItems.length > 0 && (
+              <button
+                type="button"
+                onClick={() => {
+                  const easyIds = easyItems.map((i) => i.id);
+                  const allEasySelected = easyIds.every((id) =>
+                    selectedIds.includes(id)
+                  );
+                  if (allEasySelected) {
+                    setSelectedIds((prev) =>
+                      prev.filter((id) => !easyIds.includes(id))
+                    );
+                  } else {
+                    setSelectedIds((prev) =>
+                      Array.from(new Set([...prev, ...easyIds]))
+                    );
+                  }
+                }}
+                className="text-xs font-bold text-orange-700 bg-orange-50 hover:bg-orange-100 border border-orange-200 px-2.5 py-1 rounded-full transition cursor-pointer"
+              >
+                {easyItems.every((i) => selectedIds.includes(i.id))
+                  ? `Batal Pilih Sangat Mudah & Mudah (${easyItems.length})`
+                  : `Pilih Semua Sangat Mudah & Mudah (${easyItems.length})`}
+              </button>
+            )}
+
             {selectedIds.length > 0 && (
               <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-blue-600 text-white">
                 {selectedIds.length} soal dipilih
@@ -1432,6 +1606,32 @@ export default function QuestionBankPanel({
           </div>
 
           <div className="flex flex-wrap items-center gap-2 ml-auto">
+            {easyItems.length > 0 && (
+              <button
+                type="button"
+                onClick={() => {
+                  const easyIds = easyItems.map((i) => i.id);
+                  const allEasySelected = easyIds.every((id) =>
+                    selectedIds.includes(id)
+                  );
+                  if (allEasySelected) {
+                    setSelectedIds((prev) =>
+                      prev.filter((id) => !easyIds.includes(id))
+                    );
+                  } else {
+                    setSelectedIds((prev) =>
+                      Array.from(new Set([...prev, ...easyIds]))
+                    );
+                  }
+                }}
+                className="text-xs font-bold text-orange-700 bg-orange-50 hover:bg-orange-100 border border-orange-200 px-2.5 py-1 rounded-full transition cursor-pointer"
+              >
+                {easyItems.every((i) => selectedIds.includes(i.id))
+                  ? `Batal Pilih Sangat Mudah & Mudah (${easyItems.length})`
+                  : `Pilih Semua Sangat Mudah & Mudah (${easyItems.length})`}
+              </button>
+            )}
+
             {selectedIds.length > 0 && (
               <button
                 type="button"
@@ -1487,8 +1687,58 @@ export default function QuestionBankPanel({
                   : `Cek AI Batch (${batch100Targets.length} Soal)`}
               </span>
             </button>
+
+            {selectedIds.length > 0 && (
+              <>
+                <button
+                  type="button"
+                  onClick={() => handleBatchUpgrade(4)}
+                  disabled={Boolean(batchUpgradeProgress) || isCheckingAi}
+                  className="px-3 py-2 rounded-lg bg-orange-600 hover:bg-orange-700 disabled:bg-slate-300 text-white text-xs font-bold shadow-xs flex items-center gap-1 transition cursor-pointer shrink-0"
+                  title="Ubah semua soal terpilih menjadi tingkat Sulit (4/5)"
+                >
+                  <Zap className="w-3.5 h-3.5" />
+                  <span>Batch → Sulit ({selectedIds.length})</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleBatchUpgrade(5)}
+                  disabled={Boolean(batchUpgradeProgress) || isCheckingAi}
+                  className="px-3 py-2 rounded-lg bg-rose-600 hover:bg-rose-700 disabled:bg-slate-300 text-white text-xs font-bold shadow-xs flex items-center gap-1 transition cursor-pointer shrink-0"
+                  title="Ubah semua soal terpilih menjadi tingkat HOTS (5/5)"
+                >
+                  <Zap className="w-3.5 h-3.5" />
+                  <span>Batch → HOTS ({selectedIds.length})</span>
+                </button>
+              </>
+            )}
           </div>
         </div>
+
+        {batchUpgradeProgress && (
+          <div className="pt-2">
+            <div className="flex items-center justify-between text-xs text-orange-700 font-semibold mb-1">
+              <span>
+                AI sedang menaikkan grade soal ke {batchUpgradeProgress.targetLabel}...
+              </span>
+              <span>
+                {batchUpgradeProgress.current} / {batchUpgradeProgress.total}
+              </span>
+            </div>
+            <div className="w-full h-2 bg-orange-100 rounded-full overflow-hidden">
+              <div
+                className="h-full bg-gradient-to-r from-orange-500 to-rose-600 transition-all duration-300"
+                style={{
+                  width: `${Math.round(
+                    (batchUpgradeProgress.current /
+                      Math.max(1, batchUpgradeProgress.total)) *
+                      100
+                  )}%`,
+                }}
+              />
+            </div>
+          </div>
+        )}
 
         {/* Target Package Selector + Reuse Button */}
         <div className="pt-3 border-t border-slate-200/80 flex flex-col md:flex-row md:items-center gap-3">
