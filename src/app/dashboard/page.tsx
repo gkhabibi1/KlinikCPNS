@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { supabase } from '@/lib/supabaseClient';
 import MemberLayout from '../../components/MemberLayout';
 import NotificationCenter from '../../components/NotificationCenter';
+import InstallAppCard from '../../components/InstallAppCard';
 import {
   Trophy,
   Award,
@@ -876,6 +877,9 @@ function DashboardContent() {
                   </div>
                 </div>
               </div>
+
+              {/* Section Install Aplikasi HP (PWA / WebView) */}
+              <InstallAppCard />
 
               {/* Latest Updates - Card List */}
               <div>

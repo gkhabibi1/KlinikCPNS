@@ -34,6 +34,11 @@ export const metadata: Metadata = {
     shortcut: "/icon.png",
     apple: "/icon.png",
   },
+  appleWebApp: {
+    capable: true,
+    title: "KlinikCPNS",
+    statusBarStyle: "default",
+  },
 };
 
 export default function RootLayout({
