@@ -46,6 +46,7 @@ export default function AiCalibratorModal({
   onUpdated,
 }: AiCalibratorModalProps) {
   const [provider, setProvider] = useState<CalibratorProvider>('gemini');
+  const [autoSwitchProvider, setAutoSwitchProvider] = useState<boolean>(true);
   const [targetDifficulty, setTargetDifficulty] = useState<TargetDifficulty>('sangat_sulit');
   const [batchSize, setBatchSize] = useState<number>(5);
   const [delaySeconds, setDelaySeconds] = useState<number>(4);
@@ -203,20 +204,42 @@ export default function AiCalibratorModal({
     setErrorMessage(null);
     setStatusMessage('Memulai kalibrasi batch pertama...');
 
+    let activeProv: CalibratorProvider = provider;
+    const allProviders: CalibratorProvider[] = ['gemini', 'groq', 'mistral'];
+    const parseKeysFor = (p: CalibratorProvider) =>
+      keysMap[p]
+        .split(/\r?\n/)
+        .map((k) => k.trim())
+        .filter(Boolean);
+
     try {
       while (!pauseRequestedRef.current) {
+        const currentKeys = parseKeysFor(activeProv);
+        const fallbackProviders = autoSwitchProvider
+          ? allProviders
+              .filter((p) => p !== activeProv)
+              .map((p) => ({ provider: p, apiKeys: parseKeysFor(p) }))
+              .filter((entry) => entry.apiKeys.length > 0 || envKeys[entry.provider])
+          : [];
+
         const res = await fetch('/api/calibrate-questions', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             batchSize,
-            provider,
-            apiKeys: parsedApiKeys,
+            provider: activeProv,
+            apiKeys: currentKeys,
+            fallbackProviders,
             targetDifficulty,
           }),
         });
 
         const data = await res.json();
+
+        if (data?.usedProvider && data.usedProvider !== activeProv) {
+          activeProv = data.usedProvider as CalibratorProvider;
+          handleProviderChange(activeProv);
+        }
 
         if (!res.ok) {
           setErrorMessage(data?.error || 'Gagal memproses batch kalibrasi.');
@@ -266,7 +289,7 @@ export default function AiCalibratorModal({
         }
 
         setStatusMessage(
-          `Batch selesai (${data.processedCount || 0} soal). Menunggu ${delaySeconds} detik sebelum batch berikutnya...`
+          `[${(data.usedProvider || activeProv).toUpperCase()}] Batch selesai (${data.processedCount || 0} soal)${data.switchedFromPrimary ? ' — auto-switch provider aktif!' : ''}. Menunggu ${delaySeconds} detik...`
         );
         await sleep(delaySeconds * 1000);
       }
@@ -483,6 +506,18 @@ export default function AiCalibratorModal({
               }
               className="w-full border border-slate-300 rounded-xl p-3 text-xs font-mono text-black bg-white focus:outline-none focus:border-black disabled:bg-slate-100"
             />
+            <label className="mt-2 inline-flex items-center gap-2 text-xs font-semibold text-black cursor-pointer">
+              <input
+                type="checkbox"
+                disabled={isRunning}
+                checked={autoSwitchProvider}
+                onChange={(e) => setAutoSwitchProvider(e.target.checked)}
+                className="w-4 h-4 rounded border-black accent-black"
+              />
+              <span>
+                Auto-switch ke provider cadangan (Groq / Mistral / Gemini) jika kuota gratis habis (429)
+              </span>
+            </label>
           </div>
 
           {/* Controls */}

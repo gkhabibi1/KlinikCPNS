@@ -8,10 +8,16 @@ export const maxDuration = 60;
 export type CalibratorProvider = 'gemini' | 'groq' | 'mistral';
 export type TargetDifficulty = 'sulit' | 'sangat_sulit';
 
+interface FallbackProviderEntry {
+  provider: CalibratorProvider;
+  apiKeys?: string[];
+}
+
 interface CalibrateRequestBody {
   batchSize?: number;
   provider?: CalibratorProvider;
   apiKeys?: string[];
+  fallbackProviders?: FallbackProviderEntry[];
   targetDifficulty?: TargetDifficulty;
 }
 
@@ -184,10 +190,30 @@ export async function POST(request: Request) {
       .map((k) => String(k || '').trim())
       .filter(Boolean);
     const envFallbackKey = getEnvCalibratorKey(provider);
-    const apiKeys =
+    const primaryKeys =
       rawKeys.length > 0 ? rawKeys : envFallbackKey ? [envFallbackKey] : [];
 
-    if (apiKeys.length === 0) {
+    // Susun antrean (provider + key) mulai dari provider utama lalu provider cadangan
+    const attemptQueue: Array<{ provider: CalibratorProvider; apiKey: string; keyIndex: number }> = [];
+    primaryKeys.forEach((apiKey, idx) => {
+      attemptQueue.push({ provider, apiKey, keyIndex: idx });
+    });
+
+    if (Array.isArray(body.fallbackProviders)) {
+      for (const fb of body.fallbackProviders) {
+        if (!fb?.provider || fb.provider === provider) continue;
+        const fbRawKeys = (Array.isArray(fb.apiKeys) ? fb.apiKeys : [])
+          .map((k) => String(k || '').trim())
+          .filter(Boolean);
+        const fbEnvKey = getEnvCalibratorKey(fb.provider);
+        const fbKeys = fbRawKeys.length > 0 ? fbRawKeys : fbEnvKey ? [fbEnvKey] : [];
+        fbKeys.forEach((apiKey, idx) => {
+          attemptQueue.push({ provider: fb.provider, apiKey, keyIndex: idx });
+        });
+      }
+    }
+
+    if (attemptQueue.length === 0) {
       return NextResponse.json(
         { error: 'Minimal 1 API Key harus diisi (atau set di Environment Variables Vercel).' },
         { status: 400 }
@@ -273,14 +299,21 @@ Tugas Anda pada setiap soal dalam array JSON input:
 
     let aiRawText: string | null = null;
     let usedKeyIndex = -1;
+    let usedProvider: CalibratorProvider = provider;
     let allRateLimited = true;
     let lastError = '';
 
-    for (let i = 0; i < apiKeys.length; i++) {
-      const result = await callProviderWithKey(provider, apiKeys[i], systemPrompt, userPrompt);
+    for (const attempt of attemptQueue) {
+      const result = await callProviderWithKey(
+        attempt.provider,
+        attempt.apiKey,
+        systemPrompt,
+        userPrompt
+      );
       if (result.ok) {
         aiRawText = result.rawText;
-        usedKeyIndex = i;
+        usedKeyIndex = attempt.keyIndex;
+        usedProvider = attempt.provider;
         allRateLimited = false;
         break;
       }
@@ -292,18 +325,19 @@ Tugas Anda pada setiap soal dalam array JSON input:
 
     if (aiRawText === null) {
       const stats = await getCalibrationStats(supabaseAdmin);
+      const triedProviders = Array.from(new Set(attemptQueue.map((a) => a.provider.toUpperCase()))).join(', ');
       if (allRateLimited) {
         return NextResponse.json({
           rateLimited: true,
           remaining: stats.remaining,
           total: stats.total,
           calibratedCount: stats.calibratedCount,
-          error: `Semua ${apiKeys.length} API Key ${provider.toUpperCase()} terkena batas limit (HTTP 429).`,
+          error: `Semua ${attemptQueue.length} API Key (${triedProviders}) terkena batas limit (HTTP 429).`,
         });
       }
       return NextResponse.json(
         {
-          error: lastError || `Gagal memanggil ${provider.toUpperCase()} API.`,
+          error: lastError || `Gagal memanggil AI API (${triedProviders}).`,
           remaining: stats.remaining,
         },
         { status: 502 }
@@ -423,6 +457,8 @@ Tugas Anda pada setiap soal dalam array JSON input:
       calibratedCount: statsAfter.calibratedCount,
       processedCount: activityResults.length,
       usedKeyIndex,
+      usedProvider,
+      switchedFromPrimary: usedProvider !== provider,
       results: activityResults,
     });
   } catch (err: any) {
