@@ -10,6 +10,7 @@ import {
   AlertTriangle,
   KeyRound,
   RefreshCw,
+  Loader2,
 } from 'lucide-react';
 
 type CalibratorProvider = 'gemini' | 'groq' | 'mistral';
@@ -334,17 +335,28 @@ export default function AiCalibratorModal({
               </p>
             </div>
           </div>
-          <button
-            type="button"
-            onClick={() => {
-              if (!isRunning) onClose();
-            }}
-            disabled={isRunning}
-            className="p-2 rounded-lg border border-slate-200 hover:bg-slate-100 disabled:opacity-40 cursor-pointer"
-            title={isRunning ? 'Jeda kalibrasi terlebih dahulu sebelum menutup' : 'Tutup'}
-          >
-            <X className="w-4 h-4 text-black" />
-          </button>
+          <div className="flex items-center gap-2">
+            {isRunning && (
+              <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#ddff00] border border-black text-[11px] font-black text-black">
+                <span className="relative flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-black opacity-75" />
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-black" />
+                </span>
+                AI Sedang Berjalan
+              </span>
+            )}
+            <button
+              type="button"
+              onClick={() => {
+                if (!isRunning) onClose();
+              }}
+              disabled={isRunning}
+              className="p-2 rounded-lg border border-slate-200 hover:bg-slate-100 disabled:opacity-40 cursor-pointer"
+              title={isRunning ? 'Jeda kalibrasi terlebih dahulu sebelum menutup' : 'Tutup'}
+            >
+              <X className="w-4 h-4 text-black" />
+            </button>
+          </div>
         </div>
 
         {/* Body */}
@@ -394,14 +406,25 @@ export default function AiCalibratorModal({
           </div>
 
           {/* Progress Bar */}
-          <div className="p-4 rounded-xl border border-slate-200 bg-slate-50/70 space-y-2">
-            <div className="flex items-center justify-between text-xs font-bold text-black">
-              <span>{statusMessage}</span>
-              <span>{progressPct}%</span>
+          <div
+            className={`p-4 rounded-xl border space-y-2 transition-colors ${
+              isRunning
+                ? 'border-black bg-[#ddff00]/15'
+                : 'border-slate-200 bg-slate-50/70'
+            }`}
+          >
+            <div className="flex items-center justify-between gap-2 text-xs font-bold text-black">
+              <span className="flex items-center gap-2">
+                {isRunning && <Loader2 className="w-4 h-4 animate-spin text-black shrink-0" />}
+                <span>{statusMessage}</span>
+              </span>
+              <span className="shrink-0">{progressPct}%</span>
             </div>
             <div className="w-full h-3.5 bg-white border border-black rounded-full overflow-hidden">
               <div
-                className="h-full bg-[#ddff00] transition-all duration-300"
+                className={`h-full bg-[#ddff00] transition-all duration-300 ${
+                  isRunning ? 'animate-pulse' : ''
+                }`}
                 style={{ width: `${progressPct}%` }}
               />
             </div>
