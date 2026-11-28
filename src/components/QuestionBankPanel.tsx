@@ -1109,8 +1109,8 @@ export default function QuestionBankPanel({
   return (
     <div className="space-y-6">
       {/* Header Banner */}
-      <div className="bg-gradient-to-r from-slate-900 via-blue-950 to-indigo-950 text-white rounded-2xl p-6 shadow-sm flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-        <div>
+      <div className="bg-gradient-to-r from-slate-900 via-blue-950 to-indigo-950 text-white rounded-2xl p-6 shadow-sm flex flex-col gap-4">
+        <div className="min-w-0">
           <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-blue-500/20 border border-blue-400/30 text-blue-200 text-[11px] font-bold uppercase tracking-wider mb-2">
             <Database className="w-3.5 h-3.5" />
             <span>Admin-Only Repository</span>
@@ -1118,12 +1118,12 @@ export default function QuestionBankPanel({
           <h2 className="text-xl sm:text-2xl font-extrabold tracking-tight">
             Bank Soal SKD Terpusat
           </h2>
-          <p className="text-xs sm:text-sm text-slate-300 mt-1 max-w-2xl leading-relaxed">
+          <p className="text-xs sm:text-sm text-slate-300 mt-1 max-w-3xl leading-relaxed">
             Seluruh soal dari paket try out terkumpul di sini dan dikelompokkan berdasarkan bidang serta sub-bidang resmi SKD agar mudah dicari dan digunakan ulang ke paket baru.
           </p>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2 shrink-0">
+        <div className="flex flex-wrap items-center gap-2">
           <button
             type="button"
             onClick={() =>
