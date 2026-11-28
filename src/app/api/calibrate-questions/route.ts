@@ -69,13 +69,17 @@ async function callProviderWithKey(
   provider: CalibratorProvider,
   apiKey: string,
   systemPrompt: string,
-  userPrompt: string
+  userPrompt: string,
+  timeoutMs = 7000
 ): Promise<{ ok: true; rawText: string } | { ok: false; rateLimited: boolean; status: number; error: string }> {
   try {
+    const signal = AbortSignal.timeout(Math.max(2000, timeoutMs));
+
     if (provider === 'gemini') {
       const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key=${encodeURIComponent(apiKey)}`;
       const res = await fetch(url, {
         method: 'POST',
+        signal,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           systemInstruction: { parts: [{ text: systemPrompt }] },
@@ -107,11 +111,12 @@ async function callProviderWithKey(
       provider === 'groq'
         ? 'openai/gpt-oss-120b'
         : provider === 'openrouter'
-        ? 'google/gemma-4-31b-it:free'
+        ? 'openrouter/free'
         : 'mistral-small-latest';
 
     const res = await fetch(endpoint, {
       method: 'POST',
+      signal,
       headers: {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${apiKey}`,
@@ -141,7 +146,15 @@ async function callProviderWithKey(
     const text = json?.choices?.[0]?.message?.content || '[]';
     return { ok: true, rawText: text };
   } catch (err: any) {
-    return { ok: false, rateLimited: false, status: 500, error: err?.message || 'Network error calling AI provider' };
+    const isTimeout = err?.name === 'TimeoutError' || err?.name === 'AbortError';
+    return {
+      ok: false,
+      rateLimited: isTimeout,
+      status: isTimeout ? 504 : 500,
+      error: isTimeout
+        ? `${provider.toUpperCase()} timeout (melebihi ${Math.round(timeoutMs / 1000)} detik) — coba kurangi Batch menjadi 1-2 soal.`
+        : err?.message || 'Network error calling AI provider',
+    };
   }
 }
 
@@ -196,9 +209,12 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
+  const requestStart = Date.now();
+  const MAX_BUDGET_MS = 8200; // Jaga agar selalu di bawah batas 10 detik Vercel Hobby
+
   try {
     const body = (await request.json()) as CalibrateRequestBody;
-    const batchSize = Math.min(10, Math.max(1, Number(body.batchSize) || 5));
+    const batchSize = Math.min(5, Math.max(1, Number(body.batchSize) || 2));
     const provider: CalibratorProvider = body.provider || 'gemini';
     const targetDifficulty: TargetDifficulty = body.targetDifficulty === 'sangat_sulit' ? 'sangat_sulit' : 'sulit';
     const rawKeys = (Array.isArray(body.apiKeys) ? body.apiKeys : [])
@@ -321,11 +337,21 @@ Tugas Anda pada setiap soal dalam array JSON input:
     const providerErrors: string[] = [];
 
     for (const attempt of attemptQueue) {
+      const elapsed = Date.now() - requestStart;
+      const remainingBudget = MAX_BUDGET_MS - elapsed;
+      if (remainingBudget < 2200) {
+        const budgetMsg = `[${attempt.provider.toUpperCase()}] Dilewati agar tidak melewati batas waktu 10 detik server. Kurangi Batch menjadi 1-2 soal.`;
+        lastError = budgetMsg;
+        providerErrors.push(budgetMsg);
+        break;
+      }
+
       const result = await callProviderWithKey(
         attempt.provider,
         attempt.apiKey,
         systemPrompt,
-        userPrompt
+        userPrompt,
+        Math.min(6800, remainingBudget - 800)
       );
       if (result.ok) {
         aiRawText = result.rawText;
@@ -369,7 +395,13 @@ Tugas Anda pada setiap soal dalam array JSON input:
     try {
       const cleaned = stripJsonFences(aiRawText);
       const parsed = JSON.parse(cleaned);
-      parsedItems = Array.isArray(parsed) ? parsed : Array.isArray(parsed?.questions) ? parsed.questions : [];
+      parsedItems = Array.isArray(parsed)
+        ? parsed
+        : Array.isArray(parsed?.questions)
+        ? parsed.questions
+        : parsed && typeof parsed === 'object' && parsed.id
+        ? [parsed]
+        : [];
     } catch {
       return NextResponse.json(
         { error: 'Respons AI tidak berupa JSON array yang valid. Silakan ulangi batch ini.' },
@@ -395,6 +427,8 @@ Tugas Anda pada setiap soal dalam array JSON input:
       newAnswer: string;
       notes: string;
     }> = [];
+
+    const updatePromises: Array<Promise<void>> = [];
 
     for (const item of parsedItems) {
       const original = rowMap.get(item.id);
@@ -435,28 +469,30 @@ Tugas Anda pada setiap soal dalam array JSON input:
         explanation: String(item.explanation || original.explanation || '').trim(),
       };
 
-      const { error: updateErr } = await supabaseAdmin
-        .from('question_bank')
-        .update({
-          ...updatedFields,
-          is_ai_calibrated: true,
-          ai_calibrated_at: nowIso,
-          ai_calibration_notes: notes,
-          original_question_backup: backupPayload,
-          updated_at: nowIso,
-        })
-        .eq('id', original.id);
+      updatePromises.push(
+        (async () => {
+          const { error: updateErr } = await supabaseAdmin
+            .from('question_bank')
+            .update({
+              ...updatedFields,
+              is_ai_calibrated: true,
+              ai_calibrated_at: nowIso,
+              ai_calibration_notes: notes,
+              original_question_backup: backupPayload,
+              updated_at: nowIso,
+            })
+            .eq('id', original.id);
 
-      if (updateErr) {
-        throw updateErr;
-      }
+          if (updateErr) throw updateErr;
 
-      if (original.source_question_id) {
-        await supabaseAdmin
-          .from('questions')
-          .update(updatedFields)
-          .eq('id', original.source_question_id);
-      }
+          if (original.source_question_id) {
+            await supabaseAdmin
+              .from('questions')
+              .update(updatedFields)
+              .eq('id', original.source_question_id);
+          }
+        })()
+      );
 
       activityResults.push({
         id: original.id,
@@ -468,6 +504,8 @@ Tugas Anda pada setiap soal dalam array JSON input:
         notes,
       });
     }
+
+    await Promise.all(updatePromises);
 
     const statsAfter = await getCalibrationStats(supabaseAdmin);
 

@@ -49,7 +49,7 @@ export default function AiCalibratorModal({
   const [provider, setProvider] = useState<CalibratorProvider>('gemini');
   const [autoSwitchProvider, setAutoSwitchProvider] = useState<boolean>(true);
   const [targetDifficulty, setTargetDifficulty] = useState<TargetDifficulty>('sangat_sulit');
-  const [batchSize, setBatchSize] = useState<number>(5);
+  const [batchSize, setBatchSize] = useState<number>(2);
   const [delaySeconds, setDelaySeconds] = useState<number>(4);
   const [keysMap, setKeysMap] = useState<Record<CalibratorProvider, string>>({
     gemini: '',
@@ -103,7 +103,7 @@ export default function AiCalibratorModal({
         setDelaySeconds(savedDelay);
       }
       const savedBatch = Number(localStorage.getItem(STORAGE_KEYS.batchSize));
-      if (!Number.isNaN(savedBatch) && savedBatch >= 1 && savedBatch <= 10) {
+      if (!Number.isNaN(savedBatch) && savedBatch >= 1 && savedBatch <= 5) {
         setBatchSize(savedBatch);
       }
       const savedDiff = localStorage.getItem(STORAGE_KEYS.difficulty) as TargetDifficulty | null;
@@ -119,7 +119,8 @@ export default function AiCalibratorModal({
     setIsLoadingStats(true);
     try {
       const res = await fetch('/api/calibrate-questions', { cache: 'no-store' });
-      const data = await res.json();
+      const rawText = await res.text();
+      const data = rawText ? JSON.parse(rawText) : {};
       if (res.ok && typeof data.total === 'number') {
         setStats({
           migrationReady: data.migrationReady !== false,
@@ -175,7 +176,7 @@ export default function AiCalibratorModal({
   };
 
   const handleBatchSizeChange = (val: number) => {
-    const safe = Math.max(1, Math.min(10, val || 5));
+    const safe = Math.max(1, Math.min(5, val || 2));
     setBatchSize(safe);
     try {
       localStorage.setItem(STORAGE_KEYS.batchSize, String(safe));
@@ -210,6 +211,7 @@ export default function AiCalibratorModal({
     setStatusMessage('Memulai kalibrasi batch pertama...');
 
     let activeProv: CalibratorProvider = provider;
+    let currentBatchSize = Math.max(1, Math.min(5, batchSize || 2));
     const allProviders: CalibratorProvider[] = ['gemini', 'groq', 'openrouter', 'mistral'];
     const parseKeysFor = (p: CalibratorProvider) =>
       keysMap[p]
@@ -231,7 +233,7 @@ export default function AiCalibratorModal({
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            batchSize,
+            batchSize: currentBatchSize,
             provider: activeProv,
             apiKeys: currentKeys,
             fallbackProviders,
@@ -239,7 +241,33 @@ export default function AiCalibratorModal({
           }),
         });
 
-        const data = await res.json();
+        const rawText = await res.text();
+        let data: any = null;
+        try {
+          data = rawText ? JSON.parse(rawText) : {};
+        } catch {
+          const isVercelTimeout =
+            res.status === 504 ||
+            res.status === 502 ||
+            rawText.trim().startsWith('An error') ||
+            rawText.trim().startsWith('<');
+          if (isVercelTimeout && currentBatchSize > 1) {
+            currentBatchSize = 1;
+            handleBatchSizeChange(1);
+            setStatusMessage(
+              'Server timeout pada batch sebelumnya — otomatis menurunkan batch ke 1 soal & mencoba ulang...'
+            );
+            await sleep(2000);
+            continue;
+          }
+          setErrorMessage(
+            isVercelTimeout
+              ? 'Server Vercel mencapai batas waktu eksekusi (10 detik). Turunkan Batch ke 1 soal atau pilih provider yang lebih cepat (OpenRouter Free / Groq).'
+              : `Respons server tidak valid (HTTP ${res.status}): ${rawText.slice(0, 140)}`
+          );
+          setStatusMessage('Kalibrasi dihentikan karena respons server tidak valid.');
+          break;
+        }
 
         if (data?.usedProvider && data.usedProvider !== activeProv) {
           activeProv = data.usedProvider as CalibratorProvider;
@@ -455,7 +483,7 @@ export default function AiCalibratorModal({
               >
                 <option value="gemini">Google Gemini Flash (3.8)</option>
                 <option value="groq">Groq (GPT-OSS 120B)</option>
-                <option value="openrouter">OpenRouter Free (Gemma 4 31B)</option>
+                <option value="openrouter">OpenRouter Free (Auto-Router)</option>
                 <option value="mistral">Mistral AI (Berbayar)</option>
               </select>
             </div>
@@ -483,10 +511,11 @@ export default function AiCalibratorModal({
                 <input
                   type="number"
                   min={1}
-                  max={10}
+                  max={5}
                   disabled={isRunning}
                   value={batchSize}
                   onChange={(e) => handleBatchSizeChange(Number(e.target.value))}
+                  title="Rekomendasi: 1-2 soal per batch agar bebas timeout 10 detik Vercel"
                   className="w-full border border-slate-300 rounded-xl px-3 py-2 text-xs sm:text-sm font-bold text-black bg-white disabled:bg-slate-100"
                 />
               </div>
