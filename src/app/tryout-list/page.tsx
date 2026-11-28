@@ -177,7 +177,7 @@ export default function TryoutListPage() {
   return (
     <MemberLayout>
       <div className="space-y-6 p-4 md:p-6 max-w-6xl mx-auto">
-        {/* Segmented Tab Navigation + Akses Cepat 30 Days Challenge */}
+        {/* Segmented Tab Navigation */}
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="inline-flex flex-wrap gap-1.5 bg-slate-200/60 p-1.5 rounded-2xl border border-slate-200/70">
             <button
@@ -202,13 +202,6 @@ export default function TryoutListPage() {
               <Briefcase className="w-4 h-4" strokeWidth={1.8} />
               <span>Try Out P3K</span>
             </button>
-            <Link
-              href="/dashboard/challenge"
-              className="px-4 sm:px-5 py-2.5 rounded-xl font-semibold text-xs sm:text-sm transition-all flex items-center gap-1.5 text-amber-700 bg-amber-50 hover:bg-amber-100 border border-amber-200/80"
-            >
-              <Flame className="w-4 h-4 text-amber-600" strokeWidth={2} />
-              <span>30 Days Challenge</span>
-            </Link>
           </div>
         </div>
 
